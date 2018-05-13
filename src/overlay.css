@@ -7,13 +7,24 @@
  */
 
 
+.overlay-mask {
+    position: fixed;
+    display: none;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+.overlay-container {
+    position: fixed;
+}
 
 
 
-
- 
-
-
+.o {
+    z-index: 100000000;
+}
 
 
 
