@@ -24,21 +24,21 @@
             for( i1 = 0; i1 < mergeObjGroup.length; i1++ ) {
                 mergeObj = mergeObjGroup[i1];
                 for( i2 in mergeObj ) {
-                    mergeObj;
-                    if( typeof mergeObj[i2] === 'object' ) {
+                    if( typeof mergeObj[i2] === 'object' && mergeObj[i2] ) {
                         baseObj[i2] = {};
                         extend( true, baseObj[i2], mergeObj[i2] );
                     } else {
                         baseObj[i2] = mergeObj[i2];
                     }
-
                 }
             }
 
             return baseObj;
         }, i1, i2,
         zIndex = 880811,
-        sheets, rules;
+        serialNumber = 0,
+        sheets, rules,
+        urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_]\/[a-z0-9-_]/gi;
 
     if( ~location.protocol.indexOf('http')) {
         sheets = _slice.call(document.styleSheets, 0);
@@ -47,157 +47,129 @@
             rules = _slice.call(sheets[i1].rules, 0);
 
             for( i2 in rules) {
-                if( rules[i2].style.zIndex > zIndex ) zIndex = Number(rules[i2].style.zIndex) + 1;
+                if( rules[i2].style.zIndex > zIndex ) zIndex = Number(rules[i2].style.zIndex);
             }
         }
     }
 
-    // var a = {a: 123, b: 321},
-    //     b = {aa: 123123, bb: 321321};
-    //
-    // extend( true, a, b );
-    //
-    // console.log( extend( true, a, b ) );
-    // console.log( a );
-    // console.log( b );
-
     function Overlay( options ) {
         var self = this,
-            defOpts = {
-                title: null,
-                width: null,
-                height: null,
-                content: null,
-                el: null
-            },
-            el, content, mask,
-            $el, container;
+            defOpts = extend({}, Overlay.config, options );
 
-        extend( defOpts, options );
+        self.options = defOpts;
 
-        this.options = options = defOpts;
+        if( !defOpts.el && !defOpts.content ) return;
 
-        el = defOpts.el;
-        content = defOpts.content;
-        mask;
+        self.options.width = 10000;
+        self.options.zIndex = zIndex;
+        self.options.serialNumber = serialNumber++;
 
-        if( !el && !content ) return;
-
-        mask = document.createElement('div');
-        defOpts.$mask = mask;
-        mask.classList.add('overlay-mask');
-
-        if( el ) {
-            // 找到核心元素 并将遮罩层插入到dom节点中
-            defOpts.$el = $el = document.querySelector(el);
-            $el.parentNode.insertBefore( mask, $el );
-
-            // 创建包含元素，将核心元素放到包含元素内
-            container = self.containerInit();
-            $el.parentNode.insertBefore( container, $el );
-            // container.appendChild($el);
-
-        } else if( content ) {
-
-
-
-        } else if( 1 ) {
-
-        }
-
+        self.init();
 
         return self;
     }
 
-    Overlay.prototype.init = function() {
+    Overlay.config = {
+        title: null,
+        width: null,
+        height: null,
+        content: null,
+        el: null,
+        urlPattern: urlPattern
+    }
 
+    Overlay.prototype.init = function() {
+        var self = this,
+            opts = self.options,
+            el, content, $mask,
+            $el, $container;
+
+        self.parsePutTogether();
+
+        $mask = self.maskInit();
+        document.body.appendChild($mask);
+
+        el = opts.el;
+        content = opts.content;
+
+        if( el ) {
+            // 找到核心元素 并将遮罩层插入到dom节点中
+            opts.$el = $el = document.querySelector(el);
+            $el.parentNode.insertBefore( $mask, $el );
+
+        } else if( content ) {
+            // 如果没有指定dom 则使用渲染内容的形式
+            opts.$el = $el = self.elInit();
+        }
+
+        // 创建包含元素，将核心元素放到包含元素内
+        $container = self.containerInit();
+        $el.parentNode.insertBefore( $container, $el );
+        $container.appendChild($el);
+    }
+
+    Overlay.prototype.maskInit = function() {
+        var self = this,
+            opts = self.options,
+            $mask;
+
+        $mask = document.createElement('div');
+        opts.$mask = $mask;
+        $mask.classList.add('overlay-mask');
+
+        return $mask;
+    }
+
+    Overlay.prototype.elInit = function() {
+        var self = this,
+            opts = self.options,
+            $el, loadedCallback,
+            name = 'overlay-frame-' + opts.serialNumber;
+
+        // 如果content 是链接，则装入iframe中
+        if( urlPattern.test(opts.content) ) {
+            $el = document.createElement('iframe');
+            $el.setAttribute('name', name);
+            $el.setAttribute('id', name);
+            $el.src = opts.content;
+            loadedCallback = function() {
+                opts.frameObj = window.frames[name];
+                self.contentLoadingSuccess();
+                this.removeEventListener('load', loadedCallback);
+            }
+
+            $el.addEventListener('load', loadedCallback, false);
+        } else {
+            $el = document.createElement('div');
+            $el.appendChild(document.createTextNode(opts.content));
+        }
+
+        $el.className += 'overlay-custom-wrapper';
+        document.body.appendChild($el);
+
+        return $el;
     }
 
     Overlay.prototype.containerInit = function() {
         var self = this,
-            container = document.createElement('div'),
-            opts = self.options;
+            opts = self.options,
+            $container = document.createElement('div');
 
-        opts.$container = container;
-        container.classList.add('overlay-container');
+        opts.$container = $container;
+        $container.className += 'overlay-container';
 
-        return container;
+        return $container;
     }
 
-    // class Overlay {
-    //     constructor( options ) {
-    //         const self = this;
-    //
-    //         let defOpts = {
-    //                 title: null,
-    //                 width: null,
-    //                 height: null,
-    //                 content: null,
-    //                 el: null
-    //             };
-    //
-    //         Object.assign( defOpts, options );
-    //
-    //         this.options = options = defOpts;
-    //
-    //         let el = defOpts.el,
-    //             content = defOpts.content;
-    //
-    //         if( !el && !content ) return;
-    //
-    //         let mask = document.createElement('div');
-    //         defOpts.$mask = mask;
-    //         mask.classList.add('overlay-mask');
-    //
-    //         if( el ) {
-    //             let $el
-    //             // 找到核心元素 并将遮罩层插入到dom节点中
-    //             defOpts.$el = $el = document.querySelector(el);
-    //             $el.parentNode.insertBefore( mask, $el );
-    //
-    //             // 创建包含元素，将核心元素放到包含元素内
-    //             let container = self.containerInit();
-    //             $el.parentNode.insertBefore( container, $el );
-    //             container.appendChild($el);
-    //
-    //         } else if( content ) {
-    //
-    //
-    //
-    //         } else if( 1 ) {
-    //
-    //         }
-    //
-    //
-    //         return self;
-    //     }
-    //     init() {
-    //         const self = this;
-    //
-    //
-    //     }
-    //     close() {
-    //
-    //     }
-    //     resize() {
-    //
-    //     }
-    //
-    //     containerInit() {
-    //         const self = this;
-    //         let container = document.createElement('div'),
-    //             opts = self.options;
-    //
-    //         opts.$container = container;
-    //         container.classList.add('overlay-container');
-    //
-    //         return container;
-    //     }
-    //
-    //     static alert() {
-    //         const self = this;
-    //     }
-    // }
+    Overlay.prototype.contentLoadingSuccess = function() {
+
+    }
+
+    Overlay.prototype.parsePutTogether = function() {
+
+    }
+
+
 
     return Overlay;
 
