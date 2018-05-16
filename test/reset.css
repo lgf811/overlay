@@ -47,4 +47,3 @@ body:after, .fixed:after, .clearfix:after, .cf:after, #header:after, #header > .
 .clear, .cl { display: block!important; float: none!important; clear: both; width: auto!important; max-width: none!important; min-width: 0!important; max-height: none!important; min-height: 0!important; overflow: hidden; margin: 0!important; padding: 0!important; border: 0 none!important; font-size: 0!important; line-height: 0!important }
 
 video { background-color: #000000; vertical-align: top }
- 
