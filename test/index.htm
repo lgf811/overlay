@@ -11,19 +11,35 @@
 </head>
 <body>
     <div class="o">123123123</div>
-
+    <br><br><br><br><br>
     <script src="../src/overlay.js"></script>
     <script>
 
-        (function() {
-            new Overlay({
-                // el: '.o'
-                content: './frame.htm'
-            }).content(function( e ) {
-                alert(123)
+        // (function() {
+            var win = new Overlay({
+                el: '.o',
+                // content: './frame.htm',
+                title: '标题',
+                buttons: {
+                    'enter.enter.enter-1': '确定',
+                    'cancel.cancel': '取消'
+                }
+            }).enter(function() {
+
+                alert(123);
+
+            }).enter(function() {
+                console.log(321321);
+            }).cancel(function() {
+                alert(321);
             });
 
-        })();
+            // new Overlay({
+            //     // el: '.o'
+            //     content: './frame.htm'
+            // });
+
+        // })();
     </script>
 </body>
 </html>

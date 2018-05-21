@@ -3,6 +3,24 @@
     typeof define === 'function' && define.amd ? define(factory) :
     window.Overlay = factory();
 })(this, function() {
+
+    function handy( elem ) {
+        return new handy.init( elem );
+    }
+
+    handy.prototype.init = function( elem ) {
+
+    }
+
+    return handy;
+
+});
+
+(function( global, factory ) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    window.Overlay = factory();
+})(this, function() {
     var _slice = Array.prototype.slice,
         extend = function() {
             var argus = _slice.call(arguments),
@@ -24,9 +42,9 @@
             for( i1 = 0; i1 < mergeObjGroup.length; i1++ ) {
                 mergeObj = mergeObjGroup[i1];
                 for( i2 in mergeObj ) {
-                    if( typeof mergeObj[i2] === 'object' && mergeObj[i2] ) {
-                        baseObj[i2] = {};
-                        extend( true, baseObj[i2], mergeObj[i2] );
+                    if( typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
+
+                        baseObj[i2] = extend( true, baseObj[i2], mergeObj[i2] );
                     } else {
                         baseObj[i2] = mergeObj[i2];
                     }
@@ -38,7 +56,11 @@
         zIndex = 880811,
         serialNumber = 0,
         sheets, rules,
-        urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
+        urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
+        windowKey,
+        domPrototype;
+        // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
+        // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
     if( ~location.protocol.indexOf('http')) {
         sheets = _slice.call(document.styleSheets, 0);
@@ -51,6 +73,13 @@
             }
         }
     }
+
+    Node.prototype.addClass = function() {
+        var self = this;
+
+        
+    };
+
 
     function Overlay( options ) {
         var self = this,
@@ -75,10 +104,12 @@
         height: null,
         content: null,
         el: null,
-        urlPattern: urlPattern
+        urlPattern: urlPattern,
+        showClose: true
     };
 
     Overlay.prototype.init = function() {
+
         var self = this,
             opts = self.options,
             el, content, $mask,
@@ -102,14 +133,34 @@
             self.$el = $el = self.elInit();
         }
 
+        // 将实例绑到dom对象上，方便查找调用
+        $el.overlay = self;
+
         // 创建包含元素，将核心元素放到包含元素内
         $container = self.containerInit();
         $el.parentNode.insertBefore( $container, $el );
         $container.appendChild( self.headerInit() );
         $container.appendChild( self.bodyInit() );
         $container.appendChild( self.footerInit() );
+
+        // 根据配置，操作 header内的元素
+        if( opts.title ) {
+            self.$title.innerText = opts.title;
+        } else {
+            self.$header.style.display = 'none';
+        }
+
+        if( !opts.showClose ) self.$close.style.display = 'none';
+
+        // 根据配置，操作footer内的元素
+        if( opts.buttons && typeof opts.buttons === 'object' ) {
+            this.parseButtons();
+        }
+
+        self.eventInit();
     };
 
+    // 初始化遮罩
     Overlay.prototype.maskInit = function() {
         var self = this,
             opts = self.options,
@@ -122,6 +173,7 @@
         return $mask;
     };
 
+    // 在元素 el 未有的情况下，初始化 el
     Overlay.prototype.elInit = function() {
         var self = this,
             opts = self.options,
@@ -129,7 +181,7 @@
             name = 'overlay-frame-' + opts.serialNumber;
 
         // 如果content 是链接，则装入iframe中
-        if( urlPattern.test(opts.content) ) {
+        if( opts.content.match(opts.urlPattern)[0] ) {
             $el = document.createElement('iframe');
             $el.setAttribute('name', name);
             $el.setAttribute('id', name);
@@ -152,6 +204,7 @@
         return $el;
     };
 
+    // 初始化外包含
     Overlay.prototype.containerInit = function() {
         var self = this,
             opts = self.options,
@@ -163,11 +216,13 @@
         return $container;
     };
 
+    // 初始化头部
     Overlay.prototype.headerInit = function() {
         var self = this,
             opts = self.options,
             $header = document.createElement('div'),
-            $title = document.createElement('div');
+            $title = document.createElement('span'),
+            $close = document.createElement('a');
 
         self.$header = $header;
         $header.className += 'overlay-header';
@@ -175,11 +230,17 @@
         self.$title = $title;
         $title.className += 'overlay-title';
 
+        self.$close = $close;
+        $close.className += 'overlay-close-btn';
+        $close.innerText = '关闭';
+
         $header.appendChild( $title );
+        $header.appendChild( $close );
 
         return $header;
-    }
+    };
 
+    // 初始化内容包围
     Overlay.prototype.bodyInit = function() {
         var self = this,
             opts = self.options,
@@ -191,8 +252,9 @@
         $body.appendChild( self.$el );
 
         return $body;
-    }
+    };
 
+    // 初始化底部
     Overlay.prototype.footerInit = function() {
         var self = this,
             opts = self.options,
@@ -203,8 +265,59 @@
         $footer.className += 'overlay-footer';
 
         return $footer;
-    }
+    };
 
+    // 初始化按钮
+    Overlay.prototype.buttonInit = function( className, fnName, text, i ) {
+        var self = this,
+            opts = self.options,
+            btn = document.createElement('a');
+
+        btn.appendChild( document.createTextNode(text) );
+        btn.className += 'overlay-btn overlay-btn-' + i;
+        btn.className += className ? (' ' + className.join(' ')) : '';
+
+        self['$' + fnName] = btn;
+
+        return btn;
+    };
+
+
+    // 解析按钮
+    Overlay.prototype.parseButtons = function() {
+        var self = this,
+            opts = self.options,
+            buttons = opts.buttons,
+            key, fnName, className, text, i = 0,
+            $btn, group;
+
+        if( !self.buttonsGroup ) self.buttonsGroup = {};
+
+        for( key in buttons ) {
+            className = ~key.indexOf('.') ? key.split('.') : [ key ];
+            text = buttons[key];
+            fnName = className.splice(0, 1)[0];
+            group = fnName + 'FnGroup';
+            if( typeof self[ group ] === 'undefined' ) {
+                self[ group ] = [];
+            }
+
+            (function( fnName, group ) {
+                self[ fnName ] = function( fn ) {
+                    self[ group ].push(fn);
+
+                    return self;
+                }
+            })( fnName, group );
+
+            $btn = self.$footer.appendChild( self.buttonInit( className, fnName, text, i++ ) );
+            self.buttonsGroup[ fnName ] = $btn;
+        }
+    };
+
+
+
+    // 调用装载好的 content 内的方法
     Overlay.prototype.callContentHandler = function( e ) {
         var self = this,
             opts = self.options;
@@ -219,6 +332,7 @@
 
     };
 
+    // 连缀时使用的content方法，用来在 iframe或是内容加载成功后调用该方法
     Overlay.prototype.content = function( fn ) {
         var self = this,
             opts = self.options;
@@ -231,9 +345,65 @@
 
     };
 
+
     Overlay.prototype.parsePutTogether = function() {
         var self = this,
             opts = self.options;
+    };
+
+    // 事件初始化
+    Overlay.prototype.eventInit = function() {
+        var self = this,
+            opts = self.options,
+            btnGroup = self.buttonsGroup,
+            fnName, fnGroup,
+            $btn;
+
+        for( fnName in btnGroup ) {
+
+            fnGroup = fnName + 'FnGroup';
+            $btn = btnGroup[fnName];
+            $btn.fnGroup = self[fnGroup];
+            $btn.overlay = self;
+            $btn.addEventListener('click', self.callButtonHandler, false );
+
+        }
+
+
+        // 为容器添加一个动画监听事件
+        if( typeof self.containerTransitionEndHandler === 'undefined' ) {
+            self.containerTransitionEndHandler = function( e ) {
+                if( e.currenterTarget === self.$container ) {
+
+                }
+            };
+        }
+
+
+        self.$container.addEventListener('webkitTransitionEnd', self.containerTransitionEndHandler, false);
+        self.$container.addEventListener('transitionend', self.containerTransitionEndHandler, false);
+    };
+
+
+
+    // 调用装载好的自定义 button 内的方法
+    Overlay.prototype.callButtonHandler = function( e ) {
+
+        var fnGroup = this.fnGroup,
+            i = 0;
+
+        for( ; i < fnGroup.length; i++ ) {
+            fnGroup[ i ].call( this.overlay, e );
+        }
+
+    };
+
+
+    Overlay.prototype.close = function() {
+        var self = this,
+            opts = self.options;
+
+        self.$container.className += '';
     };
 
 

@@ -18,13 +18,14 @@
 
 .overlay-container {
     position: fixed;
+    /* display: none; */
 }
 
 
 
-.o {
+/* .o {
     z-index: 100000000;
-}
+} */
 
 
 
