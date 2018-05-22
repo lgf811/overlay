@@ -58,7 +58,29 @@
         sheets, rules,
         urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
         windowKey,
-        domPrototype;
+        domPrototype,
+        easy = {
+            addClass: function( cls ) {
+                var className = this.className;
+
+                className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
+
+                if( ~className.indexOf( cls ) ) return this;
+
+                className.push(cls);
+                this.className = className.join(' ');
+            },
+            removeClass: function() {
+                var className = this.className;
+
+                className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
+
+                if( !~className.indexOf( cls ) ) return this;
+
+                className.splice(className.indexOf( cls ), 1);
+                this.className = className.join(' ');
+            }
+        };
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
@@ -74,11 +96,7 @@
         }
     }
 
-    Node.prototype.addClass = function() {
-        var self = this;
 
-        
-    };
 
 
     function Overlay( options ) {
@@ -105,7 +123,8 @@
         content: null,
         el: null,
         urlPattern: urlPattern,
-        showClose: true
+        showClose: true,
+        defOpen: false
     };
 
     Overlay.prototype.init = function() {
@@ -157,7 +176,15 @@
             this.parseButtons();
         }
 
+        // 初始化事件
         self.eventInit();
+
+        // 如果是元素已经存在，则直接执行回调方法
+        if( el && opts.defOpen ) {
+            self.callContentHandler();
+        }
+
+
     };
 
     // 初始化遮罩
@@ -188,7 +215,7 @@
             $el.src = opts.content;
             loadedCallback = function( e ) {
                 opts.frameObj = window.frames[name];
-                self.callContentHandler( e );
+                if( opts.defOpen ) self.callContentHandler( e );
                 this.removeEventListener('load', loadedCallback);
             }
 
@@ -371,17 +398,33 @@
 
 
         // 为容器添加一个动画监听事件
-        if( typeof self.containerTransitionEndHandler === 'undefined' ) {
-            self.containerTransitionEndHandler = function( e ) {
+        if( typeof self.containerTransitionEndHandler === 'undefined' && !('containerTransitionEndHandler' in self) ) {
+            Overlay.prototype.containerTransitionEndHandler = function( e ) {
                 if( e.currenterTarget === self.$container ) {
 
                 }
             };
         }
 
+        // 监听窗口动画事件
+        if( 'ontransitionend' in window ) {
+            self.$container.addEventListener('webkitTransitionEnd', self.containerTransitionEndHandler, false);
+            self.$container.addEventListener('transitionend', self.containerTransitionEndHandler, false);
+        }
 
-        self.$container.addEventListener('webkitTransitionEnd', self.containerTransitionEndHandler, false);
-        self.$container.addEventListener('transitionend', self.containerTransitionEndHandler, false);
+        if( !('closeHandler' in self) ) {
+            Overlay.prototype.closeHandler = function() {
+                easy.addClass.call( self.$mask, 'close-mask' );
+                if( 'ontransitionend' in window ) {
+                    easy.addClass.call( self.$container, 'close-anim-container' );
+                } else {
+                    easy.addClass.call( self.$container, 'close-container' );
+                }
+            };
+        }
+
+        self.$close.addEventListener('click', self.closeHandler, false);
+
     };
 
 
@@ -403,7 +446,7 @@
         var self = this,
             opts = self.options;
 
-        self.$container.className += '';
+        easy.addClass.call( self.$container, 'close' );
     };
 
 
