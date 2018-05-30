@@ -24,14 +24,14 @@
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消'
                 }
-            }).enter(function() {
+            }).enter(function( e ) {
 
-                alert(123);
+                return {a: 123};
 
-            }).enter(function() {
-                console.log(321321);
-            }).cancel(function() {
-                alert(321);
+            }).cancel(function( e, obj ) {
+                console.log(obj);
+            }).content(function() {
+                console.log(321312);
             });
 
             // new Overlay({

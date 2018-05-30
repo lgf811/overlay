@@ -134,7 +134,11 @@
             el, content, $mask,
             $el, $container;
 
-        self.parsePutTogether();
+        // self.parsePutTogether();
+
+        if( !('handlers' in self) ) {
+            self.handlers = {};
+        }
 
         $mask = self.maskInit();
 
@@ -183,7 +187,6 @@
         if( el && opts.defOpen ) {
             self.callContentHandler();
         }
-
 
     };
 
@@ -324,14 +327,14 @@
             className = ~key.indexOf('.') ? key.split('.') : [ key ];
             text = buttons[key];
             fnName = className.splice(0, 1)[0];
-            group = fnName + 'FnGroup';
-            if( typeof self[ group ] === 'undefined' ) {
-                self[ group ] = [];
+
+            if( !(fnName in self.handlers) ) {
+                self.handlers[ fnName ] = [];
             }
 
-            (function( fnName, group ) {
+            (function( fnName ) {
                 self[ fnName ] = function( fn ) {
-                    self[ group ].push(fn);
+                    self.handlers[ fnName ].push(fn);
 
                     return self;
                 }
@@ -340,8 +343,9 @@
             $btn = self.$footer.appendChild( self.buttonInit( className, fnName, text, i++ ) );
             self.buttonsGroup[ fnName ] = $btn;
         }
-    };
 
+        return self;
+    };
 
 
     // 调用装载好的 content 内的方法
@@ -349,14 +353,13 @@
         var self = this,
             opts = self.options;
 
-        if( !self.contentFnGroup || !self.contentFnGroup.length ) return;
+        if( !self.handlers.content || !self.handlers.content.length ) return;
 
-        self.contentFnGroup.forEach(function( fn, i ) {
-
+        self.handlers.content.forEach(function( fn, i ) {
             fn.call( self, e );
-
         });
 
+        return self;
     };
 
     // 连缀时使用的content方法，用来在 iframe或是内容加载成功后调用该方法
@@ -364,19 +367,15 @@
         var self = this,
             opts = self.options;
 
-        if( typeof self.contentFnGroup === 'undefined' ) {
-            self.contentFnGroup = [];
+        if( !('content' in self.handlers) ) {
+            self.handlers.content = [];
         }
 
-        self.contentFnGroup.push(fn);
+        self.handlers.content.push(fn);
 
+        return self;
     };
 
-
-    Overlay.prototype.parsePutTogether = function() {
-        var self = this,
-            opts = self.options;
-    };
 
     // 事件初始化
     Overlay.prototype.eventInit = function() {
@@ -384,13 +383,28 @@
             opts = self.options,
             btnGroup = self.buttonsGroup,
             fnName, fnGroup,
-            $btn;
+            $btn, returnStorage;
+
+
+        if( !('callButtonHandler' in self) ) {
+            // 调用装载好的自定义 button 内的方法
+            Overlay.prototype.callButtonHandler = function( e ) {
+
+                var fnGroup = this.fnGroup,
+                    i = 0;
+
+
+                for( ; i < fnGroup.length; i++ ) {
+                    returnStorage = fnGroup[ i ].call( this.overlay, e, returnStorage ? returnStorage : undefined );
+                }
+            };
+        }
+
 
         for( fnName in btnGroup ) {
 
-            fnGroup = fnName + 'FnGroup';
             $btn = btnGroup[fnName];
-            $btn.fnGroup = self[fnGroup];
+            $btn.fnGroup = self.handlers[fnName];
             $btn.overlay = self;
             $btn.addEventListener('click', self.callButtonHandler, false );
 
@@ -425,20 +439,7 @@
 
         self.$close.addEventListener('click', self.closeHandler, false);
 
-    };
-
-
-
-    // 调用装载好的自定义 button 内的方法
-    Overlay.prototype.callButtonHandler = function( e ) {
-
-        var fnGroup = this.fnGroup,
-            i = 0;
-
-        for( ; i < fnGroup.length; i++ ) {
-            fnGroup[ i ].call( this.overlay, e );
-        }
-
+        return self;
     };
 
 
@@ -447,6 +448,8 @@
             opts = self.options;
 
         easy.addClass.call( self.$container, 'close' );
+
+        return self;
     };
 
 
