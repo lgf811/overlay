@@ -80,7 +80,7 @@
                 className.splice(className.indexOf( cls ), 1);
                 this.className = className.join(' ');
             }
-        };
+        }, returnStorage = {};
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
@@ -110,7 +110,6 @@
         self.options.width = 10000;
         self.options.zIndex = zIndex;
         self.options.serialNumber = serialNumber++;
-
         self.init();
 
         return self;
@@ -185,7 +184,7 @@
 
         // 如果是元素已经存在，则直接执行回调方法
         if( el && opts.defOpen ) {
-            self.callContentHandler();
+            self.callOnceHandler();
         }
 
     };
@@ -210,18 +209,18 @@
             $el, loadedCallback,
             name = 'overlay-frame-' + opts.serialNumber;
 
-        // 如果content 是链接，则装入iframe中
+        // 如果 content 是链接，则装入iframe中
         if( opts.content.match(opts.urlPattern)[0] ) {
             $el = document.createElement('iframe');
             $el.setAttribute('name', name);
             $el.setAttribute('id', name);
             $el.src = opts.content;
+
             loadedCallback = function( e ) {
                 opts.frameObj = window.frames[name];
-                if( opts.defOpen ) self.callContentHandler( e );
-                this.removeEventListener('load', loadedCallback);
+                if( opts.defOpen ) self.callOnceHandler( e );
+                $el.removeEventListener('load', loadedCallback);
             }
-
             $el.addEventListener('load', loadedCallback, false);
         } else {
             $el = document.createElement('div');
@@ -348,30 +347,32 @@
     };
 
 
-    // 调用装载好的 content 内的方法
-    Overlay.prototype.callContentHandler = function( e ) {
+    // 调用装载好的 once 内的方法
+    Overlay.prototype.callOnceHandler = function( e ) {
         var self = this,
-            opts = self.options;
+            opts = self.options,
+            sn = opts.serialNumber,
+            i = 0;
 
-        if( !self.handlers.content || !self.handlers.content.length ) return;
+        if( !self.handlers.once || !self.handlers.once.length ) return;
 
-        self.handlers.content.forEach(function( fn, i ) {
-            fn.call( self, e );
-        });
+        for( ; i < self.handlers.length;  i++ ) {
+            returnStorage[ sn ] = self.handlers[fn].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+        }
 
         return self;
     };
 
-    // 连缀时使用的content方法，用来在 iframe或是内容加载成功后调用该方法
-    Overlay.prototype.content = function( fn ) {
+    // 连缀时使用的once方法，用来在 iframe或是内容加载成功后调用该方法
+    Overlay.prototype.once = function( fn ) {
         var self = this,
             opts = self.options;
 
-        if( !('content' in self.handlers) ) {
-            self.handlers.content = [];
-        }
+        if( !('once' in self.handlers) ) self.handlers.once = [];
 
-        self.handlers.content.push(fn);
+        if( self.handlers.once.length === 1 ) return self;
+
+        self.handlers.once.push(fn);
 
         return self;
     };
@@ -383,7 +384,7 @@
             opts = self.options,
             btnGroup = self.buttonsGroup,
             fnName, fnGroup,
-            $btn, returnStorage;
+            $btn;
 
 
         if( !('callButtonHandler' in self) ) {
@@ -391,11 +392,11 @@
             Overlay.prototype.callButtonHandler = function( e ) {
 
                 var fnGroup = this.fnGroup,
+                    sn = this.overlay.options.serialNumber
                     i = 0;
 
-
                 for( ; i < fnGroup.length; i++ ) {
-                    returnStorage = fnGroup[ i ].call( this.overlay, e, returnStorage ? returnStorage : undefined );
+                    returnStorage[ sn ] = fnGroup[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
                 }
             };
         }
