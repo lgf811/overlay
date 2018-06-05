@@ -21,8 +21,30 @@
     typeof define === 'function' && define.amd ? define(factory) :
     window.Overlay = factory();
 })(this, function() {
-    var _slice = Array.prototype.slice,
-        extend = function() {
+
+    var _slice = Array.prototype.slice
+
+    if( typeof Function.prototype.bind === 'undefined' ) {
+        Function.prototype.bind = function( oThis ) {
+            if( typeof this !== 'function' ) {
+                throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+            }
+
+            var fToBind = this,
+                argus = _slice.call( arguments, 1 ),
+                fNOP = function() {},
+                fBound = function( e ) {
+                    return fToBind.apply( this instanceof fNOP && oThis ? this : oThis || window, [].concat( argus, e ) );
+                };
+
+            fNOP.prototype = fToBind.prototype;
+            fBound.prototype = new fNOP();
+
+            return fBound;
+        }
+    }
+
+    var extend = function() {
             var argus = _slice.call(arguments),
                 newFlag, baseObj, mergeObjGroup, mergeObj,
                 i1, i2;
@@ -61,7 +83,7 @@
         domPrototype,
         easy = {
             addClass: function( cls ) {
-                var className = this.className;
+                var clsName = this.className;
 
                 className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
 
@@ -71,7 +93,7 @@
                 this.className = className.join(' ');
             },
             removeClass: function() {
-                var className = this.className;
+                var clsName = this.className;
 
                 className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
 
@@ -79,6 +101,29 @@
 
                 className.splice(className.indexOf( cls ), 1);
                 this.className = className.join(' ');
+            },
+            hasClass: function( cls ) {
+                var clsName = this.className,
+                    parent = this.parentNode;
+
+                className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
+
+                return !!~className.indexOf(cls);
+            },
+            parents: function( cls ) {
+                var self = this,
+                    parent = self.parentNode;
+
+
+                while( !easy.hasClass.call( parent, cls ) ) {
+                    if(parent.parentNode) {
+                        parent = parent.parentNode
+                    } else {
+                        return null;
+                    }
+                }
+
+                return parent;
             }
         }, returnStorage = {};
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
@@ -356,9 +401,7 @@
 
         if( !self.handlers.once || !self.handlers.once.length ) return;
 
-        for( ; i < self.handlers.length;  i++ ) {
-            returnStorage[ sn ] = self.handlers[fn].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
-        }
+        returnStorage[ sn ] = self.handlers.once[0].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
 
         return self;
     };
@@ -378,6 +421,16 @@
     };
 
 
+    Overlay.prototype.callButtonHandler = function( e ) {
+
+        var self = this;
+
+        for( ; i < fnGroup.length; i++ ) {
+            returnStorage[ sn ] = fnGroup[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+        }
+    };
+    
+
     // 事件初始化
     Overlay.prototype.eventInit = function() {
         var self = this,
@@ -386,28 +439,15 @@
             fnName, fnGroup,
             $btn;
 
-
-        if( !('callButtonHandler' in self) ) {
-            // 调用装载好的自定义 button 内的方法
-            Overlay.prototype.callButtonHandler = function( e ) {
-
-                var fnGroup = this.fnGroup,
-                    sn = this.overlay.options.serialNumber
-                    i = 0;
-
-                for( ; i < fnGroup.length; i++ ) {
-                    returnStorage[ sn ] = fnGroup[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
-                }
-            };
-        }
-
-
         for( fnName in btnGroup ) {
 
             $btn = btnGroup[fnName];
             $btn.fnGroup = self.handlers[fnName];
+
             $btn.overlay = self;
-            $btn.addEventListener('click', self.callButtonHandler, false );
+
+            elemsBindEvent.call( self, $btn, self.handlers[fnName] );
+            // elemsBindEvent.call( self, $btn, self.handlers[fnName] );
 
         }
 
@@ -453,6 +493,33 @@
         return self;
     };
 
+    // 为元素绑定事件
+    function elemsBindEvent( $btn, handlers, eventName ) {
+        var self = this;
+
+        eventName = eventName ? eventName : 'click';
+
+        $btn.addEventListener(eventName, eventHandler.bind( self, handlers ), false );
+    }
+
+    // 为元素移除事件
+    function elemsUnbindEvent( $btn, eventName ) {
+        var self = this;
+
+        eventName = eventName ? eventName : 'click';
+
+        $btn.removeEventListener(eventName, eventHandler, false );
+    }
+
+    function eventHandler( handlers, e ) {
+        var self = this,
+            opts = self.options,
+            i;
+
+        for( ; i < handlers.length; i++ ) {
+            returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+        }
+    }
 
     return Overlay;
 
