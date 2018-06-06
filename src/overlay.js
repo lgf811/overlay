@@ -124,11 +124,27 @@
                 }
 
                 return parent;
+            },
+            trigger: function( eventName ) {
+
+                var e;
+
+                if( document.createEvent ) {
+
+                    e = document.createEvent('HTMLEvents');
+                    e.initEvent(eventName, false, true);
+                    document.dispatchEvent(e);
+
+                } else if( document.createEventObject ) {
+                    e = document.createEventObject();
+                    this.fireEvent('on' + eventName, e);
+                } else if( typeof this['on' + eventName] === 'function' ) {
+                    this['on' + eventName]();
+                }
             }
         }, returnStorage = {},
         defaultCallbackHandlerName = [ 'once', 'ready' ],
-        dchni = 0,
-        handlerName;
+        dchni = 0;
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
@@ -187,6 +203,9 @@
             self.handlers = {};
         }
 
+        if( !self.ready ) self.defaultCallbackInit();
+
+
         $mask = self.maskInit();
 
         el = opts.el;
@@ -232,10 +251,40 @@
 
         // 如果是元素已经存在，则直接执行回调方法
         if( el && opts.defOpen ) {
-            self.callOnceHandler();
+
+            elemsBindEvent.call( self, $el, 'ready', 'load', function() {
+                elemsUnbindEvent.call( self, $el, 'load' );
+            } );
+
+
+            // self.callOnceHandler();
         }
 
     };
+
+    // 初始化内置回调方法
+    Overlay.prototype.defaultCallbackInit = function() {
+        var self = this;
+
+        // 将默认的回调方法输出
+        for( dchni = 0; dchni < defaultCallbackHandlerName.length; dchni++ ) {
+            (function( hn ) {
+                self[hn] = function( fn ) {
+
+                    var self = this,
+                        opts = self.options;
+
+                    if( !(hn in self.handlers) ) self.handlers[hn] = [];
+
+                    if( hn === 'once' && self.handlers[hn].length === 1 ) return self;
+                    self.handlers[hn].push(fn);
+
+                    return self;
+                };
+            })( defaultCallbackHandlerName[dchni] );
+
+        }
+    }
 
     // 初始化遮罩
     Overlay.prototype.maskInit = function() {
@@ -264,17 +313,10 @@
             $el.setAttribute('id', name);
             $el.src = opts.content;
 
-            // console.log(self.handlers.ready)
-            elemsBindEvent.call( self, $el, self.handlers.ready, 'load', function() {
+            elemsBindEvent.call( self, $el, 'ready', 'load', function() {
                 elemsUnbindEvent.call( self, $el, 'load' );
             } );
 
-            // loadedCallback = function( e ) {
-            //     opts.frameObj = window.frames[name];
-            //     if( opts.defOpen ) self.callOnceHandler( e );
-            //     $el.removeEventListener('load', loadedCallback);
-            // }
-            // $el.addEventListener('load', loadedCallback, false);
         } else {
             $el = document.createElement('div');
             $el.appendChild(document.createTextNode(opts.content));
@@ -409,23 +451,6 @@
         return self;
     };
 
-
-    // 将默认的回调方法输出
-    for( dchni = 0; dchni < defaultCallbackHandlerName.length; dchni++ ) {
-        handlerName = defaultCallbackHandlerName[dchni];
-        Overlay.prototype[handlerName] = function( fn ) {
-            var self = this,
-                opts = self.options;
-
-            if( !(handlerName in self.handlers) ) self.handlers[handlerName] = [];
-
-            if( handlerName === 'once' && self.handlers[handlerName].length === 1 ) return self;
-            self.handlers[handlerName].push(fn);
-            return self;
-        };
-
-    }
-
     // 连缀时使用的once方法，用来在 iframe或是内容加载成功后调用该方法
     Overlay.prototype.once = function( fn ) {
         var self = this,
@@ -449,7 +474,7 @@
         // 为
         for( fnName in btnGroup ) {
             $btn = btnGroup[fnName];
-            elemsBindEvent.call( self, $btn, self.handlers[fnName] );
+            elemsBindEvent.call( self, $btn, fnName );
         }
 
 
@@ -503,7 +528,7 @@
 
 
     // 为元素绑定事件
-    function elemsBindEvent( $elem, handlers, eventName, callback ) {
+    function elemsBindEvent( $elem, handlerName, eventName, callback ) {
         var self = this;
         if( typeof eventName === 'function' ) {
             removeHandler = eventName;
@@ -511,7 +536,9 @@
         }
         if( eventName === undefined ) eventName = 'click';
 
-        $elem.addEventListener(eventName, eventHandler.bind( self, handlers, callback ), false );
+        $elem.addEventListener(eventName, eventHandler.bind( self, handlerName, callback ), false );
+
+        return self;
     }
 
     // 为元素移除事件
@@ -520,18 +547,24 @@
 
         eventName = eventName ? eventName : 'click';
         $elem.removeEventListener(eventName, eventHandler, false );
+
+        return self;
     }
 
-    function eventHandler( handlers, callback, e ) {
+    function eventHandler( handlerName, callback, e ) {
         var self = this,
             opts = self.options,
             sn = opts.serialNumber,
-            i;
+            i = 0,
+            handlers = self.handlers[ handlerName ];
 
         for( ; i < handlers.length; i++ ) {
             returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
         }
+
         callback && callback();
+
+        return self;
     }
 
     return Overlay;
