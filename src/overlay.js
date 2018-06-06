@@ -125,7 +125,10 @@
 
                 return parent;
             }
-        }, returnStorage = {};
+        }, returnStorage = {},
+        defaultCallbackHandlerName = [ 'once', 'ready' ],
+        dchni = 0,
+        handlerName;
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
@@ -261,12 +264,17 @@
             $el.setAttribute('id', name);
             $el.src = opts.content;
 
-            loadedCallback = function( e ) {
-                opts.frameObj = window.frames[name];
-                if( opts.defOpen ) self.callOnceHandler( e );
-                $el.removeEventListener('load', loadedCallback);
-            }
-            $el.addEventListener('load', loadedCallback, false);
+            // console.log(self.handlers.ready)
+            elemsBindEvent.call( self, $el, self.handlers.ready, 'load', function() {
+                elemsUnbindEvent.call( self, $el, 'load' );
+            } );
+
+            // loadedCallback = function( e ) {
+            //     opts.frameObj = window.frames[name];
+            //     if( opts.defOpen ) self.callOnceHandler( e );
+            //     $el.removeEventListener('load', loadedCallback);
+            // }
+            // $el.addEventListener('load', loadedCallback, false);
         } else {
             $el = document.createElement('div');
             $el.appendChild(document.createTextNode(opts.content));
@@ -391,20 +399,32 @@
         return self;
     };
 
-
     // 调用装载好的 once 内的方法
     Overlay.prototype.callOnceHandler = function( e ) {
         var self = this,
             opts = self.options,
-            sn = opts.serialNumber,
-            i = 0;
-
-        if( !self.handlers.once || !self.handlers.once.length ) return;
+            sn = opts.serialNumber;
 
         returnStorage[ sn ] = self.handlers.once[0].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
-
         return self;
     };
+
+
+    // 将默认的回调方法输出
+    for( dchni = 0; dchni < defaultCallbackHandlerName.length; dchni++ ) {
+        handlerName = defaultCallbackHandlerName[dchni];
+        Overlay.prototype[handlerName] = function( fn ) {
+            var self = this,
+                opts = self.options;
+
+            if( !(handlerName in self.handlers) ) self.handlers[handlerName] = [];
+
+            if( handlerName === 'once' && self.handlers[handlerName].length === 1 ) return self;
+            self.handlers[handlerName].push(fn);
+            return self;
+        };
+
+    }
 
     // 连缀时使用的once方法，用来在 iframe或是内容加载成功后调用该方法
     Overlay.prototype.once = function( fn ) {
@@ -412,24 +432,11 @@
             opts = self.options;
 
         if( !('once' in self.handlers) ) self.handlers.once = [];
-
         if( self.handlers.once.length === 1 ) return self;
-
         self.handlers.once.push(fn);
-
         return self;
     };
 
-
-    Overlay.prototype.callButtonHandler = function( e ) {
-
-        var self = this;
-
-        for( ; i < fnGroup.length; i++ ) {
-            returnStorage[ sn ] = fnGroup[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
-        }
-    };
-    
 
     // 事件初始化
     Overlay.prototype.eventInit = function() {
@@ -439,16 +446,10 @@
             fnName, fnGroup,
             $btn;
 
+        // 为
         for( fnName in btnGroup ) {
-
             $btn = btnGroup[fnName];
-            $btn.fnGroup = self.handlers[fnName];
-
-            $btn.overlay = self;
-
             elemsBindEvent.call( self, $btn, self.handlers[fnName] );
-            // elemsBindEvent.call( self, $btn, self.handlers[fnName] );
-
         }
 
 
@@ -493,32 +494,44 @@
         return self;
     };
 
+
+
+
+
+
+
+
+
     // 为元素绑定事件
-    function elemsBindEvent( $btn, handlers, eventName ) {
+    function elemsBindEvent( $elem, handlers, eventName, callback ) {
         var self = this;
+        if( typeof eventName === 'function' ) {
+            removeHandler = eventName;
+            eventName = 'click';
+        }
+        if( eventName === undefined ) eventName = 'click';
 
-        eventName = eventName ? eventName : 'click';
-
-        $btn.addEventListener(eventName, eventHandler.bind( self, handlers ), false );
+        $elem.addEventListener(eventName, eventHandler.bind( self, handlers, callback ), false );
     }
 
     // 为元素移除事件
-    function elemsUnbindEvent( $btn, eventName ) {
+    function elemsUnbindEvent( $elem, eventName ) {
         var self = this;
 
         eventName = eventName ? eventName : 'click';
-
-        $btn.removeEventListener(eventName, eventHandler, false );
+        $elem.removeEventListener(eventName, eventHandler, false );
     }
 
-    function eventHandler( handlers, e ) {
+    function eventHandler( handlers, callback, e ) {
         var self = this,
             opts = self.options,
+            sn = opts.serialNumber,
             i;
 
         for( ; i < handlers.length; i++ ) {
             returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
         }
+        callback && callback();
     }
 
     return Overlay;
