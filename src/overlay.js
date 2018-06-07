@@ -494,8 +494,12 @@
 
         // 监听窗口动画事件
         if( 'ontransitionend' in window ) {
-            self.$container.addEventListener('webkitTransitionEnd', self.containerTransitionEndHandler, false);
-            self.$container.addEventListener('transitionend', self.containerTransitionEndHandler, false);
+            self.$container.addEventListener('webkitTransitionEnd', transitionendHandler, false);
+            self.$container.addEventListener('transitionend', transitionendHandler, false);
+        }
+
+        function transitionendHandler() {
+            alert(123)
         }
 
         if( !('closeHandler' in self) ) {
@@ -520,8 +524,11 @@
         var self = this,
             opts = self.options;
 
-        easy.addClass.call( self.$container, 'open opening' );
-
+        easy.addClass.call( self.$mask, 'open');
+        easy.addClass.call( self.$container, 'open');
+        setTimeout(function() {
+            easy.addClass.call( self.$container, 'opening');
+        });
         return self;
     };
 
