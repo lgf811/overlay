@@ -83,32 +83,32 @@
         domPrototype,
         easy = {
             addClass: function( cls ) {
-                var clsName = this.className;
+                var clsn = this.className;
 
-                className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
+                clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                if( ~className.indexOf( cls ) ) return this;
+                if( ~clsn.indexOf( cls ) ) return this;
 
-                className.push(cls);
-                this.className = className.join(' ');
+                clsn.push(cls);
+                this.className = clsn.join(' ');
             },
             removeClass: function() {
-                var clsName = this.className;
+                var clsn = this.className;
 
-                className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
+                clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                if( !~className.indexOf( cls ) ) return this;
+                if( !~clsn.indexOf( cls ) ) return this;
 
-                className.splice(className.indexOf( cls ), 1);
-                this.className = className.join(' ');
+                clsn.splice(clsn.indexOf( cls ), 1);
+                this.className = clsn.join(' ');
             },
             hasClass: function( cls ) {
-                var clsName = this.className,
+                var clsn = this.className,
                     parent = this.parentNode;
 
-                className = ~className.indexOf(' ') ? className.split(' ') : [ className ];
+                clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                return !!~className.indexOf(cls);
+                return !!~clsn.indexOf(cls);
             },
             parents: function( cls ) {
                 var self = this,
@@ -142,7 +142,8 @@
                     this['on' + eventName]();
                 }
             }
-        }, returnStorage = {},
+        },
+        returnStorage = {},
         defaultCallbackHandlerName = [ 'once', 'ready' ],
         dchni = 0;
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
@@ -250,34 +251,38 @@
         self.eventInit();
 
         // 如果是元素已经存在，则直接执行回调方法
-        if( el && opts.defOpen ) {
-
-            elemsBindEvent.call( self, $el, 'ready', 'load', function() {
-                elemsUnbindEvent.call( self, $el, 'load' );
-            } );
-
-
-            // self.callOnceHandler();
-        }
+        // if( el && opts.defOpen ) {
+        //     self.callReadyHandler();
+        // }
 
     };
 
     // 初始化内置回调方法
     Overlay.prototype.defaultCallbackInit = function() {
-        var self = this;
+        var self = this,
+            sn = self.options.serialNumber;
 
         // 将默认的回调方法输出
         for( dchni = 0; dchni < defaultCallbackHandlerName.length; dchni++ ) {
             (function( hn ) {
+                if( hn in self ) return;
+
                 self[hn] = function( fn ) {
 
                     var self = this,
                         opts = self.options;
 
-                    if( !(hn in self.handlers) ) self.handlers[hn] = [];
+                    if( !(hn in self.handlers) ) self.handlers[ hn ] = [];
 
-                    if( hn === 'once' && self.handlers[hn].length === 1 ) return self;
-                    self.handlers[hn].push(fn);
+                    // once 在打开界面后，执行一次即可
+                    if( hn === 'once' && self.handlers[ hn ].length === 1 ) return self;
+
+                    self.handlers[ hn ].push(fn);
+
+                    // 如果是静态元素，并且执行方法是ready的话，直接调用函数即可实现ready方法
+                    if( self.options.el && hn === 'ready' ) {
+                        mouseEventHandler.call( self, 'ready', null, null, self.handlers[ hn ].length - 1 );
+                    }
 
                     return self;
                 };
@@ -442,14 +447,14 @@
     };
 
     // 调用装载好的 once 内的方法
-    Overlay.prototype.callOnceHandler = function( e ) {
-        var self = this,
-            opts = self.options,
-            sn = opts.serialNumber;
-
-        returnStorage[ sn ] = self.handlers.once[0].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
-        return self;
-    };
+    // Overlay.prototype.callReadyHandler = function( e ) {
+    //     var self = this,
+    //         opts = self.options,
+    //         sn = opts.serialNumber;
+    //
+    //     returnStorage[ sn ] = self.handlers.ready[0].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+    //     return self;
+    // };
 
     // 连缀时使用的once方法，用来在 iframe或是内容加载成功后调用该方法
     Overlay.prototype.once = function( fn ) {
@@ -482,7 +487,7 @@
         if( typeof self.containerTransitionEndHandler === 'undefined' && !('containerTransitionEndHandler' in self) ) {
             Overlay.prototype.containerTransitionEndHandler = function( e ) {
                 if( e.currenterTarget === self.$container ) {
-
+                    console.log(123)
                 }
             };
         }
@@ -510,6 +515,17 @@
     };
 
 
+    // 打开窗口方法
+    Overlay.prototype.open = function() {
+        var self = this,
+            opts = self.options;
+
+        easy.addClass.call( self.$container, 'open opening' );
+
+        return self;
+    };
+
+    // 打开窗口方法
     Overlay.prototype.close = function() {
         var self = this,
             opts = self.options;
@@ -531,13 +547,11 @@
     function elemsBindEvent( $elem, handlerName, eventName, callback ) {
         var self = this;
         if( typeof eventName === 'function' ) {
-            removeHandler = eventName;
+            callback = eventName;
             eventName = 'click';
         }
         if( eventName === undefined ) eventName = 'click';
-
-        $elem.addEventListener(eventName, eventHandler.bind( self, handlerName, callback ), false );
-
+        $elem.addEventListener(eventName, mouseEventHandler.bind( self, handlerName, callback ), false );
         return self;
     }
 
@@ -546,26 +560,36 @@
         var self = this;
 
         eventName = eventName ? eventName : 'click';
-        $elem.removeEventListener(eventName, eventHandler, false );
+        $elem.removeEventListener(eventName, mouseEventHandler, false );
 
         return self;
     }
 
-    function eventHandler( handlerName, callback, e ) {
+    // 所有调用方法的回调，全部在这里被执行
+    function mouseEventHandler( handlerName, callback, e, i ) {
         var self = this,
             opts = self.options,
             sn = opts.serialNumber,
-            i = 0,
-            handlers = self.handlers[ handlerName ];
+            handlers = self.handlers[ handlerName ],
+            onceFlag;
+
+        if( i === undefined ) {
+            i = 0;
+        } else {
+            onceFlag = true;
+        }
 
         for( ; i < handlers.length; i++ ) {
             returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+            if( onceFlag ) break;
         }
 
         callback && callback();
 
         return self;
     }
+
+
 
     return Overlay;
 
