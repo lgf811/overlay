@@ -486,16 +486,6 @@
             elemsBindEvent.call( self, $btn, fnName );
         }
 
-
-        // 为容器添加一个动画监听事件
-        if( typeof self.containerTransitionEndHandler === 'undefined' && !('containerTransitionEndHandler' in self) ) {
-            Overlay.prototype.containerTransitionEndHandler = function( e ) {
-                if( e.currenterTarget === self.eles.container ) {
-                    console.log(123);
-                }
-            };
-        }
-
         // 监听窗口动画事件
         if( 'ontransitionend' in window ) {
             self.eles.container.addEventListener('webkitTransitionEnd', transitionendHandler, false);
@@ -526,6 +516,9 @@
 
         easy.addClass.call( self.eles.mask, 'open');
         easy.addClass.call( self.eles.container, 'open');
+
+        setOffset.call( self );
+
         setTimeout(function() {
             easy.addClass.call( self.eles.container, 'opening');
         });
@@ -599,8 +592,36 @@
         return self;
     }
 
-    // 支持css的，全部在这里被执行
+    // 支持css延时动画的，全部在这里被执行
     function transitionendHandler() {
+
+    }
+
+    // 设置弹出框位置
+    function setOffset() {
+        var self = this,
+            opts = self.options,
+            position = self.position,
+            offset = window.documentElement.getBoundingClientRect(),
+            cssText,
+            container = self.eles.container,
+            cStyle = container.style,
+            num;
+
+        if( opts.width ) cStyle.width = correctNumber(opts.width);
+        if( opts.height ) cStyle.height = correctNumber(opts.height);
+
+        
+
+    }
+
+    function correctNumber( num ) {
+        var _num,
+            hasUnitPattern = /\d+(\%|px)$/g,
+            numPattern = /^\d+$/g;
+
+        return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + 'px' ) :
+                hasUnitPattern.test(num) ? num : 'auto';
 
     }
 
