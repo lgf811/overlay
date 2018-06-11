@@ -597,12 +597,40 @@
 
     }
 
+<<<<<<< HEAD
     //
     function setOffset() {
         var self = this,
             position = self.position,
             offset = window.documentElement.getBoundingClientRect();
 
+=======
+    // 设置弹出框位置
+    function setOffset() {
+        var self = this,
+            opts = self.options,
+            position = self.position,
+            offset = window.documentElement.getBoundingClientRect(),
+            cssText,
+            container = self.eles.container,
+            cStyle = container.style,
+            num;
+
+        if( opts.width ) cStyle.width = correctNumber(opts.width);
+        if( opts.height ) cStyle.height = correctNumber(opts.height);
+
+        
+
+    }
+
+    function correctNumber( num ) {
+        var _num,
+            hasUnitPattern = /\d+(\%|px)$/g,
+            numPattern = /^\d+$/g;
+
+        return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + 'px' ) :
+                hasUnitPattern.test(num) ? num : 'auto';
+>>>>>>> d87228a70b3d7a7a1ee98a9d4c0b6654633c4403
 
     }
 
