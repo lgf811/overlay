@@ -192,13 +192,12 @@
     };
 
     Overlay.prototype.init = function() {
+        if( this.eles ) return this;
 
         var self = this,
             opts = self.options,
             el, content, $mask,
             $el, $container;
-
-        // self.parsePutTogether();
 
         if( !('handlers' in self) ) {
             self.handlers = {};
@@ -206,6 +205,9 @@
 
         if( !self.ready ) self.defaultCallbackInit();
 
+        if( !('eles' in self) ) {
+            self.eles = {};
+        }
 
         $mask = self.maskInit();
 
@@ -214,13 +216,13 @@
 
         if( el ) {
             // 找到核心元素 并将遮罩层插入到dom节点中
-            self.$el = $el = document.querySelector(el);
+            self.eles.el = $el = document.querySelector(el);
             $el.parentNode.insertBefore( $mask, $el );
 
         } else if( content ) {
             document.body.appendChild($mask);
             // 如果没有指定dom 则使用渲染内容的形式
-            self.$el = $el = self.elInit();
+            self.eles.el = $el = self.elInit();
         }
 
         // 将实例绑到dom对象上，方便查找调用
@@ -228,6 +230,7 @@
 
         // 创建包含元素，将核心元素放到包含元素内
         $container = self.containerInit();
+
         $el.parentNode.insertBefore( $container, $el );
         $container.appendChild( self.headerInit() );
         $container.appendChild( self.bodyInit() );
@@ -235,12 +238,12 @@
 
         // 根据配置，操作 header内的元素
         if( opts.title ) {
-            self.$title.innerText = opts.title;
+            self.eles.title.innerText = opts.title;
         } else {
-            self.$header.style.display = 'none';
+            self.eles.header.style.display = 'none';
         }
 
-        if( !opts.showClose ) self.$close.style.display = 'none';
+        if( !opts.showClose ) self.eles.close.style.display = 'none';
 
         // 根据配置，操作footer内的元素
         if( opts.buttons && typeof opts.buttons === 'object' ) {
@@ -250,17 +253,17 @@
         // 初始化事件
         self.eventInit();
 
-        // 如果是元素已经存在，则直接执行回调方法
-        // if( el && opts.defOpen ) {
-        //     self.callReadyHandler();
-        // }
+        // 如果默认初始化就打开，则执行open方法
+        if( opts.defOpen ) self.open();
 
     };
 
     // 初始化内置回调方法
     Overlay.prototype.defaultCallbackInit = function() {
         var self = this,
-            sn = self.options.serialNumber;
+            opts = self.options,
+            sn = self.options.serialNumber,
+            hasUrl = opts.urlPattern.test(opts.content);
 
         // 将默认的回调方法输出
         for( dchni = 0; dchni < defaultCallbackHandlerName.length; dchni++ ) {
@@ -279,9 +282,9 @@
 
                     self.handlers[ hn ].push(fn);
 
-                    // 如果是静态元素，并且执行方法是ready的话，直接调用函数即可实现ready方法
-                    if( self.options.el && hn === 'ready' ) {
-                        mouseEventHandler.call( self, 'ready', null, null, self.handlers[ hn ].length - 1 );
+                    // 如果是静态元素或是普通自符串，并且执行方法是ready的话，直接调用函数即可实现ready方法
+                    if( ( self.options.el || !hasUrl ) && hn === 'ready' ) {
+                        eventHandler.call( self, 'ready', null, null, self.handlers[ hn ].length - 1 );
                     }
 
                     return self;
@@ -298,7 +301,7 @@
             $mask;
 
         $mask = document.createElement('div');
-        self.$mask = $mask;
+        self.eles.mask = $mask;
         $mask.classList.add('overlay-mask');
 
         return $mask;
@@ -309,10 +312,11 @@
         var self = this,
             opts = self.options,
             $el, loadedCallback,
-            name = 'overlay-frame-' + opts.serialNumber;
+            name = 'overlay-frame-' + opts.serialNumber,
+            hasUrl = opts.content.match(opts.urlPattern);
 
         // 如果 content 是链接，则装入iframe中
-        if( opts.content.match(opts.urlPattern)[0] ) {
+        if( hasUrl && hasUrl.length && hasUrl[0] ) {
             $el = document.createElement('iframe');
             $el.setAttribute('name', name);
             $el.setAttribute('id', name);
@@ -324,10 +328,10 @@
 
         } else {
             $el = document.createElement('div');
+            $el.className += 'overlay-custom-wrapper';
             $el.appendChild(document.createTextNode(opts.content));
         }
 
-        $el.className += 'overlay-custom-wrapper';
         document.body.appendChild($el);
 
         return $el;
@@ -339,7 +343,7 @@
             opts = self.options,
             $container = document.createElement('div');
 
-        self.$container = $container;
+        self.eles.container = $container;
         $container.className += 'overlay-container';
 
         return $container;
@@ -353,13 +357,13 @@
             $title = document.createElement('span'),
             $close = document.createElement('a');
 
-        self.$header = $header;
+        self.eles.header = $header;
         $header.className += 'overlay-header';
 
-        self.$title = $title;
+        self.eles.title = $title;
         $title.className += 'overlay-title';
 
-        self.$close = $close;
+        self.eles.close = $close;
         $close.className += 'overlay-close-btn';
         $close.innerText = '关闭';
 
@@ -375,10 +379,10 @@
             opts = self.options,
             $body = document.createElement('div');
 
-        self.$body = $body;
+        self.eles.body = $body;
         $body.className += 'overlay-body';
 
-        $body.appendChild( self.$el );
+        $body.appendChild( self.eles.el );
 
         return $body;
     };
@@ -390,7 +394,7 @@
             $footer = document.createElement('div'),
             $title = document.createElement('div');
 
-        self.$footer = $footer;
+        self.eles.footer = $footer;
         $footer.className += 'overlay-footer';
 
         return $footer;
@@ -406,7 +410,7 @@
         btn.className += 'overlay-btn overlay-btn-' + i;
         btn.className += className ? (' ' + className.join(' ')) : '';
 
-        self['$' + fnName] = btn;
+        self.eles[fnName] = btn;
 
         return btn;
     };
@@ -439,7 +443,7 @@
                 }
             })( fnName, group );
 
-            $btn = self.$footer.appendChild( self.buttonInit( className, fnName, text, i++ ) );
+            $btn = self.eles.footer.appendChild( self.buttonInit( className, fnName, text, i++ ) );
             self.buttonsGroup[ fnName ] = $btn;
         }
 
@@ -482,34 +486,24 @@
             elemsBindEvent.call( self, $btn, fnName );
         }
 
-
-        // 为容器添加一个动画监听事件
-        if( typeof self.containerTransitionEndHandler === 'undefined' && !('containerTransitionEndHandler' in self) ) {
-            Overlay.prototype.containerTransitionEndHandler = function( e ) {
-                if( e.currenterTarget === self.$container ) {
-                    console.log(123)
-                }
-            };
-        }
-
         // 监听窗口动画事件
         if( 'ontransitionend' in window ) {
-            self.$container.addEventListener('webkitTransitionEnd', self.containerTransitionEndHandler, false);
-            self.$container.addEventListener('transitionend', self.containerTransitionEndHandler, false);
+            self.eles.container.addEventListener('webkitTransitionEnd', transitionendHandler, false);
+            self.eles.container.addEventListener('transitionend', transitionendHandler, false);
         }
 
         if( !('closeHandler' in self) ) {
             Overlay.prototype.closeHandler = function() {
-                easy.addClass.call( self.$mask, 'close-mask' );
+                easy.addClass.call( self.eles.mask, 'close-mask' );
                 if( 'ontransitionend' in window ) {
-                    easy.addClass.call( self.$container, 'close-anim-container' );
+                    easy.addClass.call( self.eles.container, 'close-anim-container' );
                 } else {
-                    easy.addClass.call( self.$container, 'close-container' );
+                    easy.addClass.call( self.eles.container, 'close-container' );
                 }
             };
         }
 
-        self.$close.addEventListener('click', self.closeHandler, false);
+        self.eles.close.addEventListener('click', self.closeHandler, false);
 
         return self;
     };
@@ -520,8 +514,14 @@
         var self = this,
             opts = self.options;
 
-        easy.addClass.call( self.$container, 'open opening' );
+        easy.addClass.call( self.eles.mask, 'open');
+        easy.addClass.call( self.eles.container, 'open');
 
+        setOffset.call( self );
+
+        setTimeout(function() {
+            easy.addClass.call( self.eles.container, 'opening');
+        });
         return self;
     };
 
@@ -530,7 +530,7 @@
         var self = this,
             opts = self.options;
 
-        easy.addClass.call( self.$container, 'close' );
+        easy.addClass.call( self.eles.container, 'close' );
 
         return self;
     };
@@ -551,7 +551,7 @@
             eventName = 'click';
         }
         if( eventName === undefined ) eventName = 'click';
-        $elem.addEventListener(eventName, mouseEventHandler.bind( self, handlerName, callback ), false );
+        $elem.addEventListener(eventName, eventHandler.bind( self, handlerName, callback ), false );
         return self;
     }
 
@@ -560,13 +560,13 @@
         var self = this;
 
         eventName = eventName ? eventName : 'click';
-        $elem.removeEventListener(eventName, mouseEventHandler, false );
+        $elem.removeEventListener(eventName, eventHandler, false );
 
         return self;
     }
 
     // 所有调用方法的回调，全部在这里被执行
-    function mouseEventHandler( handlerName, callback, e, i ) {
+    function eventHandler( handlerName, callback, e, i ) {
         var self = this,
             opts = self.options,
             sn = opts.serialNumber,
@@ -579,17 +579,32 @@
             onceFlag = true;
         }
 
+
+        // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
             returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
             if( onceFlag ) break;
         }
 
+        // 执行回
         callback && callback();
 
         return self;
     }
 
+    // 支持css延时动画的，全部在这里被执行
+    function transitionendHandler() {
 
+    }
+
+    //
+    function setOffset() {
+        var self = this,
+            position = self.position,
+            offset = window.documentElement.getBoundingClientRect();
+
+
+    }
 
     return Overlay;
 

@@ -25,16 +25,14 @@
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消'
                 }
-            }).enter(function( e ) {
-
+            }).enter(function( e, obj ) {
+                console.log( obj );
 
             }).cancel(function( e, obj ) {
                 console.log(obj);
             }).ready(function() {
-                console.log(321);
                 return {a: 123}
             }).ready(function( e, obj ) {
-                console.log(123123);
                 obj.b = 321;
                 return obj;
             });
