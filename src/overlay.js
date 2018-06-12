@@ -145,7 +145,18 @@
         },
         returnStorage = {},
         defaultCallbackHandlerName = [ 'once', 'ready' ],
-        dchni = 0;
+        dchni = 0,
+        anim = {
+            fade: {
+                in: 'fadeIn',
+                out: 'fadeOut'
+            },
+            slide: {
+                in: 'slideIn',
+                out: 'slideOut'
+            },
+            
+        };
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
@@ -188,7 +199,8 @@
         el: null,
         urlPattern: urlPattern,
         showClose: true,
-        defOpen: false
+        defOpen: false,
+        anim: 'fade'
     };
 
     Overlay.prototype.init = function() {
@@ -487,9 +499,9 @@
         }
 
         // 监听窗口动画事件
-        if( 'ontransitionend' in window ) {
-            self.eles.container.addEventListener('webkitTransitionEnd', transitionendHandler, false);
-            self.eles.container.addEventListener('transitionend', transitionendHandler, false);
+        if( 'onanimationend' in window ) {
+            self.eles.container.addEventListener('webkitAnimationEnd', animationEndHandler, false);
+            self.eles.container.addEventListener('animationend', animationEndHandler, false);
         }
 
         if( !('closeHandler' in self) ) {
@@ -522,7 +534,7 @@
         }
 
         setTimeout(function() {
-            easy.addClass.call( self.eles.container, 'opening');
+            easy.addClass.call( self.eles.container, );
         });
         return self;
     };
@@ -595,7 +607,7 @@
     }
 
     // 支持css延时动画的，全部在这里被执行
-    function transitionendHandler() {
+    function animationEndHandler() {
 
     }
 
@@ -615,7 +627,33 @@
 
         cStyle.zIndex = opts.zIndex;
 
-        
+        // 判断是否是提示组件
+        if( opts.isTips ) {
+
+        } else {
+            if( opts.position === 'center' ) {
+
+
+
+            } else if( opts.position === 'top' ) {
+
+
+
+            } else if( opts.position === 'right' ) {
+
+
+
+            } else if( opts.position === 'bottom' ) {
+
+
+
+            } else if( opts.position === 'left' ) {
+
+
+
+            }
+        }
+
 
 
 
