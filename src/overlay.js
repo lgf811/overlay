@@ -172,7 +172,7 @@
 
         if( !defOpts.el && !defOpts.content ) return;
 
-        self.options.width = 10000;
+        // self.options.width = 10000;
         self.options.zIndex = zIndex;
         self.options.serialNumber = serialNumber++;
         self.init();
@@ -517,7 +517,9 @@
         easy.addClass.call( self.eles.mask, 'open');
         easy.addClass.call( self.eles.container, 'open');
 
-        setOffset.call( self );
+        if( !self.eles.container.getAttribute('style') ) {
+            setOffset.call( self );
+        }
 
         setTimeout(function() {
             easy.addClass.call( self.eles.container, 'opening');
@@ -597,40 +599,40 @@
 
     }
 
-<<<<<<< HEAD
-    //
-    function setOffset() {
-        var self = this,
-            position = self.position,
-            offset = window.documentElement.getBoundingClientRect();
-
-=======
     // 设置弹出框位置
     function setOffset() {
         var self = this,
             opts = self.options,
             position = self.position,
-            offset = window.documentElement.getBoundingClientRect(),
-            cssText,
             container = self.eles.container,
             cStyle = container.style,
-            num;
+            windowWidth = document.documentElement.clientWidth,
+            windowHeight = document.documentElement.clientHeight,
+            cRect;
 
-        if( opts.width ) cStyle.width = correctNumber(opts.width);
-        if( opts.height ) cStyle.height = correctNumber(opts.height);
+        if( opts.width ) cStyle.width = correctValue(opts.width);
+        if( opts.height ) cStyle.height = correctValue(opts.height);
+
+        cStyle.zIndex = opts.zIndex;
 
         
 
+
+
+        // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
+        cRect = container.getBoundingClientRect();
+        if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth);
+        if( cRect.height > windowHeight ) cStyle.width = correctValue(windowWidth);
+
     }
 
-    function correctNumber( num ) {
+    function correctValue( num ) {
         var _num,
             hasUnitPattern = /\d+(\%|px)$/g,
             numPattern = /^\d+$/g;
 
         return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + 'px' ) :
                 hasUnitPattern.test(num) ? num : 'auto';
->>>>>>> d87228a70b3d7a7a1ee98a9d4c0b6654633c4403
 
     }
 
