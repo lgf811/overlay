@@ -1,28 +1,30 @@
+
+
+// (function( global, factory ) {
+//     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+//     typeof define === 'function' && define.amd ? define(factory) :
+//     window.Overlay = factory();
+// })(this, function() {
+//
+//     function handy( elem ) {
+//         return new handy.init( elem );
+//     }
+//
+//     handy.prototype.init = function( elem ) {
+//
+//     }
+//
+//     return handy;
+//
+// });
+
 (function( global, factory ) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
     window.Overlay = factory();
 })(this, function() {
 
-    function handy( elem ) {
-        return new handy.init( elem );
-    }
-
-    handy.prototype.init = function( elem ) {
-
-    }
-
-    return handy;
-
-});
-
-(function( global, factory ) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    window.Overlay = factory();
-})(this, function() {
-
-    var _slice = Array.prototype.slice
+    var _slice = Array.prototype.slice;
 
     if( typeof Function.prototype.bind === 'undefined' ) {
         Function.prototype.bind = function( oThis ) {
@@ -51,7 +53,7 @@
 
             if( typeof argus[0] !== 'boolean' && typeof argus[0] !== 'object' ) return argus[0];
 
-            if( typeof argus[0] === 'boolean' ) {
+            if( typeof argus[0] === 'boolean' && argus[0] ) {
                 newFlag = argus[0];
                 argus.splice(0, 1);
                 baseObj = 'length' in argus[0] && argus[0] instanceof Array ? [] : {};
@@ -63,12 +65,17 @@
 
             for( i1 = 0; i1 < mergeObjGroup.length; i1++ ) {
                 mergeObj = mergeObjGroup[i1];
+
+                if( typeof mergeObj !== 'object' ) continue;
+
                 for( i2 in mergeObj ) {
-                    if( typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
-                        baseObj[i2] = mergeObj[i2].length && mergeObj[i2] instanceof Array ? [] : {};
-                        baseObj[i2] = extend( true, baseObj[i2], mergeObj[i2] );
+
+                    if( newFlag && typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
+                        baseObj[i2] = 'length' in mergeObj[i2] && mergeObj[i2] instanceof Array ? [] : {};
+                        baseObj[i2] = extend( newFlag, baseObj[i2], mergeObj[i2] );
                     } else {
                         baseObj[i2] = mergeObj[i2];
+
                     }
                 }
             }
@@ -165,12 +172,11 @@
 
 
     function Overlay( options ) {
+
         var self = this,
-            defOpts = extend({}, Overlay.defaultOptions, Overlay.config, options ),
-            config = extend({}, Overlay.config );
+            defOpts = extend({}, Overlay.defaultOptions, options );
 
         self.options = defOpts;
-        self.config = config;
 
         if( !defOpts.el && !defOpts.content ) return;
 
@@ -190,7 +196,7 @@
         el: null,
         showClose: true,
         defOpen: false,
-        anim: 'fade'
+        anim: 'scale'
     };
 
     Overlay.config = {
@@ -200,13 +206,54 @@
                 in: 'fadeIn',
                 out: 'fadeOut'
             },
+            scale: {
+                in: 'scaleIn',
+                out: 'scaleOut'
+            },
             slide: {
                 in: 'slideIn',
                 out: 'slideOut'
             },
 
         },
-        defaultCallbackHandlerName: [ 'once', 'ready' ]
+        defaultCallbackHandlerName: [ 'once', 'ready' ],
+
+        keyframes: {
+            fade: {
+                in: {
+                    "0%": "opacity: 0;",
+                    "100%": "opacity: 1;"
+                },
+                out: {
+                    "0%": "opacity: 1;",
+                    "100%": "opacity: 0;"
+                }
+            },
+
+            scale: {
+                in: {
+                    "0%": "opacity: 0; transform: scale(0.6)",
+                    "100%": "opacity: 1; transform: scale(1)"
+                },
+                out: {
+                    "0%": "opacity: 1; transform: scale(1)",
+                    "100%": "opacity: 0; transform: scale(0.6)"
+                }
+            },
+
+            spring: {
+                in: {
+                    "0%": "opacity: 0; transform: scale(0.6)",
+                    "80%": "opacity: 0.8; transform: scale(1.05)",
+                    "100%": "opacity: 1; transform: scale(1)"
+                },
+                out: {
+                    "0%": "opacity: 1; transform: scale(1)",
+                    "20%": "opacity: 0.8; transform: scale(1.05)",
+                    "100%": "opacity: 0; transform: scale(0.6)"
+                }
+            }
+        }
     };
 
     Overlay.prototype.init = function() {
@@ -222,6 +269,7 @@
         }
 
         if( !self.ready ) self.defaultCallbackInit();
+        if( 'onanimationend' in window && !document.querySelector('#overlay-keyframes') ) keyFramesInit.call( self );
 
         if( !('eles' in self) ) {
             self.eles = {};
@@ -276,13 +324,15 @@
 
     };
 
+
+
     // 初始化内置回调方法
     Overlay.prototype.defaultCallbackInit = function() {
         var self = this,
             opts = self.options,
             sn = self.options.serialNumber,
-            hasUrl = opts.urlPattern.test(opts.content),
-            dchn = self.config.defaultCallbackHandlerName;
+            hasUrl = Overlay.config.urlPattern.test(opts.content),
+            dchn = Overlay.config.defaultCallbackHandlerName;
 
         // 将默认的回调方法输出
         for( dchni = 0; dchni < dchn.length; dchni++ ) {
@@ -541,7 +591,7 @@
         }
 
         setTimeout(function() {
-            easy.addClass.call( self.eles.container, 'overlay-anim overlay-fade-in');
+            easy.addClass.call( self.eles.container, 'overlay-anim overlay-scale-in');
         });
         return self;
     };
@@ -678,6 +728,51 @@
 
         return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + 'px' ) :
                 hasUnitPattern.test(num) ? num : 'auto';
+
+    }
+
+    // 帧动画样式初始化到head内
+    function keyFramesInit() {
+        var self = this,
+            head = document.querySelector('head'),
+            style = document.createElement('style'),
+            sheetText = '',
+            keyframesText = '',
+            keyframes = Overlay.config.keyframes,
+            keyframe, animName, key1, key2, key3, rules, rule, ruleText;
+
+        style.type = 'text/css';
+        style.id = 'overlay-keyframes';
+
+        for( key1 in keyframes ) {
+
+            keyframe = keyframes[key1];
+
+            keyframesText = '';
+
+            for( key2 in keyframe ) {
+                animName = key1 + ( key2.charAt(0).toUpperCase() + key2.split(/^\w/)[1] );
+                rules = keyframe[key2];
+
+                keyframesText += animName + ' {\n';
+
+                ruleText = '';
+
+                for( key3 in rules ) {
+                    rule = rules[key3];
+                    ruleText += key3 + ' { ' + rules[key3] + ' }\n';
+                }
+                keyframesText += ruleText + '}\n';
+                sheetText += '@keyframes ' + keyframesText;
+                sheetText += '@-webkit-keyframes ' + keyframesText;
+                // styleText += '@keyframes ' + animName + '{' + keyframe[key2] + '}';
+            }
+        }
+
+        sheetText.innerHTML = sheetText;
+
+        console.log(sheetText);
+        head.appendChild( style );
 
     }
 

@@ -14,6 +14,47 @@
     <br><br><br><br><br>
     <script src="../src/overlay.js"></script>
     <script>
+        var _slice = Array.prototype.slice;
+        var extend = function() {
+                var argus = _slice.call(arguments),
+                    newFlag, baseObj, mergeObjGroup, mergeObj,
+                    i1, i2;
+
+                if( typeof argus[0] !== 'boolean' && typeof argus[0] !== 'object' ) return argus[0];
+
+                if( typeof argus[0] === 'boolean' && argus[0] ) {
+                    newFlag = argus[0];
+                    argus.splice(0, 1);
+                    baseObj = 'length' in argus[0] && argus[0] instanceof Array ? [] : {};
+                } else {
+                    baseObj = argus[0];
+                    argus.splice(0, 1);
+                }
+                mergeObjGroup = argus;
+
+                for( i1 = 0; i1 < mergeObjGroup.length; i1++ ) {
+                    mergeObj = mergeObjGroup[i1];
+
+                    if( typeof mergeObj !== 'object' ) continue;
+
+                    for( i2 in mergeObj ) {
+                        if( newFlag && typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
+                            baseObj[i2] = 'length' in mergeObj[i2] && mergeObj[i2] instanceof Array ? [] : {};
+                            baseObj[i2] = extend( newFlag, baseObj[i2], mergeObj[i2] );
+                        } else {
+                            baseObj[i2] = mergeObj[i2];
+
+                        }
+                    }
+                }
+
+                return baseObj;
+            }
+
+        var a = [0, 1, 2, 3],
+            b = [ 4, 5, 6 ];
+
+        var aa = extend( [], a, b );
 
         // (function() {
             var win = new Overlay({
