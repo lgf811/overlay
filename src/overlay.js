@@ -54,7 +54,7 @@
             if( typeof argus[0] === 'boolean' ) {
                 newFlag = argus[0];
                 argus.splice(0, 1);
-                baseObj = {};
+                baseObj = 'length' in argus[0] && argus[0] instanceof Array ? [] : {};
             } else {
                 baseObj = argus[0];
                 argus.splice(0, 1);
@@ -65,7 +65,7 @@
                 mergeObj = mergeObjGroup[i1];
                 for( i2 in mergeObj ) {
                     if( typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
-
+                        baseObj[i2] = mergeObj[i2].length && mergeObj[i2] instanceof Array ? [] : {};
                         baseObj[i2] = extend( true, baseObj[i2], mergeObj[i2] );
                     } else {
                         baseObj[i2] = mergeObj[i2];
@@ -145,18 +145,7 @@
         },
         returnStorage = {},
         defaultCallbackHandlerName = [ 'once', 'ready' ],
-        dchni = 0,
-        anim = {
-            fade: {
-                in: 'fadeIn',
-                out: 'fadeOut'
-            },
-            slide: {
-                in: 'slideIn',
-                out: 'slideOut'
-            },
-            
-        };
+        dchni = 0;
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
@@ -167,7 +156,7 @@
             rules = _slice.call(sheets[i1].rules, 0);
 
             for( i2 in rules) {
-                if( rules[i2].style.zIndex > zIndex ) zIndex = Number(rules[i2].style.zIndex);
+                if( rules[i2].style && rules[i2].style.zIndex > zIndex ) zIndex = Number(rules[i2].style.zIndex);
             }
         }
     }
@@ -177,9 +166,11 @@
 
     function Overlay( options ) {
         var self = this,
-            defOpts = extend({}, Overlay.config, options );
+            defOpts = extend({}, Overlay.defaultOptions, Overlay.config, options ),
+            config = extend({}, Overlay.config );
 
         self.options = defOpts;
+        self.config = config;
 
         if( !defOpts.el && !defOpts.content ) return;
 
@@ -191,16 +182,31 @@
         return self;
     }
 
-    Overlay.config = {
+    Overlay.defaultOptions = {
         title: null,
         width: null,
         height: null,
         content: null,
         el: null,
-        urlPattern: urlPattern,
         showClose: true,
         defOpen: false,
         anim: 'fade'
+    };
+
+    Overlay.config = {
+        urlPattern: urlPattern,
+        anim: {
+            fade: {
+                in: 'fadeIn',
+                out: 'fadeOut'
+            },
+            slide: {
+                in: 'slideIn',
+                out: 'slideOut'
+            },
+
+        },
+        defaultCallbackHandlerName: [ 'once', 'ready' ]
     };
 
     Overlay.prototype.init = function() {
@@ -275,10 +281,11 @@
         var self = this,
             opts = self.options,
             sn = self.options.serialNumber,
-            hasUrl = opts.urlPattern.test(opts.content);
+            hasUrl = opts.urlPattern.test(opts.content),
+            dchn = self.config.defaultCallbackHandlerName;
 
         // 将默认的回调方法输出
-        for( dchni = 0; dchni < defaultCallbackHandlerName.length; dchni++ ) {
+        for( dchni = 0; dchni < dchn.length; dchni++ ) {
             (function( hn ) {
                 if( hn in self ) return;
 
@@ -301,7 +308,7 @@
 
                     return self;
                 };
-            })( defaultCallbackHandlerName[dchni] );
+            })( dchn[dchni] );
 
         }
     }
@@ -534,7 +541,7 @@
         }
 
         setTimeout(function() {
-            easy.addClass.call( self.eles.container, );
+            easy.addClass.call( self.eles.container, 'overlay-anim overlay-fade-in');
         });
         return self;
     };
