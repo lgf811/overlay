@@ -753,9 +753,10 @@
 
             keyframe = keyframes[key1];
 
-            keyframesText = '';
+
 
             for( key2 in keyframe ) {
+                keyframesText = '';
                 animName = key1 + ( key2.charAt(0).toUpperCase() + key2.split(/^\w/)[1] );
                 rules = keyframe[key2];
                 animNames.push( key1 + '-' + key2 );
@@ -765,18 +766,19 @@
 
                 for( key3 in rules ) {
                     rule = rules[key3];
-                    ruleText += key3 + ' { ' + rules[key3] + ' }\n';
+                    ruleText += '   ' + key3 + ' { ' + rules[key3] + ' }\n';
                 }
                 keyframesText += ruleText + '}\n';
 
-                sheetText += '@keyframes ' + keyframesText;
                 sheetText += '@-webkit-keyframes ' + keyframesText;
-                
+                sheetText += '@keyframes ' + keyframesText;
+
+
                 // styleText += '@keyframes ' + animName + '{' + keyframe[key2] + '}';
             }
         }
 
-        if( animNames.length ) sheetText += createAnimationSelector.call( self, animNames );
+        if( animNames.length ) sheetText = createAnimationSelector.call( self, animNames ) + sheetText;
 
         console.log(style.id);
         if( !style.id ) {
@@ -802,7 +804,7 @@
             animName = selectorLast.replace(/-[a-z]/, function( $1 ) {
                 return $1 ? $1.split('-')[1].toUpperCase() : '';
             });
-            sheet += selectorFirst + selectorLast + ' {' + '-webkit-animationo-name: ' + animName + '}\n';
+            sheet += selectorFirst + selectorLast + ' { ' + '-webkit-animationo-name: ' + animName + ' }\n';
         }
 
         return sheet;
