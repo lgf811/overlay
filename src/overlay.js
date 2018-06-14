@@ -738,7 +738,7 @@
         var self = this,
             head = document.querySelector('head'),
             style = document.querySelector('#overlay-keyframes') ? document.querySelector('#overlay-keyframes') : document.createElement('style'),
-            animNames = [];
+            animNames = [],
             sheetText = '',
             keyframesText = '',
             keyframes = Overlay.config.keyframes,
@@ -746,7 +746,7 @@
 
         if( !style ) {
             style = document.createElement('style');
-            style.type = 'text/css';
+            style.setAttribute('type', 'text/css');
         }
 
         for( key1 in keyframes ) {
@@ -758,7 +758,7 @@
             for( key2 in keyframe ) {
                 animName = key1 + ( key2.charAt(0).toUpperCase() + key2.split(/^\w/)[1] );
                 rules = keyframe[key2];
-
+                animNames.push( key1 + '-' + key2 );
                 keyframesText += animName + ' {\n';
 
                 ruleText = '';
@@ -768,13 +768,17 @@
                     ruleText += key3 + ' { ' + rules[key3] + ' }\n';
                 }
                 keyframesText += ruleText + '}\n';
+
                 sheetText += '@keyframes ' + keyframesText;
                 sheetText += '@-webkit-keyframes ' + keyframesText;
+                
                 // styleText += '@keyframes ' + animName + '{' + keyframe[key2] + '}';
             }
         }
 
+        if( animNames.length ) sheetText += createAnimationSelector.call( self, animNames );
 
+        console.log(style.id);
         if( !style.id ) {
             style.id = 'overlay-keyframes';
             style.innerHTML = sheetText;
@@ -785,6 +789,26 @@
         head.appendChild( style );
 
     }
+
+    function createAnimationSelector( selectorGroup ) {
+
+        var selectorFirst = '.overlay-container.overlay-',
+            sheet = '',
+            selectorLast, animName, animPattern = /-[a-z]/,
+            i = 0;
+
+        for( ; i < selectorGroup.length; i++ ) {
+            selectorLast = selectorGroup[i];
+            animName = selectorLast.replace(/-[a-z]/, function( $1 ) {
+                return $1 ? $1.split('-')[1].toUpperCase() : '';
+            });
+            sheet += selectorFirst + selectorLast + ' {' + '-webkit-animationo-name: ' + animName + '}\n';
+        }
+
+        return sheet;
+    }
+
+
 
     return Overlay;
 
