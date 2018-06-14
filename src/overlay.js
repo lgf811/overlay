@@ -716,17 +716,19 @@
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = container.getBoundingClientRect();
-        if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth);
-        if( cRect.height > windowHeight ) cStyle.width = correctValue(windowWidth);
+        if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth, 'px');
+        if( cRect.height > windowHeight ) cStyle.width = correctValue(windowWidth, 'px');
 
     }
 
-    function correctValue( num ) {
+    function correctValue( num, unit ) {
         var _num,
-            hasUnitPattern = /\d+(\%|px)$/g,
-            numPattern = /^\d+$/g;
+            hasUnitPattern = /\d?\.?\d+?(\%|px)$/g,
+            numPattern = /^\d?\.?\d+?$/g;
 
-        return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + 'px' ) :
+        if( unit === undefined ) unit = '';
+
+        return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) :
                 hasUnitPattern.test(num) ? num : 'auto';
 
     }
@@ -735,14 +737,17 @@
     function keyFramesInit() {
         var self = this,
             head = document.querySelector('head'),
-            style = document.createElement('style'),
+            style = document.querySelector('#overlay-keyframes') ? document.querySelector('#overlay-keyframes') : document.createElement('style'),
+            animNames = [];
             sheetText = '',
             keyframesText = '',
             keyframes = Overlay.config.keyframes,
             keyframe, animName, key1, key2, key3, rules, rule, ruleText;
 
-        style.type = 'text/css';
-        style.id = 'overlay-keyframes';
+        if( !style ) {
+            style = document.createElement('style');
+            style.type = 'text/css';
+        }
 
         for( key1 in keyframes ) {
 
@@ -769,9 +774,14 @@
             }
         }
 
-        sheetText.innerHTML = sheetText;
 
-        console.log(sheetText);
+        if( !style.id ) {
+            style.id = 'overlay-keyframes';
+            style.innerHTML = sheetText;
+        } else {
+            style.innerHTML += sheetText;
+        }
+
         head.appendChild( style );
 
     }
