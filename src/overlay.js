@@ -201,21 +201,8 @@
 
     Overlay.config = {
         urlPattern: urlPattern,
-        anim: {
-            fade: {
-                in: 'fadeIn',
-                out: 'fadeOut'
-            },
-            scale: {
-                in: 'scaleIn',
-                out: 'scaleOut'
-            },
-            slide: {
-                in: 'slideIn',
-                out: 'slideOut'
-            },
+        duration: 300,
 
-        },
         defaultCallbackHandlerName: [ 'once', 'ready' ],
 
         keyframes: {
@@ -581,18 +568,18 @@
     // 打开窗口方法
     Overlay.prototype.open = function() {
         var self = this,
-            opts = self.options;
+            opts = self.options,
+            config = Overlay.config,
+            animClassName = 'overlay-' + config.anim[opts.anim].in;
 
         easy.addClass.call( self.eles.mask, 'open');
-        easy.addClass.call( self.eles.container, 'open');
+
+        easy.addClass.call( self.eles.container, 'open overlay-anim ' + animClassName);
 
         if( !self.eles.container.getAttribute('style') ) {
             setOffset.call( self );
         }
 
-        setTimeout(function() {
-            easy.addClass.call( self.eles.container, 'overlay-anim overlay-scale-in');
-        });
         return self;
     };
 
@@ -749,17 +736,26 @@
             style.setAttribute('type', 'text/css');
         }
 
+        if( !('anim' in Overlay.config) ) {
+            Overlay.config.anim = {};
+        }
+
         for( key1 in keyframes ) {
 
             keyframe = keyframes[key1];
 
-
+            if( !( key1 in Overlay.config.anim ) ) Overlay.config.anim[key1] = {};
 
             for( key2 in keyframe ) {
                 keyframesText = '';
                 animName = key1 + ( key2.charAt(0).toUpperCase() + key2.split(/^\w/)[1] );
                 rules = keyframe[key2];
                 animNames.push( key1 + '-' + key2 );
+
+                if( !( key2 in Overlay.config.anim[key1] ) ) {
+                    Overlay.config.anim[key1][key2] = animNames[ animNames.length - 1 ];
+                }
+
                 keyframesText += animName + ' {\n';
 
                 ruleText = '';
@@ -780,7 +776,7 @@
 
         if( animNames.length ) sheetText = createAnimationSelector.call( self, animNames ) + sheetText;
 
-        console.log(style.id);
+
         if( !style.id ) {
             style.id = 'overlay-keyframes';
             style.innerHTML = sheetText;
@@ -794,8 +790,12 @@
 
     function createAnimationSelector( selectorGroup ) {
 
-        var selectorFirst = '.overlay-container.overlay-',
+        var self = this,
+            opts = self.options,
+            duration = opts.duration || Overlay.config.duration,
+            selectorFirst = '.overlay-container.overlay-',
             sheet = '',
+
             selectorLast, animName, animPattern = /-[a-z]/,
             i = 0;
 
@@ -804,12 +804,14 @@
             animName = selectorLast.replace(/-[a-z]/, function( $1 ) {
                 return $1 ? $1.split('-')[1].toUpperCase() : '';
             });
-            sheet += selectorFirst + selectorLast + ' { ' + '-webkit-animationo-name: ' + animName + ' }\n';
+            sheet += selectorFirst + selectorLast + ' { ' +
+                '-webkit-animation-name: ' + animName + '; animation-name: ' + animName +
+                '; -webkit-animation-duration: ' + duration + 'ms' + '; animation-duration: ' + duration + 'ms' +
+                 ' }\n';
         }
 
         return sheet;
     }
-
 
 
     return Overlay;
