@@ -18,6 +18,10 @@
 //
 // });
 
+/*
+* Overlay.js v1.0.1
+*/
+
 (function( global, factory ) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
@@ -151,7 +155,8 @@
             }
         },
         returnStorage = {},
-        defaultCallbackHandlerName = [ 'once', 'ready' ],
+        supportAnim = 'onanimationend' in window,
+        //defaultCallbackHandlerName = [ 'once', 'ready' ],
         dchni = 0;
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
@@ -203,7 +208,7 @@
         urlPattern: urlPattern,
         duration: 300,
 
-        defaultCallbackHandlerName: [ 'once', 'ready' ],
+        defaultCallbackHandlerName: [ 'once', 'ready', 'opened' ],
 
         keyframes: {
             fade: {
@@ -249,14 +254,22 @@
         var self = this,
             opts = self.options,
             el, content, $mask,
-            $el, $container;
+            $el, $container,
+            config, animClassName;
 
         if( !('handlers' in self) ) {
             self.handlers = {};
         }
 
         if( !self.ready ) self.defaultCallbackInit();
-        if( 'onanimationend' in window && !document.querySelector('#overlay-keyframes') ) keyFramesInit.call( self );
+        if( supportAnim && !document.querySelector('#overlay-keyframes') ) keyFramesInit.call( self );
+
+        if( !opts.animClass ) {
+            config = Overlay.config;
+            opts.animClass = {};
+            opts.animClass.in = 'overlay-' + config.anim[opts.anim].in;
+            opts.animClass.out = 'overlay-' + config.anim[opts.anim].out;
+        }
 
         if( !('eles' in self) ) {
             self.eles = {};
@@ -307,7 +320,7 @@
         self.eventInit();
 
         // 如果默认初始化就打开，则执行open方法
-        if( opts.defOpen ) self.open();
+        //if( opts.defOpen ) self.open();
 
     };
 
@@ -543,9 +556,12 @@
         }
 
         // 监听窗口动画事件
-        if( 'onanimationend' in window ) {
-            self.eles.container.addEventListener('webkitAnimationEnd', animationEndHandler, false);
-            self.eles.container.addEventListener('animationend', animationEndHandler, false);
+        if( supportAnim ) {
+            // elemsBindEvent.call( self, self.eles.container, 'once', 'webkitAnimationEnd');
+            // elemsBindEvent.call( self, self.eles.container, 'once', 'animationend');
+
+            self.eles.container.addEventListener('webkitAnimationEnd', animationEndHandler.bind(self), false);
+            self.eles.container.addEventListener('animationend', animationEndHandler.bind(self), false);
         }
 
         if( !('closeHandler' in self) ) {
@@ -573,12 +589,9 @@
             animClassName = 'overlay-' + config.anim[opts.anim].in;
 
         easy.addClass.call( self.eles.mask, 'open');
-
         easy.addClass.call( self.eles.container, 'open overlay-anim ' + animClassName);
 
-        if( !self.eles.container.getAttribute('style') ) {
-            setOffset.call( self );
-        }
+        if( !self.eles.container.getAttribute('style') ) setOffset.call( self );
 
         return self;
     };
@@ -603,13 +616,26 @@
 
     // 为元素绑定事件
     function elemsBindEvent( $elem, handlerName, eventName, callback ) {
-        var self = this;
+        var self = this,
+            i = 0, j = i;
+
         if( typeof eventName === 'function' ) {
             callback = eventName;
             eventName = 'click';
         }
+
         if( eventName === undefined ) eventName = 'click';
-        $elem.addEventListener(eventName, eventHandler.bind( self, handlerName, callback ), false );
+        if( typeof eventName === 'string' ) eventName = [ eventName ];
+        if( typeof handlerName === 'string' ) handlerName = [ handlerName ];
+
+
+        for( ; i < eventName.length; i++ ) {
+            for( ; j < handlerName.length; j++ ) {
+                $elem.addEventListener(eventName[i], eventHandler.bind( self, handlerName[j], callback ), false );
+            }
+
+        }
+
         return self;
     }
 
@@ -631,12 +657,12 @@
             handlers = self.handlers[ handlerName ],
             onceFlag;
 
-        if( i === undefined ) {
-            i = 0;
-        } else {
-            onceFlag = true;
-        }
-
+        i === undefined ? ( i = 0 ) : ( onceFlag = true );
+        // if( i === undefined ) {
+        //     i = 0;
+        // } else {
+        //     onceFlag = true;
+        // }
 
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
@@ -650,8 +676,18 @@
         return self;
     }
 
-    // 支持css延时动画的，全部在这里被执行
+    // 支持css延时动画的，会在这里执行
     function animationEndHandler() {
+        var self = this,
+            opts = self.opts,
+            eles = self.eles;
+
+        if( easy.hasClass.call( eles, opts.animClass.in ) ) {
+            eventHandler.call( self, 'once' );
+            eventHandler.call( self, 'opened' );
+        } else if( easy.hasClass.call( eles, opts.animClass.out ) ) {
+
+        }
 
     }
 
@@ -720,6 +756,7 @@
 
     }
 
+
     // 帧动画样式初始化到head内
     function keyFramesInit() {
         var self = this,
@@ -769,8 +806,6 @@
                 sheetText += '@-webkit-keyframes ' + keyframesText;
                 sheetText += '@keyframes ' + keyframesText;
 
-
-                // styleText += '@keyframes ' + animName + '{' + keyframe[key2] + '}';
             }
         }
 

@@ -82,6 +82,18 @@
             }).ready(function( e, obj ) {
                 obj.b = 321;
                 return obj;
+            }).once(function( e, obj ) {
+                console.log(123123);
+            }).once(function( e, obj ) {
+                console.log(321321);
+            }).opened(function() {
+                console.log('abcabc');
+            }).opened(function() {
+                console.log('abcabc');
+            }).opened(function() {
+                console.log('abcabc');
+            }).opened(function() {
+                console.log('abcabc');
             });
 
             // var win2 = new Overlay({
