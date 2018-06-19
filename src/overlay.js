@@ -103,14 +103,26 @@
                 clsn.push(cls);
                 this.className = clsn.join(' ');
             },
-            removeClass: function() {
-                var clsn = this.className;
+            removeClass: function( cls ) {
+                var clsn = this.className,
+                    i = 0;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                if( !~clsn.indexOf( cls ) ) return this;
+                if( !cls ) return this;
 
-                clsn.splice(clsn.indexOf( cls ), 1);
+                if( ~cls.indexOf(' ') ) cls = cls.split(' ');
+
+                if( typeof cls === 'string' && ~clsn.indexOf( cls ) ) {
+                    clsn.splice(clsn.indexOf( cls ), 1);
+                } else {
+                    for( ; i < cls.length; i++ ) {
+                        if( ~clsn.indexOf( cls[i] ) && cls[i] ) {
+                            clsn.splice(clsn.indexOf( cls[i] ), 1);
+                        }
+                    }
+                }
+
                 this.className = clsn.join(' ');
             },
             hasClass: function( cls ) {
@@ -201,14 +213,15 @@
         el: null,
         showClose: true,
         defOpen: false,
-        anim: 'scale'
+        anim: 'scale',
+        position: 'center'
     };
 
     Overlay.config = {
         urlPattern: urlPattern,
         duration: 300,
 
-        defaultCallbackHandlerName: [ 'once', 'ready', 'opened' ],
+        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed' ],
 
         keyframes: {
             fade: {
@@ -320,7 +333,7 @@
         self.eventInit();
 
         // 如果默认初始化就打开，则执行open方法
-        //if( opts.defOpen ) self.open();
+        if( opts.defOpen ) self.open();
 
     };
 
@@ -353,7 +366,7 @@
 
                     // 如果是静态元素或是普通自符串，并且执行方法是ready的话，直接调用函数即可实现ready方法
                     if( ( self.options.el || !hasUrl ) && hn === 'ready' ) {
-                        eventHandler.call( self, 'ready', null, null, self.handlers[ hn ].length - 1 );
+                        triggerEventHandler.call( self, 'ready', null, null, self.handlers[ hn ].length - 1 );
                     }
 
                     return self;
@@ -585,23 +598,23 @@
     Overlay.prototype.open = function() {
         var self = this,
             opts = self.options,
-            config = Overlay.config,
-            animClassName = 'overlay-' + config.anim[opts.anim].in;
+            config = Overlay.config;
 
         easy.addClass.call( self.eles.mask, 'open');
-        easy.addClass.call( self.eles.container, 'open overlay-anim ' + animClassName);
+        easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.in);
 
         if( !self.eles.container.getAttribute('style') ) setOffset.call( self );
 
         return self;
     };
 
-    // 打开窗口方法
+    // 关闭窗口方法
     Overlay.prototype.close = function() {
         var self = this,
             opts = self.options;
 
-        easy.addClass.call( self.eles.container, 'close' );
+            easy.removeClass.call( self.eles.mask, 'open');
+            easy.addClass.call( self.eles.container, opts.animClass.out);
 
         return self;
     };
@@ -631,7 +644,7 @@
 
         for( ; i < eventName.length; i++ ) {
             for( ; j < handlerName.length; j++ ) {
-                $elem.addEventListener(eventName[i], eventHandler.bind( self, handlerName[j], callback ), false );
+                $elem.addEventListener(eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ), false );
             }
 
         }
@@ -644,13 +657,13 @@
         var self = this;
 
         eventName = eventName ? eventName : 'click';
-        $elem.removeEventListener(eventName, eventHandler, false );
+        $elem.removeEventListener(eventName, triggerEventHandler, false );
 
         return self;
     }
 
     // 所有调用方法的回调，全部在这里被执行
-    function eventHandler( handlerName, callback, e, i ) {
+    function triggerEventHandler( handlerName, callback, e, i ) {
         var self = this,
             opts = self.options,
             sn = opts.serialNumber,
@@ -677,16 +690,20 @@
     }
 
     // 支持css延时动画的，会在这里执行
-    function animationEndHandler() {
+    function animationEndHandler( e ) {
         var self = this,
-            opts = self.opts,
+            opts = self.options,
             eles = self.eles;
 
-        if( easy.hasClass.call( eles, opts.animClass.in ) ) {
-            eventHandler.call( self, 'once' );
-            eventHandler.call( self, 'opened' );
-        } else if( easy.hasClass.call( eles, opts.animClass.out ) ) {
+        if( e.target !== eles.container ) return;
 
+        if( easy.hasClass.call( eles.container, opts.animClass.in ) ) {
+            triggerEventHandler.call( self, 'once' );
+            triggerEventHandler.call( self, 'opened' );
+            easy.removeClass.call( eles.container, opts.animClass.in);
+        } else if( easy.hasClass.call( eles.container, opts.animClass.out ) ) {
+            triggerEventHandler.call( self, 'closed' );
+            easy.removeClass.call( eles.container, opts.animClass.out);
         }
 
     }
@@ -707,8 +724,12 @@
 
         cStyle.zIndex = opts.zIndex;
 
-        // 判断是否是提示组件
-        if( opts.isTips ) {
+        if( opts.offset && opts.offset.x && opts.offset.y ) {
+
+            cStyle.top = correctValue(opts.offset.y);
+            cStyle.left = correctValue(opts.offset.x);
+
+        } else if( opts.isTips ) { // 判断是否是提示组件
 
         } else {
             if( opts.position === 'center' ) {
@@ -739,8 +760,8 @@
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = container.getBoundingClientRect();
-        if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth, 'px');
-        if( cRect.height > windowHeight ) cStyle.width = correctValue(windowWidth, 'px');
+        if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth);
+        if( cRect.height > windowHeight ) cStyle.height = correctValue(windowHeight);
 
     }
 
@@ -749,7 +770,7 @@
             hasUnitPattern = /\d?\.?\d+?(\%|px)$/g,
             numPattern = /^\d?\.?\d+?$/g;
 
-        if( unit === undefined ) unit = '';
+        if( unit === undefined ) unit = 'px';
 
         return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) :
                 hasUnitPattern.test(num) ? num : 'auto';

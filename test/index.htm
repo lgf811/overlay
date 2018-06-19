@@ -61,12 +61,12 @@
             //Overlay.config.keyframes.
 
             var win = new Overlay({
-                // el: '.o',
-                content: '你好好',
+                el: '.o',
+                // content: '你好好',
                 width: '100',
                 height: '100',
                 title: '标题',
-                defOpen: true,
+                // defOpen: true,
                 anim: 'scale',
                 buttons: {
                     'enter.enter.enter-1': '确定',
@@ -88,12 +88,8 @@
                 console.log(321321);
             }).opened(function() {
                 console.log('abcabc');
-            }).opened(function() {
-                console.log('abcabc');
-            }).opened(function() {
-                console.log('abcabc');
-            }).opened(function() {
-                console.log('abcabc');
+            }).closed(function() {
+                console.log('closed');
             });
 
             // var win2 = new Overlay({
