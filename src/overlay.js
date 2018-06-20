@@ -86,7 +86,7 @@
 
             return baseObj;
         }, i1, i2,
-        zIndex = 880811,
+        zIndex = parseInt(Math.random() * 100000),
         serialNumber = 0,
         sheets, rules,
         urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
@@ -164,9 +164,17 @@
                 } else if( typeof this['on' + eventName] === 'function' ) {
                     this['on' + eventName]();
                 }
+            },
+            on: function( eventName, handler ) {
+                if( document.all ) {
+                    this.attachEvent( 'on' + eventName, handler );
+                } else {
+                    this.addEventListener( eventName, handler, false );
+                }
             }
         },
         returnStorage = {},
+        resizeStorage = {},
         supportAnim = 'onanimationend' in window,
         //defaultCallbackHandlerName = [ 'once', 'ready' ],
         dchni = 0;
@@ -179,15 +187,17 @@
         for( i1 = 0; i1 < sheets.length; i1++ ) {
             rules = _slice.call(sheets[i1].rules, 0);
 
-            for( i2 in rules) {
-                if( rules[i2].style && rules[i2].style.zIndex > zIndex ) zIndex = Number(rules[i2].style.zIndex);
+            for( i2 in rules ) {
+                if( rules[i2].style && rules[i2].style.zIndex > zIndex ) {
+                    zIndex = Number(rules[i2].style.zIndex);
+                }
             }
         }
     }
 
 
 
-
+    // Overlay 构造函数
     function Overlay( options ) {
 
         var self = this,
@@ -198,32 +208,35 @@
         if( !defOpts.el && !defOpts.content ) return;
 
         // self.options.width = 10000;
-        self.options.zIndex = zIndex;
+        self.options.zIndex = ++zIndex;
         self.options.serialNumber = serialNumber++;
         self.init();
 
         return self;
     }
 
+    // Overlay 默认属性
     Overlay.defaultOptions = {
-        title: null,
-        width: null,
-        height: null,
-        content: null,
-        el: null,
+        title: null,                                                                // 标题
+        width: null,                                                                // 宽度
+        height: null,                                                               // 高度
+        content: null,                                                              // 被包含的字符串或是地址
+        el: null,                                                                   // 被包含的元素
         showClose: true,
         defOpen: false,
         anim: 'scale',
-        position: 'center'
+        position: 'center',
+        opacity: 0.4
     };
 
+    // Overlay 默认配置
     Overlay.config = {
-        urlPattern: urlPattern,
-        duration: 300,
+        urlPattern: urlPattern,                                                     // url正则匹配规则
+        duration: 300,                                                              // 动画过程时间
 
-        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed' ],
+        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed' ],        // 默认的执行回调函数方法
 
-        keyframes: {
+        keyframes: {                                                                // 默认动画配置，可在创建实例前，追加新的动画名称
             fade: {
                 in: {
                     "0%": "opacity: 0;",
@@ -384,6 +397,8 @@
 
         $mask = document.createElement('div');
         self.eles.mask = $mask;
+        self.eles.mask.style.opacity = opts.opacity;
+        self.eles.mask.style.filter = 'opacity(alpha=' + ( opts.opacity * 100 ) + ')';
         $mask.classList.add('overlay-mask');
 
         return $mask;
@@ -558,6 +573,7 @@
     Overlay.prototype.eventInit = function() {
         var self = this,
             opts = self.options,
+            eles = self.eles,
             btnGroup = self.buttonsGroup,
             fnName, fnGroup,
             $btn;
@@ -573,22 +589,27 @@
             // elemsBindEvent.call( self, self.eles.container, 'once', 'webkitAnimationEnd');
             // elemsBindEvent.call( self, self.eles.container, 'once', 'animationend');
 
-            self.eles.container.addEventListener('webkitAnimationEnd', animationEndHandler.bind(self), false);
-            self.eles.container.addEventListener('animationend', animationEndHandler.bind(self), false);
+            easy.on.call( eles.container, 'webkitAnimationEnd', animationEndHandler.bind(self) );
+            easy.on.call( eles.container, 'animationend', animationEndHandler.bind(self) );
         }
 
         if( !('closeHandler' in self) ) {
             Overlay.prototype.closeHandler = function() {
-                easy.addClass.call( self.eles.mask, 'close-mask' );
+                easy.addClass.call( eles.mask, 'close-mask' );
                 if( 'ontransitionend' in window ) {
-                    easy.addClass.call( self.eles.container, 'close-anim-container' );
+                    easy.addClass.call( eles.container, 'close-anim-container' );
                 } else {
-                    easy.addClass.call( self.eles.container, 'close-container' );
+                    easy.addClass.call( eles.container, 'close-container' );
                 }
             };
         }
 
-        self.eles.close.addEventListener('click', self.closeHandler, false);
+        if( eles.close ) {
+            easy.on.call( eles.close, 'click', self.closeHandler );
+            // self.eles.close.addEventListener('click', self.closeHandler, false);
+        }
+
+
 
         return self;
     };
@@ -603,7 +624,7 @@
         easy.addClass.call( self.eles.mask, 'open');
         easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.in);
 
-        if( !self.eles.container.getAttribute('style') ) setOffset.call( self );
+        if( !self.eles.container.getAttribute('style') ) setStyle.call( self );
 
         return self;
     };
@@ -625,7 +646,9 @@
 
 
 
-
+    ////////
+    ////////  事件绑定与监听事件函数代码块
+    ////////
 
     // 为元素绑定事件
     function elemsBindEvent( $elem, handlerName, eventName, callback ) {
@@ -644,9 +667,9 @@
 
         for( ; i < eventName.length; i++ ) {
             for( ; j < handlerName.length; j++ ) {
-                $elem.addEventListener(eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ), false );
+                easy.on.call( $elem, eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ) );
+                // $elem.addEventListener(eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ), false );
             }
-
         }
 
         return self;
@@ -676,7 +699,7 @@
         // } else {
         //     onceFlag = true;
         // }
-
+        if( !handlers ) return;
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
             returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
@@ -708,11 +731,138 @@
 
     }
 
+
+
+
+
+
+
+
+
+    ////////
+    ////////  设置组件样式代码块
+    ////////
+
     // 设置弹出框位置
+    function setStyle() {
+        var self = this;
+
+        setZIndex.call( self );
+        setOffset.call( self );
+        setSize.call( self );
+
+    }
+
+    // 设置 z-index 层顺序
+    function setZIndex() {
+        var self = this,
+            opts = self.options,
+            mask = self.eles.mask,
+            container = self.eles.container,
+            cStyle = container.style;
+
+        mask.style.zIndex = opts.zIndex;
+        cStyle.zIndex = opts.zIndex;
+    }
+
+    // 设置组件位置
     function setOffset() {
         var self = this,
             opts = self.options,
             position = self.position,
+            container = self.eles.container,
+            cStyle = container.style;
+
+        if( opts.offset && opts.offset.x && opts.offset.y && !opts.isTips ) {
+
+            cStyle.top = correctValue(opts.offset.y);
+            cStyle.left = correctValue(opts.offset.x);
+
+        } else if( opts.isTips ) { // 判断是否是提示组件
+
+
+
+        } else if( opts.position && !(opts.serialNumber in resizeStorage) ) {
+
+            resizeStorage[ opts.serialNumber ] = function() {
+
+                switch( opts.position ) {
+                    case 'center' :
+                    case 'c' :
+                    //
+                    break;
+
+                    case 'top' :
+                    case 't' :
+                    //
+                    break;
+
+                    case 'right' :
+                    case 'r' :
+                    //
+
+                    break;
+
+                    case 'bottom' :
+                    case 'b' :
+                    //
+                    break;
+
+                    case 'left' :
+                    case 'l' :
+                    //
+                    break;
+
+                    case 'top-left' :
+                    case 'tl' :
+                    case 't-l' :
+                    case 'left-top' :
+                    case 'lt' :
+                    case 'l-t' :
+                    //
+                    break;
+
+                    case 'top-right' :
+                    case 'tr' :
+                    case 't-r' :
+                    case 'right-top' :
+                    case 'rt' :
+                    case 'r-t' :
+                    //
+                    break;
+
+                    case 'bottom-right' :
+                    case 'br' :
+                    case 'b-r' :
+                    case 'right-bottom' :
+                    case 'rb' :
+                    case 'r-b' :
+                    //
+                    break;
+
+                    case 'bottom-left' :
+                    case 'bl' :
+                    case 'b-l' :
+                    case 'left-bottom' :
+                    case 'lb' :
+                    case 'l-b' :
+                    //
+                    break;
+                }
+
+            };
+
+
+
+        }
+    }
+
+
+
+    // 设置组件尺寸
+    function setSize() {
+        var self = this,
+            opts = self.options,
             container = self.eles.container,
             cStyle = container.style,
             windowWidth = document.documentElement.clientWidth,
@@ -722,49 +872,20 @@
         if( opts.width ) cStyle.width = correctValue(opts.width);
         if( opts.height ) cStyle.height = correctValue(opts.height);
 
-        cStyle.zIndex = opts.zIndex;
-
-        if( opts.offset && opts.offset.x && opts.offset.y ) {
-
-            cStyle.top = correctValue(opts.offset.y);
-            cStyle.left = correctValue(opts.offset.x);
-
-        } else if( opts.isTips ) { // 判断是否是提示组件
-
-        } else {
-            if( opts.position === 'center' ) {
-
-
-
-            } else if( opts.position === 'top' ) {
-
-
-
-            } else if( opts.position === 'right' ) {
-
-
-
-            } else if( opts.position === 'bottom' ) {
-
-
-
-            } else if( opts.position === 'left' ) {
-
-
-
-            }
-        }
-
-
-
-
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = container.getBoundingClientRect();
         if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth);
         if( cRect.height > windowHeight ) cStyle.height = correctValue(windowHeight);
-
     }
 
+
+
+
+
+
+
+
+    // 修正返回值
     function correctValue( num, unit ) {
         var _num,
             hasUnitPattern = /\d?\.?\d+?(\%|px)$/g,
@@ -844,6 +965,7 @@
 
     }
 
+    // 创建动画选择器
     function createAnimationSelector( selectorGroup ) {
 
         var self = this,
@@ -868,6 +990,24 @@
 
         return sheet;
     }
+
+
+    // 监听窗口调整事件 用于窗口位置调整
+    easy.on.call( window, 'resize', function() {
+        var i;
+        // 查看序号是否是原始值，是的话，则说明没有创建过组件
+        if(!serialNumber) return;
+
+        for( i in resizeStorage ) {
+            if( !resizeStorage ) return;
+
+            resizeStorage[ i ]();
+        }
+
+    } );
+
+
+
 
 
     return Overlay;

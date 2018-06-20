@@ -92,24 +92,25 @@
                 console.log('closed');
             });
 
-            // var win2 = new Overlay({
-            //     // el: '.o',
-            //     content: './frame.htm',
-            //     title: '标题',
-            //     defOpen: true,
-            //     buttons: {
-            //         'enter.enter.enter-1': '确定',
-            //         'cancel.cancel': '取消'
-            //     }
-            // }).enter(function( e ) {
-            //
-            //
-            //
-            // }).cancel(function( e, obj ) {
-            //     console.log(obj);
-            // }).once(function() {
-            //     return {a: 123321};
-            // });
+            var win2 = new Overlay({
+                // el: '.o',
+                content: '123123',
+                title: '标题',
+                width: 200,
+                height: 100,
+                defOpen: true,
+                buttons: {
+                    'enter.enter.enter-1': '确定',
+                    'cancel.cancel': '取消'
+                }
+            }).enter(function( e ) {
+                alert(123)
+
+            }).cancel(function( e, obj ) {
+                console.log(obj);
+            }).once(function() {
+                return {a: 123321};
+            });
 
             // new Overlay({
             //     // el: '.o'

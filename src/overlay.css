@@ -6,6 +6,7 @@
  * Email: sblqtd@vip.qq.com
  */
 
+.a { z-index: 100000000 }
 
 .overlay-mask {
     position: fixed;
@@ -14,14 +15,21 @@
     right: 0;
     bottom: 0;
     left: 0;
+    background-color: #000000
 }
 
 .overlay-container {
     position: fixed;
     display: none;
+    overflow: hidden;
+    border-radius: 2px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 25px rgba(0, 0, 0, 0.2);
+
 }
 
-.overlay-container.open {
+.overlay-container.open,
+.overlay-mask.open {
     display: block;
 }
 
@@ -30,42 +38,22 @@
     animation-fill-mode: both;
 }
 
-.overlay-container.overlay-fade-in {
-    animation-name: fadeIn;
-    animation-duration: 0.3s;
+.overlay-header {
+    position: relative;
+    height: 35px;
+    padding: 0 45px 0 15px;
+    background-color: #e8e8e8;
+    font-size: 14px;
+    line-height: 35px;
 }
-
-.overlay-container.overlay-fade-out {
-    animation-name: fadeOut;
-    animation-duration: 0.3s;
+.overlay-close-btn {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    height: 15px;
+    margin-top: -8px;
+    line-height: 15px;
 }
-
-/* .o {
-    z-index: 100000000;
-} */
-
-
-
-@-webkit-keyframes fadeIn {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
-}
-@-webkit-keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-
-
-
-
 
 
 
