@@ -96,12 +96,15 @@
             addClass: function( cls ) {
                 var clsn = this.className;
 
+                if( !cls ) return;
+
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
                 if( ~clsn.indexOf( cls ) ) return this;
 
                 clsn.push(cls);
-                this.className = clsn.join(' ');
+                clsn = easy.trim( clsn.join(' ') );
+                this.className = clsn;
             },
             removeClass: function( cls ) {
                 var clsn = this.className,
@@ -171,7 +174,30 @@
                 } else {
                     this.addEventListener( eventName, handler, false );
                 }
+            },
+            getCss: function( key ) {
+                var val, unitPattern = /(px|%)$/;
+
+                val = this.currentStyle ? this.currentStyle[ key ] : window.getComputedStyle(this).getPropertyValue( key )
+
+                return unitPattern.test(val) ? Number(val.split(unitPattern)[0]) : !isNaN( parseInt( val ) ) ? parseInt( val ) : 0;
+            },
+            trim: function( val ) {
+                return val ? val.replace(/^\s+|\s$/, '') : val;
+            },
+            width: function() {
+                return easy.getCss.call( this, 'width' );
+            },
+            height: function() {
+                return easy.getCss.call( this, 'height' );
+            },
+            outerWidth: function() {
+                return easy.getCss.call( this, 'width' ) + easy.getCss.call( this, 'padding-right' ) + easy.getCss.call( this, 'padding-left' ) + easy.getCss.call( this, 'border-right-width' ) + easy.getCss.call( this, 'border-left-width' );
+            },
+            outerHeight: function() {
+                return easy.getCss.call( this, 'height' ) + easy.getCss.call( this, 'padding-top' ) + easy.getCss.call( this, 'padding-bottom' ) + easy.getCss.call( this, 'border-top-width' ) + easy.getCss.call( this, 'border-bottom-width' );
             }
+
         },
         returnStorage = {},
         resizeStorage = {},
@@ -297,9 +323,7 @@
             opts.animClass.out = 'overlay-' + config.anim[opts.anim].out;
         }
 
-        if( !('eles' in self) ) {
-            self.eles = {};
-        }
+        if( !('eles' in self) ) self.eles = {};
 
         $mask = self.maskInit();
 
@@ -425,7 +449,8 @@
 
         } else {
             $el = document.createElement('div');
-            $el.className += 'overlay-custom-wrapper';
+            easy.addClass.call( $el, 'overlay-custom-wrapper' );
+            // $el.className += 'overlay-custom-wrapper';
             $el.appendChild(document.createTextNode(opts.content));
         }
 
@@ -441,7 +466,8 @@
             $container = document.createElement('div');
 
         self.eles.container = $container;
-        $container.className += 'overlay-container';
+        easy.addClass.call( $container, 'overlay-container' );
+        // $container.className += 'overlay-container';
 
         return $container;
     };
@@ -455,13 +481,16 @@
             $close = document.createElement('a');
 
         self.eles.header = $header;
-        $header.className += 'overlay-header';
+        easy.addClass.call( $header, 'overlay-header' );
+        // $header.className += 'overlay-header';
 
         self.eles.title = $title;
-        $title.className += 'overlay-title';
+        easy.addClass.call( $title, 'overlay-title' );
+        // $title.className += 'overlay-title';
 
         self.eles.close = $close;
-        $close.className += 'overlay-close-btn';
+        easy.addClass.call( $close, 'overlay-close-btn' );
+        // $close.className += 'overlay-close-btn';
         $close.innerText = '关闭';
 
         $header.appendChild( $title );
@@ -477,7 +506,8 @@
             $body = document.createElement('div');
 
         self.eles.body = $body;
-        $body.className += 'overlay-body';
+        easy.addClass.call( $body, 'overlay-body' );
+        // $body.className += 'overlay-body';
 
         $body.appendChild( self.eles.el );
 
@@ -492,7 +522,8 @@
             $title = document.createElement('div');
 
         self.eles.footer = $footer;
-        $footer.className += 'overlay-footer';
+        easy.addClass.call( $footer, 'overlay-footer' );
+        // $footer.className += 'overlay-footer';
 
         return $footer;
     };
@@ -504,8 +535,9 @@
             btn = document.createElement('a');
 
         btn.appendChild( document.createTextNode(text) );
-        btn.className += 'overlay-btn overlay-btn-' + i;
-        btn.className += className ? (' ' + className.join(' ')) : '';
+        easy.addClass.call( btn, 'overlay-btn overlay-btn-' + i + ( className ? (' ' + className.join(' ')) : '' ) );
+        // btn.className += 'overlay-btn overlay-btn-' + i;
+        // btn.className += className ? (' ' + className.join(' ')) : '';
 
         self.eles[fnName] = btn;
 
@@ -748,8 +780,8 @@
         var self = this;
 
         setZIndex.call( self );
-        setOffset.call( self );
         setSize.call( self );
+        setOffset.call( self );
 
     }
 
@@ -785,11 +817,18 @@
         } else if( opts.position && !(opts.serialNumber in resizeStorage) ) {
 
             resizeStorage[ opts.serialNumber ] = function() {
+                var windowWidth = document.documentElement.clientWidth,
+                    windowHeight = document.documentElement.clientHeight;
 
                 switch( opts.position ) {
                     case 'center' :
                     case 'c' :
                     //
+
+                    container.style.top = correctValue( ( windowHeight - easy.height.call(container) ) / 2 );
+                    container.style.left = correctValue( ( windowWidth - easy.width.call(container) ) / 2 );
+                    // console.log( easy.height.call( document.documentElement ) );
+
                     break;
 
                     case 'top' :
@@ -851,7 +890,7 @@
                 }
 
             };
-
+            resizeStorage[ opts.serialNumber ]();
 
 
         }
@@ -863,25 +902,26 @@
     function setSize() {
         var self = this,
             opts = self.options,
-            container = self.eles.container,
+            eles = self.eles,
+            container = eles.container,
             cStyle = container.style,
             windowWidth = document.documentElement.clientWidth,
             windowHeight = document.documentElement.clientHeight,
+            containerWidth, containerHeight,
+            headerHeight = eles.header ? easy.outerHeight.call( eles.header) : 0,
+            footerHeight = eles.footer ? easy.outerHeight.call( eles.footer) : 0,
             cRect;
 
-        if( opts.width ) cStyle.width = correctValue(opts.width);
-        if( opts.height ) cStyle.height = correctValue(opts.height);
+        if( opts.width ) cStyle.width = containerWidth = correctValue(opts.width);
+        if( opts.height ) cStyle.height = containerHeight = correctValue(opts.height);
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = container.getBoundingClientRect();
-        if( cRect.width > windowWidth ) cStyle.width = correctValue(windowWidth);
-        if( cRect.height > windowHeight ) cStyle.height = correctValue(windowHeight);
+        if( cRect.width > windowWidth ) cStyle.width = containerWidth = correctValue(windowWidth);
+        if( cRect.height > windowHeight ) cStyle.height = containerHeight = correctValue(windowHeight);
+
+        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight );
     }
-
-
-
-
-
 
 
 

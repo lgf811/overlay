@@ -56,13 +56,40 @@
 }
 
 
+.overlay-body { overflow: auto }
 
+.overlay-footer {
+    height: 25px;
+    padding: 15px 5px 15px;
+    font-size: 0;
+    line-height: 25px;
+    text-align: center
+}
+.overlay-btn {
+    display: inline-block;
+    height: 25px;
+    margin: 0 8px;
+    padding: 0 12px;
+    border-radius: 2px;
+    font-size: 14px;
+    vertical-align: top;
+    cursor: pointer;
+}
 
+.overlay-btn.enter {
+    background-color: #17b6e2;
+    color: #ffffff
+}
 
+.overlay-btn.enter:hover {
+    background-color: #31c4ec;
+}
 
-
-
-
-
-
+.overlay-btn.cancel {
+    background-color: #e0e0e0;
+    color: #545454
+}
+.overlay-btn.cancel:hover {
+    background-color: #e6e6e6;
+}
 /**/
