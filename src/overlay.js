@@ -323,7 +323,7 @@
         if( !opts.animClass ) {
             config = Overlay.config;
             opts.animClass = {};
-            console.log(config.anim)
+
             opts.animClass.in = 'overlay-' + config.anim[opts.anim].in;
             opts.animClass.out = 'overlay-' + config.anim[opts.anim].out;
         }
@@ -485,7 +485,8 @@
             opts = self.options,
             $header = document.createElement('div'),
             $title = document.createElement('span'),
-            $close = document.createElement('a');
+            $close = document.createElement('a'),
+            $tool = document.createElement('div');
 
         self.eles.header = $header;
         easy.addClass.call( $header, 'overlay-header' );
@@ -495,13 +496,18 @@
         easy.addClass.call( $title, 'overlay-title' );
         // $title.className += 'overlay-title';
 
+        easy.addClass.call( $tool, 'overlay-head-tool' );
+
         self.eles.close = $close;
         easy.addClass.call( $close, 'overlay-close-btn' );
         // $close.className += 'overlay-close-btn';
-        $close.innerText = '关闭';
+
+        $tool.appendChild( $close )
 
         $header.appendChild( $title );
-        $header.appendChild( $close );
+        $header.appendChild( $tool );
+
+
 
         return $header;
     };

@@ -6,8 +6,6 @@
  * Email: sblqtd@vip.qq.com
  */
 
-.a { z-index: 100000000 }
-
 .overlay-mask {
     position: fixed;
     display: none;
@@ -24,7 +22,7 @@
     overflow: hidden;
     border-radius: 2px;
     background-color: #ffffff;
-    box-shadow: 0 2px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 35px rgba(0, 0, 0, 0.2);
 
 }
 
@@ -41,25 +39,49 @@
 .overlay-header {
     position: relative;
     height: 35px;
-    padding: 0 45px 0 15px;
+    padding: 0 70px 0 15px;
     background-color: #e8e8e8;
+    cursor: move
+}
+
+.overlay-title {
+    display: inline-block;
     font-size: 14px;
     line-height: 35px;
+    vertical-align: top
 }
-.overlay-close-btn {
+
+.overlay-head-tool {
     position: absolute;
     top: 50%;
-    right: 15px;
-    height: 15px;
-    margin-top: -8px;
-    line-height: 15px;
+    right: 10px;
+    margin-top: -12px;
+    font-size: 0
+}
+
+.overlay-head-tool a {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin: 0 0 0 10px;
+    border: 5px solid transparent;
+    vertical-align: top;
+    cursor: pointer
+}
+
+.overlay-head-tool a:first-child {
+    margin-left: 0;
+}
+
+.overlay-close-btn {
+    background: url('overlay_btn_bg.svg') no-repeat 0 0;
+    background: url('overlay_btn_bg.png') no-repeat\0;
 }
 
 
 .overlay-body { overflow: auto }
 
 .overlay-footer {
-    height: 25px;
     padding: 15px 10px 15px;
     font-size: 0;
     line-height: 25px;
@@ -67,12 +89,12 @@
 }
 .overlay-btn {
     display: inline-block;
-    height: 23px;
+    height: 28px;
     margin: 0 8px;
-    padding: 0 11px;
+    padding: 0 15px;
     border-radius: 2px;
     border: 1px solid #dedede;
-    line-height: 23px;
+    line-height: 28px;
     font-size: 14px;
     vertical-align: top;
     cursor: pointer;
@@ -80,19 +102,19 @@
 
 .overlay-btn.enter,
 .overlay-btn.cancel {
-    height: 25px;
-    padding: 0 12px;
+    height: 30px;
+    padding: 0 16px;
     border: 0 none;
-    line-height: 25px;
+    line-height: 30px;
 }
 
 .overlay-btn.enter {
-    background-color: #17b6e2;
+    background-color: #24c85e;
     color: #ffffff
 }
 
 .overlay-btn.enter:hover {
-    background-color: #31c4ec;
+    background-color: #30cd68;
 }
 
 .overlay-btn.cancel {
@@ -103,6 +125,3 @@
     background-color: #e6e6e6;
 }
 /**/
-.overlay-close-btn {
-    cursor: pointer
-}

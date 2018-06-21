@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Overlay</title>
     <link rel="stylesheet" href="reset.css">
-    <link rel="stylesheet" href="../src/overlay.css">
+    <link rel="stylesheet" href="../src/theme/default/overlay.css">
 
 </head>
 <body>
@@ -97,23 +97,24 @@
                 el: '.o2',
                 // content: '123123',
                 title: '标题',
-                width: 240,
-                height: 160,
+                width: 340,
+                height: 260,
                 defOpen: true,
                 buttons: {
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消',
-                    'clear.clear-btn': '清除'
+                    'full.fu123123': '全屏'
                 }
             }).enter(function( e ) {
                 alert(123)
-
             }).cancel(function( e, obj ) {
                 console.log(obj);
             }).once(function() {
                 return {a: 123321};
-            }).clear(function() {
-                alert('清除');
+            }).closed(function() {
+                alert(123);
+            }).full(function( e, obj ) {
+                alert( JSON.stringify(obj) );
             });
 
             // new Overlay({
