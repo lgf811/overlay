@@ -60,20 +60,30 @@
 
 .overlay-footer {
     height: 25px;
-    padding: 15px 5px 15px;
+    padding: 15px 10px 15px;
     font-size: 0;
     line-height: 25px;
     text-align: center
 }
 .overlay-btn {
     display: inline-block;
-    height: 25px;
+    height: 23px;
     margin: 0 8px;
-    padding: 0 12px;
+    padding: 0 11px;
     border-radius: 2px;
+    border: 1px solid #dedede;
+    line-height: 23px;
     font-size: 14px;
     vertical-align: top;
     cursor: pointer;
+}
+
+.overlay-btn.enter,
+.overlay-btn.cancel {
+    height: 25px;
+    padding: 0 12px;
+    border: 0 none;
+    line-height: 25px;
 }
 
 .overlay-btn.enter {
@@ -93,3 +103,6 @@
     background-color: #e6e6e6;
 }
 /**/
+.overlay-close-btn {
+    cursor: pointer
+}

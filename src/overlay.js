@@ -226,6 +226,11 @@
     // Overlay 构造函数
     function Overlay( options ) {
 
+        var $el = options.el ? document.querySelector(options.el) : '';
+
+        if( $el && $el.overlay && $el.overlay instanceof Overlay ) return $el.overlay
+
+
         var self = this,
             defOpts = extend({}, Overlay.defaultOptions, options );
 
@@ -236,9 +241,8 @@
         // self.options.width = 10000;
         self.options.zIndex = ++zIndex;
         self.options.serialNumber = serialNumber++;
-        self.init();
 
-        return self;
+        return self.init();
     }
 
     // Overlay 默认属性
@@ -319,6 +323,7 @@
         if( !opts.animClass ) {
             config = Overlay.config;
             opts.animClass = {};
+            console.log(config.anim)
             opts.animClass.in = 'overlay-' + config.anim[opts.anim].in;
             opts.animClass.out = 'overlay-' + config.anim[opts.anim].out;
         }
@@ -333,6 +338,7 @@
         if( el ) {
             // 找到核心元素 并将遮罩层插入到dom节点中
             self.eles.el = $el = document.querySelector(el);
+
             $el.parentNode.insertBefore( $mask, $el );
 
         } else if( content ) {
@@ -372,6 +378,7 @@
         // 如果默认初始化就打开，则执行open方法
         if( opts.defOpen ) self.open();
 
+        return self;
     };
 
 
@@ -625,19 +632,8 @@
             easy.on.call( eles.container, 'animationend', animationEndHandler.bind(self) );
         }
 
-        if( !('closeHandler' in self) ) {
-            Overlay.prototype.closeHandler = function() {
-                easy.addClass.call( eles.mask, 'close-mask' );
-                if( 'ontransitionend' in window ) {
-                    easy.addClass.call( eles.container, 'close-anim-container' );
-                } else {
-                    easy.addClass.call( eles.container, 'close-container' );
-                }
-            };
-        }
-
         if( eles.close ) {
-            easy.on.call( eles.close, 'click', self.closeHandler );
+            easy.on.call( eles.close, 'click', closeHandler.bind( self ) );
             // self.eles.close.addEventListener('click', self.closeHandler, false);
         }
 
@@ -654,7 +650,11 @@
             config = Overlay.config;
 
         easy.addClass.call( self.eles.mask, 'open');
-        easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.in);
+        if( supportAnim ) {
+            easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.in);
+        } else {
+            easy.addClass.call( self.eles.container, 'open');
+        }
 
         if( !self.eles.container.getAttribute('style') ) setStyle.call( self );
 
@@ -666,8 +666,14 @@
         var self = this,
             opts = self.options;
 
-            easy.removeClass.call( self.eles.mask, 'open');
+
+        easy.removeClass.call( self.eles.mask, 'open');
+        if( supportAnim ) {
             easy.addClass.call( self.eles.container, opts.animClass.out);
+        } else {
+            easy.removeClass.call( self.eles.container, 'open');
+        }
+
 
         return self;
     };
@@ -758,13 +764,16 @@
             easy.removeClass.call( eles.container, opts.animClass.in);
         } else if( easy.hasClass.call( eles.container, opts.animClass.out ) ) {
             triggerEventHandler.call( self, 'closed' );
-            easy.removeClass.call( eles.container, opts.animClass.out);
+            easy.removeClass.call( eles.container, opts.animClass.out + ' open');
+            easy.removeClass.call( eles.mask, 'open');
         }
 
     }
 
 
-
+    function closeHandler() {
+        this.close();
+    }
 
 
 

@@ -11,6 +11,7 @@
 </head>
 <body>
     <div class="o">123123123</div>
+    <div class="o2">123123123</div>
     <br><br><br><br><br>
     <script src="../src/overlay.js"></script>
     <script>
@@ -93,15 +94,16 @@
             });
 
             var win2 = new Overlay({
-                // el: '.o',
-                content: '123123',
+                el: '.o2',
+                // content: '123123',
                 title: '标题',
                 width: 240,
                 height: 160,
                 defOpen: true,
                 buttons: {
                     'enter.enter.enter-1': '确定',
-                    'cancel.cancel': '取消'
+                    'cancel.cancel': '取消',
+                    'clear.clear-btn': '清除'
                 }
             }).enter(function( e ) {
                 alert(123)
@@ -110,6 +112,8 @@
                 console.log(obj);
             }).once(function() {
                 return {a: 123321};
+            }).clear(function() {
+                alert('清除');
             });
 
             // new Overlay({
