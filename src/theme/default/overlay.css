@@ -43,6 +43,9 @@
     background-color: #e8e8e8;
     cursor: move
 }
+.overlay-header.not-drag {
+    cursor: default
+}
 
 .overlay-title {
     display: inline-block;

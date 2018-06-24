@@ -50,6 +50,41 @@
         }
     }
 
+    if (!Array.prototype.indexOf) {
+        Array.prototype.indexOf = function( val, start ) {
+
+            var index = -1,
+                self = this,
+                len = this.length, i = 0;
+
+            if( !arr ) return index;
+
+            for( ; i < len; i++ ) {
+                if( self[i] === val ) {
+                    return i;
+                }
+            }
+        };
+
+        Array.prototype.indexOf = function (elt /*, from*/) {
+            var len = this.length >>> 0;
+
+            var from = Number(arguments[1]) || 0;
+            from = (from < 0)
+             ? Math.ceil(from)
+             : Math.floor(from);
+            if (from < 0)
+                from += len;
+
+            for (; from < len; from++) {
+                if (from in this &&
+              this[from] === elt)
+                    return from;
+            }
+            return -1;
+        };
+    }
+
     var extend = function() {
             var argus = _slice.call(arguments),
                 newFlag, baseObj, mergeObjGroup, mergeObj,
@@ -175,6 +210,13 @@
                     this.addEventListener( eventName, handler, false );
                 }
             },
+            off: function( eventName, handler ) {
+                if( document.all ) {
+                    this.detachEvent( 'on' + eventName, handler );
+                } else {
+                    this.removeEventListener( eventName, handler, false );
+                }
+            },
             getCss: function( key ) {
                 var val, unitPattern = /(px|%)$/;
 
@@ -186,32 +228,37 @@
                 return val ? val.replace(/^\s+|\s$/, '') : val;
             },
             width: function() {
-                return easy.getCss.call( this, 'width' );
+                return this.clientHeight - easy.getCss.call( this, 'padding-right' ) - easy.getCss.call( this, 'padding-left' );
             },
             height: function() {
-                return easy.getCss.call( this, 'height' );
+                return this.clientHeight - easy.getCss.call( this, 'padding-top' ) - easy.getCss.call( this, 'padding-bottom' );
             },
             outerWidth: function() {
-                return easy.getCss.call( this, 'width' ) + easy.getCss.call( this, 'padding-right' ) + easy.getCss.call( this, 'padding-left' ) + easy.getCss.call( this, 'border-right-width' ) + easy.getCss.call( this, 'border-left-width' );
+                return this.offsetWidth;
             },
             outerHeight: function() {
-                return easy.getCss.call( this, 'height' ) + easy.getCss.call( this, 'padding-top' ) + easy.getCss.call( this, 'padding-bottom' ) + easy.getCss.call( this, 'border-top-width' ) + easy.getCss.call( this, 'border-bottom-width' );
+                return this.offsetHeight;
             }
 
         },
         returnStorage = {},
         resizeStorage = {},
+        dragMoveStorage = {},
         supportAnim = 'onanimationend' in window,
         //defaultCallbackHandlerName = [ 'once', 'ready' ],
-        dchni = 0;
+        dchni = 0,
+        dragInit = { x: 0, y: 0 },
+        dragCurr = { x: 0, y: 0 },
+        dragD = { x: 0, y: 0 },
+        dragFlag = false;
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
     if( ~location.protocol.indexOf('http')) {
-        sheets = _slice.call(document.styleSheets, 0);
+        sheets = document.styleSheets;
 
         for( i1 = 0; i1 < sheets.length; i1++ ) {
-            rules = _slice.call(sheets[i1].rules, 0);
+            rules = sheets[i1].rules;
 
             for( i2 in rules ) {
                 if( rules[i2].style && rules[i2].style.zIndex > zIndex ) {
@@ -256,7 +303,8 @@
         defOpen: false,
         anim: 'scale',
         position: 'center',
-        opacity: 0.4
+        opacity: 0.4,
+        drag: true
     };
 
     // Overlay 默认配置
@@ -268,34 +316,34 @@
 
         keyframes: {                                                                // 默认动画配置，可在创建实例前，追加新的动画名称
             fade: {
-                in: {
+                'enter': {
                     "0%": "opacity: 0;",
                     "100%": "opacity: 1;"
                 },
-                out: {
+                'leave': {
                     "0%": "opacity: 1;",
                     "100%": "opacity: 0;"
                 }
             },
 
             scale: {
-                in: {
+                'enter': {
                     "0%": "opacity: 0; transform: scale(0.6)",
                     "100%": "opacity: 1; transform: scale(1)"
                 },
-                out: {
+                'leave': {
                     "0%": "opacity: 1; transform: scale(1)",
                     "100%": "opacity: 0; transform: scale(0.6)"
                 }
             },
 
             spring: {
-                in: {
+                'enter': {
                     "0%": "opacity: 0; transform: scale(0.6)",
                     "80%": "opacity: 0.8; transform: scale(1.05)",
                     "100%": "opacity: 1; transform: scale(1)"
                 },
-                out: {
+                'leave': {
                     "0%": "opacity: 1; transform: scale(1)",
                     "20%": "opacity: 0.8; transform: scale(1.05)",
                     "100%": "opacity: 0; transform: scale(0.6)"
@@ -305,6 +353,7 @@
     };
 
     Overlay.prototype.init = function() {
+
         if( this.eles ) return this;
 
         var self = this,
@@ -320,12 +369,12 @@
         if( !self.ready ) self.defaultCallbackInit();
         if( supportAnim && !document.querySelector('#overlay-keyframes') ) keyFramesInit.call( self );
 
-        if( !opts.animClass ) {
+        if( !opts.animClass && supportAnim ) {
             config = Overlay.config;
             opts.animClass = {};
 
-            opts.animClass.in = 'overlay-' + config.anim[opts.anim].in;
-            opts.animClass.out = 'overlay-' + config.anim[opts.anim].out;
+            opts.animClass.enter = 'overlay-' + config.anim[opts.anim].enter;
+            opts.animClass.leave = 'overlay-' + config.anim[opts.anim].leave;
         }
 
         if( !('eles' in self) ) self.eles = {};
@@ -429,8 +478,8 @@
         $mask = document.createElement('div');
         self.eles.mask = $mask;
         self.eles.mask.style.opacity = opts.opacity;
-        self.eles.mask.style.filter = 'opacity(alpha=' + ( opts.opacity * 100 ) + ')';
-        $mask.classList.add('overlay-mask');
+        self.eles.mask.style.filter = 'alpha(opacity=' + ( opts.opacity * 100 ) + ')';
+        easy.addClass.call( $mask, 'overlay-mask' );
 
         return $mask;
     };
@@ -496,6 +545,7 @@
         easy.addClass.call( $title, 'overlay-title' );
         // $title.className += 'overlay-title';
 
+        self.eles.tool = $tool;
         easy.addClass.call( $tool, 'overlay-head-tool' );
 
         self.eles.close = $close;
@@ -592,15 +642,6 @@
         return self;
     };
 
-    // 调用装载好的 once 内的方法
-    // Overlay.prototype.callReadyHandler = function( e ) {
-    //     var self = this,
-    //         opts = self.options,
-    //         sn = opts.serialNumber;
-    //
-    //     returnStorage[ sn ] = self.handlers.ready[0].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
-    //     return self;
-    // };
 
     // 连缀时使用的once方法，用来在 iframe或是内容加载成功后调用该方法
     Overlay.prototype.once = function( fn ) {
@@ -643,7 +684,20 @@
             // self.eles.close.addEventListener('click', self.closeHandler, false);
         }
 
-
+        if( opts.drag ) {
+            easy.on.call( eles.header, 'mousedown', dragDownOrUpHandler.bind( self ) );
+            dragMoveStorage[ opts.serialNumber ] = function( e ) {
+                if( !dragFlag ) return;
+                var opts = self.options,
+                    eles = self.eles;
+                
+                eles.container.style.top = e.clientY - dragD.y + 'px';
+                eles.container.style.left = e.clientX - dragD.x + 'px';
+            }
+            easy.on.call( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
+        } else {
+            easy.addClass.call( eles.header, 'not-drag' );
+        }
 
         return self;
     };
@@ -657,12 +711,14 @@
 
         easy.addClass.call( self.eles.mask, 'open');
         if( supportAnim ) {
-            easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.in);
+            easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
         } else {
             easy.addClass.call( self.eles.container, 'open');
+            triggerEventHandler.call( self, 'once' );
+            triggerEventHandler.call( self, 'opened' );
         }
 
-        if( !self.eles.container.getAttribute('style') ) setStyle.call( self );
+        setStyle.call( self );
 
         return self;
     };
@@ -672,14 +728,13 @@
         var self = this,
             opts = self.options;
 
-
         easy.removeClass.call( self.eles.mask, 'open');
         if( supportAnim ) {
-            easy.addClass.call( self.eles.container, opts.animClass.out);
+            easy.addClass.call( self.eles.container, opts.animClass.leave);
         } else {
             easy.removeClass.call( self.eles.container, 'open');
+            triggerEventHandler.call( self, 'closed' );
         }
-
 
         return self;
     };
@@ -738,20 +793,17 @@
             onceFlag;
 
         i === undefined ? ( i = 0 ) : ( onceFlag = true );
-        // if( i === undefined ) {
-        //     i = 0;
-        // } else {
-        //     onceFlag = true;
-        // }
+
         if( !handlers ) return;
+
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
             returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
             if( onceFlag ) break;
         }
 
-        // 执行回
-        callback && callback();
+        // 执行补充的回调函数
+        typeof callback === 'function' && callback();
 
         return self;
     }
@@ -764,26 +816,49 @@
 
         if( e.target !== eles.container ) return;
 
-        if( easy.hasClass.call( eles.container, opts.animClass.in ) ) {
+        if( easy.hasClass.call( eles.container, opts.animClass.enter ) ) {
             triggerEventHandler.call( self, 'once' );
             triggerEventHandler.call( self, 'opened' );
-            easy.removeClass.call( eles.container, opts.animClass.in);
-        } else if( easy.hasClass.call( eles.container, opts.animClass.out ) ) {
+            easy.removeClass.call( eles.container, opts.animClass.enter);
+        } else if( easy.hasClass.call( eles.container, opts.animClass.leave ) ) {
             triggerEventHandler.call( self, 'closed' );
-            easy.removeClass.call( eles.container, opts.animClass.out + ' open');
+            easy.removeClass.call( eles.container, opts.animClass.leave + ' open');
             easy.removeClass.call( eles.mask, 'open');
         }
 
     }
 
-
+    // 关闭事件监听函数
     function closeHandler() {
         this.close();
     }
 
+    // 拖拽事件监听函数
+    function dragDownOrUpHandler( e ) {
+        var self = this,
+            opts = self.options,
+            eles = self.eles;
 
+        // mousedown
+        if( e.target !== eles.title && e.target !== eles.header ) return;
 
+        if( e.type === 'mousedown' ) {
 
+            dragInit.x = e.clientX;
+            dragInit.y = e.clientY;
+            dragCurr.x = eles.container.offsetLeft;
+            dragCurr.y = eles.container.offsetTop;
+            dragD.x = dragInit.x - dragCurr.x;
+            dragD.y = dragInit.y - dragCurr.y;
+
+            dragFlag = opts.serialNumber;
+
+            return;
+        }
+
+        dragFlag = 0;
+        // mouseup
+    }
 
 
     ////////
@@ -832,6 +907,9 @@
         } else if( opts.position && !(opts.serialNumber in resizeStorage) ) {
 
             resizeStorage[ opts.serialNumber ] = function() {
+
+                if( !easy.hasClass.call( container, 'open' ) ) return;
+
                 var windowWidth = document.documentElement.clientWidth,
                     windowHeight = document.documentElement.clientHeight;
 
@@ -905,9 +983,11 @@
                 }
 
             };
+
+        }
+
+        if( opts.position && resizeStorage[ opts.serialNumber ] ) {
             resizeStorage[ opts.serialNumber ]();
-
-
         }
     }
 
@@ -1058,6 +1138,15 @@
 
             resizeStorage[ i ]();
         }
+
+    } );
+
+    easy.on.call( document.body, 'mousemove', function( e ) {
+        var i;
+        // 查看序号是否是原始值，是的话，则说明没有创建过组件
+        if(!serialNumber) return;
+
+        typeof dragMoveStorage[ dragFlag ] === 'function' && dragMoveStorage[ dragFlag ]( e );
 
     } );
 

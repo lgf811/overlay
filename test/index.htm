@@ -13,53 +13,10 @@
     <div class="o">123123123</div>
     <div class="o2">123123123</div>
     <br><br><br><br><br>
+    <div id="a">123123213</div>
     <script src="../src/overlay.js"></script>
     <script>
-        // var _slice = Array.prototype.slice;
-        // var extend = function() {
-        //         var argus = _slice.call(arguments),
-        //             newFlag, baseObj, mergeObjGroup, mergeObj,
-        //             i1, i2;
-        //
-        //         if( typeof argus[0] !== 'boolean' && typeof argus[0] !== 'object' ) return argus[0];
-        //
-        //         if( typeof argus[0] === 'boolean' && argus[0] ) {
-        //             newFlag = argus[0];
-        //             argus.splice(0, 1);
-        //             baseObj = 'length' in argus[0] && argus[0] instanceof Array ? [] : {};
-        //         } else {
-        //             baseObj = argus[0];
-        //             argus.splice(0, 1);
-        //         }
-        //         mergeObjGroup = argus;
-        //
-        //         for( i1 = 0; i1 < mergeObjGroup.length; i1++ ) {
-        //             mergeObj = mergeObjGroup[i1];
-        //
-        //             if( typeof mergeObj !== 'object' ) continue;
-        //
-        //             for( i2 in mergeObj ) {
-        //                 if( newFlag && typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
-        //                     baseObj[i2] = 'length' in mergeObj[i2] && mergeObj[i2] instanceof Array ? [] : {};
-        //                     baseObj[i2] = extend( newFlag, baseObj[i2], mergeObj[i2] );
-        //                 } else {
-        //                     baseObj[i2] = mergeObj[i2];
-        //
-        //                 }
-        //             }
-        //         }
-        //
-        //         return baseObj;
-        //     }
-
-        // var a = [0, 1, 2, 3],
-        //     b = [ 4, 5, 6 ];
-        //
-        // var aa = extend( [], a, b );
-
-        // (function() {
-
-            //Overlay.config.keyframes.
+        (function() {
 
             var win = new Overlay({
                 el: '.o',
@@ -73,24 +30,6 @@
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消'
                 }
-            }).enter(function( e, obj ) {
-                console.log( obj );
-
-            }).cancel(function( e, obj ) {
-                console.log(obj);
-            }).ready(function() {
-                return {a: 123}
-            }).ready(function( e, obj ) {
-                obj.b = 321;
-                return obj;
-            }).once(function( e, obj ) {
-                console.log(123123);
-            }).once(function( e, obj ) {
-                console.log(321321);
-            }).opened(function() {
-                console.log('abcabc');
-            }).closed(function() {
-                console.log('closed');
             });
 
             var win2 = new Overlay({
@@ -116,13 +55,9 @@
             }).full(function( e, obj ) {
                 alert( JSON.stringify(obj) );
             });
+        })();
 
-            // new Overlay({
-            //     // el: '.o'
-            //     content: './frame.htm'
-            // });
 
-        // })();
     </script>
 </body>
 </html>
