@@ -217,21 +217,24 @@
                     this.removeEventListener( eventName, handler, false );
                 }
             },
-            getCss: function( key ) {
-                var val, unitPattern = /(px|%)$/;
+            css: function( key, val ) {
+                var unitPattern = /(px|%)$/;
 
-                val = this.currentStyle ? this.currentStyle[ key ] : window.getComputedStyle(this).getPropertyValue( key )
+                if( val === undefined ) {
+                    return this.currentStyle ? this.currentStyle[ key ] : window.getComputedStyle(this).getPropertyValue( key );
+                } else {
+                    tihs.style[ key ] = val;
+                }
 
-                return unitPattern.test(val) ? Number(val.split(unitPattern)[0]) : !isNaN( parseInt( val ) ) ? parseInt( val ) : 0;
             },
             trim: function( val ) {
                 return val ? val.replace(/^\s+|\s$/, '') : val;
             },
             width: function() {
-                return this.clientHeight - easy.getCss.call( this, 'padding-right' ) - easy.getCss.call( this, 'padding-left' );
+                return this.clientHeight - parseInt(easy.css.call( this, 'padding-right' )) - parseInt(easy.css.call( this, 'padding-left' ));
             },
             height: function() {
-                return this.clientHeight - easy.getCss.call( this, 'padding-top' ) - easy.getCss.call( this, 'padding-bottom' );
+                return this.clientHeight - parseInt(easy.css.call( this, 'padding-top' )) - parseInt(easy.css.call( this, 'padding-bottom' ));
             },
             outerWidth: function() {
                 return this.offsetWidth;
@@ -358,6 +361,7 @@
 
         var self = this,
             opts = self.options,
+            eles,
             el, content, $mask,
             $el, $container,
             config, animClassName;
@@ -378,6 +382,7 @@
         }
 
         if( !('eles' in self) ) self.eles = {};
+        eles = self.eles;
 
         $mask = self.maskInit();
 
@@ -386,18 +391,22 @@
 
         if( el ) {
             // 找到核心元素 并将遮罩层插入到dom节点中
-            self.eles.el = $el = document.querySelector(el);
+            eles.el = $el = document.querySelector(el);
 
             $el.parentNode.insertBefore( $mask, $el );
 
         } else if( content ) {
             document.body.appendChild($mask);
             // 如果没有指定dom 则使用渲染内容的形式
-            self.eles.el = $el = self.elInit();
+            eles.el = $el = self.elInit();
         }
 
         // 将实例绑到dom对象上，方便查找调用
         $el.overlay = self;
+
+        if( easy.css.call( $el, 'display' ) === 'none' ) {
+            easy.css.call( $el, 'display', 'none' );
+        }
 
         // 创建包含元素，将核心元素放到包含元素内
         $container = self.containerInit();
@@ -409,12 +418,12 @@
 
         // 根据配置，操作 header内的元素
         if( opts.title ) {
-            self.eles.title.innerText = opts.title;
+            eles.title.innerText = opts.title;
         } else {
-            self.eles.header.style.display = 'none';
+            easy.css.call( eles.header, 'display', 'none' );
         }
 
-        if( !opts.showClose ) self.eles.close.style.display = 'none';
+        if( !opts.showClose ) easy.css.call( eles.close, 'display', 'none' );
 
         // 根据配置，操作footer内的元素
         if( opts.buttons && typeof opts.buttons === 'object' ) {
@@ -477,8 +486,8 @@
 
         $mask = document.createElement('div');
         self.eles.mask = $mask;
-        self.eles.mask.style.opacity = opts.opacity;
-        self.eles.mask.style.filter = 'alpha(opacity=' + ( opts.opacity * 100 ) + ')';
+        easy.css.call( self.eles.mask, 'opacity', opts.opacity );
+        easy.css.call( self.eles.mask, 'filter', 'alpha(opacity=' + ( opts.opacity * 100 ) + ')' );
         easy.addClass.call( $mask, 'overlay-mask' );
 
         return $mask;
@@ -690,9 +699,10 @@
                 if( !dragFlag ) return;
                 var opts = self.options,
                     eles = self.eles;
+
+                easy.css.call( eles.container, 'top', e.clientY - dragD.y + 'px' );
+                easy.css.call( eles.container, 'left', e.clientX - dragD.x + 'px' );
                 
-                eles.container.style.top = e.clientY - dragD.y + 'px';
-                eles.container.style.left = e.clientX - dragD.x + 'px';
             }
             easy.on.call( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
         } else {
@@ -740,7 +750,16 @@
     };
 
 
+    // 组件销毁
+    Overlay.prototype.destroy = function() {
+        var self = this,
+            opts = self.options;
 
+
+
+        delete self.eles;
+
+    };
 
 
 
