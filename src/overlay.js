@@ -131,7 +131,7 @@
             addClass: function( cls ) {
                 var clsn = this.className;
 
-                if( !cls ) return;
+                if( !cls || cls && easy.hasClass.call( this, cls ) ) return;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
@@ -165,11 +165,21 @@
             },
             hasClass: function( cls ) {
                 var clsn = this.className,
-                    parent = this.parentNode;
+                    i = 0, flag = false;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
+                cls = ~cls.indexOf(' ') ? cls.split(' ') : [ cls ]
 
-                return !!~clsn.indexOf(cls);
+                for( ; i < cls.length; i++ ) {
+
+                    if( ~clsn.indexOf( cls[i] ) ) {
+                        flag = true;
+                    } else {
+                        flag = false;
+                    }
+                }
+
+                return flag;
             },
             parents: function( cls ) {
                 var self = this,
@@ -223,7 +233,7 @@
                 if( val === undefined ) {
                     return this.currentStyle ? this.currentStyle[ key ] : window.getComputedStyle(this).getPropertyValue( key );
                 } else {
-                    tihs.style[ key ] = val;
+                    this.style[ key ] = val;
                 }
 
             },
@@ -257,19 +267,19 @@
         // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
         // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
-    if( ~location.protocol.indexOf('http')) {
-        sheets = document.styleSheets;
-
-        for( i1 = 0; i1 < sheets.length; i1++ ) {
-            rules = sheets[i1].rules;
-
-            for( i2 in rules ) {
-                if( rules[i2].style && rules[i2].style.zIndex > zIndex ) {
-                    zIndex = Number(rules[i2].style.zIndex);
-                }
-            }
-        }
-    }
+    // if( ~location.protocol.indexOf('http')) {
+    //     sheets = document.styleSheets;
+    //
+    //     for( i1 = 0; i1 < sheets.length; i1++ ) {
+    //         rules = sheets[i1].rules;
+    //
+    //         for( i2 in rules ) {
+    //             if( rules[i2].style && rules[i2].style.zIndex > zIndex ) {
+    //                 zIndex = Number(rules[i2].style.zIndex);
+    //             }
+    //         }
+    //     }
+    // }
 
 
 
@@ -286,11 +296,11 @@
 
         self.options = defOpts;
 
-        if( !defOpts.el && !defOpts.content ) return;
+        if( !defOpts.el && !('content' in defOpts) && defOpts.content !== null ) return;
 
         // self.options.width = 10000;
         self.options.zIndex = ++zIndex;
-        self.options.serialNumber = serialNumber++;
+        self.options.serialNumber = ++serialNumber;
 
         return self.init();
     }
@@ -302,12 +312,13 @@
         height: null,                                                               // 高度
         content: null,                                                              // 被包含的字符串或是地址
         el: null,                                                                   // 被包含的元素
-        showClose: true,
         defOpen: false,
         anim: 'scale',
         position: 'center',
         opacity: 0.4,
-        drag: true
+        drag: true,
+        footAlign: 'center',
+        showClose: true
     };
 
     // Overlay 默认配置
@@ -355,6 +366,20 @@
         }
     };
 
+    Overlay.alert = function( options ) {
+
+        if( !options ) options = {};
+
+        return new Overlay(extend( {
+            title: '提示',
+            content: '',
+            closedDestroy: true,
+            showClose: false,
+            defOpen: true,
+            width: 280
+        }, options ));
+    };
+
     Overlay.prototype.init = function() {
 
         if( this.eles ) return this;
@@ -395,7 +420,8 @@
 
             $el.parentNode.insertBefore( $mask, $el );
 
-        } else if( content ) {
+        } else if( typeof content === 'string' ) {
+            console.log(123)
             document.body.appendChild($mask);
             // 如果没有指定dom 则使用渲染内容的形式
             eles.el = $el = self.elInit();
@@ -405,7 +431,7 @@
         $el.overlay = self;
 
         if( easy.css.call( $el, 'display' ) === 'none' ) {
-            easy.css.call( $el, 'display', 'none' );
+            easy.css.call( $el, 'display', 'block' );
         }
 
         // 创建包含元素，将核心元素放到包含元素内
@@ -486,9 +512,9 @@
 
         $mask = document.createElement('div');
         self.eles.mask = $mask;
-        easy.css.call( self.eles.mask, 'opacity', opts.opacity );
-        easy.css.call( self.eles.mask, 'filter', 'alpha(opacity=' + ( opts.opacity * 100 ) + ')' );
         easy.addClass.call( $mask, 'overlay-mask' );
+        easy.css.call( $mask, 'opacity', opts.opacity );
+        easy.css.call( $mask, 'filter', 'alpha(opacity=' + ( opts.opacity * 100 ) + ')' );
 
         return $mask;
     };
@@ -559,8 +585,6 @@
 
         self.eles.close = $close;
         easy.addClass.call( $close, 'overlay-close-btn' );
-        // $close.className += 'overlay-close-btn';
-
         $tool.appendChild( $close )
 
         $header.appendChild( $title );
@@ -594,7 +618,11 @@
             $title = document.createElement('div');
 
         self.eles.footer = $footer;
-        easy.addClass.call( $footer, 'overlay-footer' );
+        easy.addClass.call( $footer, 'overlay-footer overlay-footer-' + ( opts.footAlign ) );
+        if( !opts.buttons ) {
+            easy.css.call( $footer, 'display', 'none' );
+        }
+
         // $footer.className += 'overlay-footer';
 
         return $footer;
@@ -607,9 +635,8 @@
             btn = document.createElement('a');
 
         btn.appendChild( document.createTextNode(text) );
-        easy.addClass.call( btn, 'overlay-btn overlay-btn-' + i + ( className ? (' ' + className.join(' ')) : '' ) );
-        // btn.className += 'overlay-btn overlay-btn-' + i;
-        // btn.className += className ? (' ' + className.join(' ')) : '';
+
+        easy.addClass.call( btn, 'overlay-btn overlay-btn-' + i + ( className.length ? (' ' + className.join(' ')) : '' ) );
 
         self.eles[fnName] = btn;
 
@@ -681,20 +708,17 @@
 
         // 监听窗口动画事件
         if( supportAnim ) {
-            // elemsBindEvent.call( self, self.eles.container, 'once', 'webkitAnimationEnd');
-            // elemsBindEvent.call( self, self.eles.container, 'once', 'animationend');
-
             easy.on.call( eles.container, 'webkitAnimationEnd', animationEndHandler.bind(self) );
             easy.on.call( eles.container, 'animationend', animationEndHandler.bind(self) );
         }
 
         if( eles.close ) {
             easy.on.call( eles.close, 'click', closeHandler.bind( self ) );
-            // self.eles.close.addEventListener('click', self.closeHandler, false);
         }
 
         if( opts.drag ) {
             easy.on.call( eles.header, 'mousedown', dragDownOrUpHandler.bind( self ) );
+
             dragMoveStorage[ opts.serialNumber ] = function( e ) {
                 if( !dragFlag ) return;
                 var opts = self.options,
@@ -702,7 +726,7 @@
 
                 easy.css.call( eles.container, 'top', e.clientY - dragD.y + 'px' );
                 easy.css.call( eles.container, 'left', e.clientX - dragD.x + 'px' );
-                
+
             }
             easy.on.call( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
         } else {
@@ -720,8 +744,12 @@
             config = Overlay.config;
 
         easy.addClass.call( self.eles.mask, 'open');
+
         if( supportAnim ) {
             easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
+            setTimeout(function() {
+                triggerEventHandler.call( self, 'once' );
+            });
         } else {
             easy.addClass.call( self.eles.container, 'open');
             triggerEventHandler.call( self, 'once' );
@@ -760,8 +788,6 @@
         delete self.eles;
 
     };
-
-
 
 
     ////////
@@ -836,7 +862,6 @@
         if( e.target !== eles.container ) return;
 
         if( easy.hasClass.call( eles.container, opts.animClass.enter ) ) {
-            triggerEventHandler.call( self, 'once' );
             triggerEventHandler.call( self, 'opened' );
             easy.removeClass.call( eles.container, opts.animClass.enter);
         } else if( easy.hasClass.call( eles.container, opts.animClass.leave ) ) {
@@ -1163,7 +1188,7 @@
     easy.on.call( document.body, 'mousemove', function( e ) {
         var i;
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
-        if(!serialNumber) return;
+        if(!serialNumber && !dragMoveStorage[ dragFlag ]) return;
 
         typeof dragMoveStorage[ dragFlag ] === 'function' && dragMoveStorage[ dragFlag ]( e );
 

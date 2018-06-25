@@ -87,8 +87,7 @@
 .overlay-footer {
     padding: 15px 10px 15px;
     font-size: 0;
-    line-height: 25px;
-    text-align: center
+    line-height: 25px
 }
 .overlay-btn {
     display: inline-block;
@@ -128,3 +127,12 @@
     background-color: #e6e6e6;
 }
 /**/
+.overlay-footer-center {
+    text-align: center
+}
+.overlay-footer-right {
+    text-align: right
+}
+.overlay-footer-left {
+    text-align: left
+}
