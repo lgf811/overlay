@@ -251,6 +251,18 @@
             },
             outerHeight: function() {
                 return this.offsetHeight;
+            },
+            attr: function( key, val ) {
+                if( val !== undefined ) {
+                    this.setAttribute(key, val)
+                    return this;
+                }
+                return this.getAttribute(key);
+            },
+            removeAttr: function( key ) {
+                if( key === undefined ) return this;
+                this.removeAttribute(key);
+                return this
             }
 
         },
@@ -264,8 +276,6 @@
         dragCurr = { x: 0, y: 0 },
         dragD = { x: 0, y: 0 },
         dragFlag = false;
-        // urlPattern = /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi;
-        // /^\.?\/|^https?:\/\/|\/$|[a-z0-9-_=\?]\/[a-z0-9-_=\?]/gi
 
     // if( ~location.protocol.indexOf('http')) {
     //     sheets = document.styleSheets;
@@ -374,9 +384,13 @@
             title: '提示',
             content: '',
             closedDestroy: true,
-            showClose: false,
+            // showClose: false,
             defOpen: true,
-            width: 280
+            width: 280,
+            buttons: {
+                'enter.enter-btn': '确定',
+                'enter.cancel-btn': '取消'
+            }
         }, options ));
     };
 
@@ -421,7 +435,6 @@
             $el.parentNode.insertBefore( $mask, $el );
 
         } else if( typeof content === 'string' ) {
-            console.log(123)
             document.body.appendChild($mask);
             // 如果没有指定dom 则使用渲染内容的形式
             eles.el = $el = self.elInit();
@@ -486,7 +499,6 @@
                         opts = self.options;
 
                     if( !(hn in self.handlers) ) self.handlers[ hn ] = [];
-
                     // once 在打开界面后，执行一次即可
                     if( hn === 'once' && self.handlers[ hn ].length === 1 ) return self;
 
@@ -781,11 +793,47 @@
     // 组件销毁
     Overlay.prototype.destroy = function() {
         var self = this,
-            opts = self.options;
+            opts = self.options,
+            eles = self.eles,
+            i,
+            dchn = Overlay.config.defaultCallbackHandlerName;
 
+        for( i in self.buttonsGroup ) {
+            if( self.buttonsGroup[i] ) {
+                self.buttonsGroup[i].parentNode.removeChild( self.buttonsGroup[i] );
+                delete self.buttonsGroup[i];
+            }
+        }
+        delete self.buttonsGroup;
 
+        if( opts.el ) {
+            eles.container.parentNode.insertBefore( eles.el, eles.container );
+            easy.removeAttr.call( eles.el, 'style' );
+            delete eles.el;
+        }
+
+        for( i in self.eles ) {
+            if( self.eles[i] && self.eles[i].parentNode ) {
+                self.eles[i].parentNode.removeChild( self.eles[i] );
+            }
+        }
+
+        for( i in self.handlers ) {
+            if( self[i] ) {
+                delete self.handlers[i];
+                delete self[i];
+            }
+        }
+        delete self.handlers;
+
+        for( i = 0; i < dchn.length; i++ ) {
+            if( self[ dchn[i] ] ) {
+                delete self[ dchn[i] ];
+            }
+        }
 
         delete self.eles;
+        delete self.options;
 
     };
 
@@ -835,7 +883,8 @@
             opts = self.options,
             sn = opts.serialNumber,
             handlers = self.handlers[ handlerName ],
-            onceFlag;
+            onceFlag,
+            returnTemp, i, j;
 
         i === undefined ? ( i = 0 ) : ( onceFlag = true );
 
@@ -843,7 +892,11 @@
 
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
-            returnStorage[ sn ] = handlers[ i ].call( self, e, returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+            returnStorage[ sn ] = handlers[ i ].call(
+                self,
+                e,
+                returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+
             if( onceFlag ) break;
         }
 
@@ -964,7 +1017,6 @@
 
                     container.style.top = correctValue( ( windowHeight - easy.height.call(container) ) / 2 );
                     container.style.left = correctValue( ( windowWidth - easy.width.call(container) ) / 2 );
-                    // console.log( easy.height.call( document.documentElement ) );
 
                     break;
 

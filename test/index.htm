@@ -16,7 +16,7 @@
     <div id="a">123123213</div>
     <script src="../src/overlay.js"></script>
     <script>
-        (function() {
+        //(function() {
 
             var win = new Overlay({
                 el: '.o',
@@ -45,17 +45,18 @@
                     'full.fu123123': '全屏'
                 }
             }).enter(function( e ) {
-                alert(123)
+                //alert(123)
+
             }).cancel(function( e, obj ) {
                 console.log(obj);
-            }).once(function() {
-                return {a: 123321};
-            }).closed(function() {
-                alert(123);
+            }).once(function( e, obj ) {
+                //return Overlay.alert();
+            }).closed(function( e, obj ) {
+                console.log(this)
             }).full(function( e, obj ) {
                 alert( JSON.stringify(obj) );
             });
-        })();
+        //})();
 
 
     </script>
