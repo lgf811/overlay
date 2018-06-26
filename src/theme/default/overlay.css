@@ -110,20 +110,24 @@
     line-height: 30px;
 }
 
-.overlay-btn.enter {
+.overlay-btn.enter,
+.overlay-btn.enter-btn {
     background-color: #24c85e;
     color: #ffffff
 }
 
-.overlay-btn.enter:hover {
+.overlay-btn.enter:hover,
+.overlay-btn.enter-btn:hover {
     background-color: #30cd68;
 }
 
-.overlay-btn.cancel {
+.overlay-btn.cancel,
+.overlay-btn.cancel-btn {
     background-color: #e0e0e0;
     color: #545454
 }
-.overlay-btn.cancel:hover {
+.overlay-btn.cancel:hover,
+.overlay-btn.cancel-btn:hover {
     background-color: #e6e6e6;
 }
 /**/
@@ -135,4 +139,9 @@
 }
 .overlay-footer-left {
     text-align: left
+}
+
+
+.overlay-alert-body {
+    padding: 20px 15px 10px
 }

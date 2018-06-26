@@ -93,12 +93,10 @@
             if( typeof argus[0] !== 'boolean' && typeof argus[0] !== 'object' ) return argus[0];
 
             if( typeof argus[0] === 'boolean' && argus[0] ) {
-                newFlag = argus[0];
-                argus.splice(0, 1);
-                baseObj = 'length' in argus[0] && argus[0] instanceof Array ? [] : {};
+                newFlag = argus.splice(0, 1)[0];
+                baseObj = argus.splice(0, 1)[0];
             } else {
-                baseObj = argus[0];
-                argus.splice(0, 1);
+                baseObj = argus.splice(0, 1)[0];
             }
             mergeObjGroup = argus;
 
@@ -108,10 +106,10 @@
                 if( typeof mergeObj !== 'object' ) continue;
 
                 for( i2 in mergeObj ) {
-
                     if( newFlag && typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
-                        baseObj[i2] = 'length' in mergeObj[i2] && mergeObj[i2] instanceof Array ? [] : {};
+                        if( !(i2 in baseObj) ) baseObj[i2] = 'length' in mergeObj[i2] && mergeObj[i2] instanceof Array ? [] : {};
                         baseObj[i2] = extend( newFlag, baseObj[i2], mergeObj[i2] );
+
                     } else {
                         baseObj[i2] = mergeObj[i2];
 
@@ -241,7 +239,7 @@
                 return val ? val.replace(/^\s+|\s$/, '') : val;
             },
             width: function() {
-                return this.clientHeight - parseInt(easy.css.call( this, 'padding-right' )) - parseInt(easy.css.call( this, 'padding-left' ));
+                return this.clientWidth - parseInt(easy.css.call( this, 'padding-right' )) - parseInt(easy.css.call( this, 'padding-left' ));
             },
             height: function() {
                 return this.clientHeight - parseInt(easy.css.call( this, 'padding-top' )) - parseInt(easy.css.call( this, 'padding-bottom' ));
@@ -328,7 +326,8 @@
         opacity: 0.4,
         drag: true,
         footAlign: 'center',
-        showClose: true
+        showClose: true,
+        bodyClass: null
     };
 
     // Overlay 默认配置
@@ -374,24 +373,6 @@
                 }
             }
         }
-    };
-
-    Overlay.alert = function( options ) {
-
-        if( !options ) options = {};
-
-        return new Overlay(extend( {
-            title: '提示',
-            content: '',
-            closedDestroy: true,
-            // showClose: false,
-            defOpen: true,
-            width: 280,
-            buttons: {
-                'enter.enter-btn': '确定',
-                'enter.cancel-btn': '取消'
-            }
-        }, options ));
     };
 
     Overlay.prototype.init = function() {
@@ -554,7 +535,7 @@
             $el = document.createElement('div');
             easy.addClass.call( $el, 'overlay-custom-wrapper' );
             // $el.className += 'overlay-custom-wrapper';
-            $el.appendChild(document.createTextNode(opts.content));
+            $el.innerHTML = opts.content;
         }
 
         document.body.appendChild($el);
@@ -614,7 +595,7 @@
             $body = document.createElement('div');
 
         self.eles.body = $body;
-        easy.addClass.call( $body, 'overlay-body' );
+        easy.addClass.call( $body, 'overlay-body' + ( opts.bodyClass ? ( ' ' + opts.bodyClass ) : '' ) );
         // $body.className += 'overlay-body';
 
         $body.appendChild( self.eles.el );
@@ -784,10 +765,44 @@
         } else {
             easy.removeClass.call( self.eles.container, 'open');
             triggerEventHandler.call( self, 'closed' );
+
+            if( opts.closedDestroy ) self.destroy();
         }
 
         return self;
     };
+
+    // 将需要存的值存到当前对象内 可以在回调方法内被取到
+    Overlay.prototype.push = function( val ) {
+        var self = this,
+            sn = self.options.serialNumber;
+
+        returnStorage[ sn ] = val;
+
+        return self;
+    }
+
+    // 将存储的值拿出来
+    Overlay.prototype.pull = function() {
+        var self = this,
+            sn = self.options.serialNumber;
+
+        return returnStorage[ sn ];
+    }
+
+    // 将弹出框置顶
+    Overlay.prototype.setTop = function() {
+        var self = this,
+            opts = self.options;
+
+        if( opts.zIndex < zIndex ) {
+            opts.zIndex = ++zIndex;
+
+            setZIndex.call( self );
+        }
+
+        return self;
+    }
 
 
     // 组件销毁
@@ -795,47 +810,113 @@
         var self = this,
             opts = self.options,
             eles = self.eles,
+            sn = opts.serialNumber,
             i,
             dchn = Overlay.config.defaultCallbackHandlerName;
 
+        delete returnStorage[ sn ]; // 移除存储的当前实例的数据
+        delete resizeStorage[ sn ]; // 移除存储的当前实例的重置函数
+        delete dragMoveStorage[ sn ]; // 移除存储的当前实例的拖拽函数
+
+        // 移除按钮集合内的dom节点与对象
         for( i in self.buttonsGroup ) {
             if( self.buttonsGroup[i] ) {
                 self.buttonsGroup[i].parentNode.removeChild( self.buttonsGroup[i] );
                 delete self.buttonsGroup[i];
             }
         }
+        // 移除按钮集合对象
         delete self.buttonsGroup;
 
+        // 判断el是否为原本就存在的dom节点，是的话，则还原到原来的位置
         if( opts.el ) {
             eles.container.parentNode.insertBefore( eles.el, eles.container );
             easy.removeAttr.call( eles.el, 'style' );
             delete eles.el;
         }
 
+        // 将所有实例创建的dom节点移除
         for( i in self.eles ) {
             if( self.eles[i] && self.eles[i].parentNode ) {
                 self.eles[i].parentNode.removeChild( self.eles[i] );
+                delete self.eles[i];
             }
         }
 
+        // 移除所有实例监听的事件函数
         for( i in self.handlers ) {
             if( self[i] ) {
                 delete self.handlers[i];
                 delete self[i];
             }
         }
+        // 移除事件存储对象
         delete self.handlers;
 
+        // 移除内置回调函数对象
         for( i = 0; i < dchn.length; i++ ) {
             if( self[ dchn[i] ] ) {
                 delete self[ dchn[i] ];
             }
         }
 
+        // 移除dom节点存储对象
         delete self.eles;
+
+        // 移除options对象
         delete self.options;
 
+        return self;
     };
+
+
+    ////////
+    //////// 常用类型弹出框代码块
+    ////////
+
+    Overlay.alert = function( options ) {
+
+        if( !options ) options = {};
+
+        return new Overlay(extend( true, {
+            title: '提示',
+            content: '',
+            closedDestroy: true,
+            showClose: false,
+            defOpen: true,
+            width: 280,
+            bodyClass: 'overlay-alert-body',
+            buttons: {
+                'enter.enter-btn': '确定'
+            }
+        }, options )).enter(function() {
+            this.close();
+        });
+    };
+
+    Overlay.confirm = function( options ) {
+
+        if( !options ) options = {};
+
+        return new Overlay(extend( true, {
+            title: '提示',
+            content: '',
+            closedDestroy: true,
+            showClose: false,
+            defOpen: true,
+            width: 280,
+            bodyClass: 'overlay-alert-body',
+            buttons: {
+                'enter.enter-btn': '确定',
+                'cancel.cancel-btn': '取消'
+            }
+        }, options )).cancel(function() {
+            this.close();
+        });
+    };
+
+
+
 
 
     ////////
@@ -921,6 +1002,7 @@
             triggerEventHandler.call( self, 'closed' );
             easy.removeClass.call( eles.container, opts.animClass.leave + ' open');
             easy.removeClass.call( eles.mask, 'open');
+            if( opts.closedDestroy ) self.destroy();
         }
 
     }
@@ -1014,7 +1096,6 @@
                     case 'center' :
                     case 'c' :
                     //
-
                     container.style.top = correctValue( ( windowHeight - easy.height.call(container) ) / 2 );
                     container.style.left = correctValue( ( windowWidth - easy.width.call(container) ) / 2 );
 
@@ -1111,7 +1192,7 @@
         if( cRect.width > windowWidth ) cStyle.width = containerWidth = correctValue(windowWidth);
         if( cRect.height > windowHeight ) cStyle.height = containerHeight = correctValue(windowHeight);
 
-        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight );
+        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) );
     }
 
 
