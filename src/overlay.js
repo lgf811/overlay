@@ -830,6 +830,7 @@
 
         // 判断el是否为原本就存在的dom节点，是的话，则还原到原来的位置
         if( opts.el ) {
+            delete eles.el.overlay;
             eles.container.parentNode.insertBefore( eles.el, eles.container );
             easy.removeAttr.call( eles.el, 'style' );
             delete eles.el;
