@@ -267,6 +267,7 @@
         returnStorage = {},
         resizeStorage = {},
         dragMoveStorage = {},
+        handlersStorage = {},
         supportAnim = 'onanimationend' in window,
         //defaultCallbackHandlerName = [ 'once', 'ready' ],
         dchni = 0,
@@ -308,7 +309,15 @@
 
         // self.options.width = 10000;
         self.options.zIndex = ++zIndex;
-        self.options.serialNumber = ++serialNumber;
+        if( Object.defineProperty ) {
+            Object.defineProperty( self.options, 'serialNumber', {
+                value: ++serialNumber,
+                configurable: true
+            } );
+        } else {
+            self.options.serialNumber = ++serialNumber;
+        }
+
 
         return self.init();
     }
@@ -381,13 +390,14 @@
 
         var self = this,
             opts = self.options,
+            sn = opts.serialNumber,
             eles,
             el, content, $mask,
             $el, $container,
             config, animClassName;
 
-        if( !('handlers' in self) ) {
-            self.handlers = {};
+        if( !(sn in handlersStorage) ) {
+            handlersStorage[ sn ] = {};
         }
 
         if( !self.ready ) self.defaultCallbackInit();
@@ -471,28 +481,30 @@
 
         // 将默认的回调方法输出
         for( dchni = 0; dchni < dchn.length; dchni++ ) {
-            (function( hn ) {
+            (function( hn, sn ) {
                 if( hn in self ) return;
 
                 self[hn] = function( fn ) {
 
                     var self = this,
-                        opts = self.options;
+                        opts = self.options,
+                        handlers = handlersStorage[ sn ];
 
-                    if( !(hn in self.handlers) ) self.handlers[ hn ] = [];
+                    if( !(hn in handlersStorage[ sn ]) ) handlers[ hn ] = [];
                     // once 在打开界面后，执行一次即可
-                    if( hn === 'once' && self.handlers[ hn ].length === 1 ) return self;
 
-                    self.handlers[ hn ].push(fn);
+                    if( hn === 'once' && handlers[ hn ].length === 1 ) return self;
+
+                    handlers[ hn ].push(fn);
 
                     // 如果是静态元素或是普通自符串，并且执行方法是ready的话，直接调用函数即可实现ready方法
                     if( ( self.options.el || !hasUrl ) && hn === 'ready' ) {
-                        triggerEventHandler.call( self, 'ready', null, null, self.handlers[ hn ].length - 1 );
+                        triggerEventHandler.call( self, 'ready', null, null, handlers[ hn ].length - 1 );
                     }
 
                     return self;
                 };
-            })( dchn[dchni] );
+            })( dchn[dchni], sn );
 
         }
     }
@@ -641,6 +653,8 @@
     Overlay.prototype.parseButtons = function() {
         var self = this,
             opts = self.options,
+            sn = opts.serialNumber,
+            handlers = handlersStorage[ sn ],
             buttons = opts.buttons,
             key, fnName, className, text, i = 0,
             $btn, group;
@@ -652,13 +666,13 @@
             text = buttons[key];
             fnName = className.splice(0, 1)[0];
 
-            if( !(fnName in self.handlers) ) {
-                self.handlers[ fnName ] = [];
+            if( !(fnName in handlers) ) {
+                handlers[ fnName ] = [];
             }
 
             (function( fnName ) {
                 self[ fnName ] = function( fn ) {
-                    self.handlers[ fnName ].push(fn);
+                    handlers[ fnName ].push(fn);
 
                     return self;
                 }
@@ -668,18 +682,6 @@
             self.buttonsGroup[ fnName ] = $btn;
         }
 
-        return self;
-    };
-
-
-    // 连缀时使用的once方法，用来在 iframe或是内容加载成功后调用该方法
-    Overlay.prototype.once = function( fn ) {
-        var self = this,
-            opts = self.options;
-
-        if( !('once' in self.handlers) ) self.handlers.once = [];
-        if( self.handlers.once.length === 1 ) return self;
-        self.handlers.once.push(fn);
         return self;
     };
 
@@ -811,6 +813,7 @@
             opts = self.options,
             eles = self.eles,
             sn = opts.serialNumber,
+            handlers = handlersStorage[sn],
             i,
             dchn = Overlay.config.defaultCallbackHandlerName;
 
@@ -845,14 +848,14 @@
         }
 
         // 移除所有实例监听的事件函数
-        for( i in self.handlers ) {
+        for( i in handlers ) {
             if( self[i] ) {
-                delete self.handlers[i];
+                delete handlers[i];
                 delete self[i];
             }
         }
         // 移除事件存储对象
-        delete self.handlers;
+        delete handlersStorage[sn];
 
         // 移除内置回调函数对象
         for( i = 0; i < dchn.length; i++ ) {
@@ -964,7 +967,7 @@
         var self = this,
             opts = self.options,
             sn = opts.serialNumber,
-            handlers = self.handlers[ handlerName ],
+            handlers = handlersStorage[ sn ][ handlerName ],
             onceFlag,
             returnTemp, i, j;
 
@@ -982,6 +985,9 @@
             if( onceFlag ) break;
         }
 
+        if( handlerName === 'once' ) {
+            handlersStorage[ sn ][ handlerName ] = null;
+        }
         // 执行补充的回调函数
         typeof callback === 'function' && callback();
 
