@@ -125,6 +125,7 @@
         urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
         windowKey,
         domPrototype,
+        undef = undefined,
         easy = {
             addClass: function( cls ) {
                 var clsn = this.className;
@@ -228,7 +229,17 @@
             css: function( key, val ) {
                 var unitPattern = /(px|%)$/;
 
-                if( val === undefined ) {
+                // if( modePattern.test( key ) ) {
+                //     _key = key.match( modePattern );
+                //     for( ; i < _key.length; i++ ) {
+                //         key = key.replace( _key[i], _key[i].split('-')[1].toUpperCase() );
+                //     }
+                //
+                //     console.log()
+                // }
+
+
+                if( val === undef ) {
                     return this.currentStyle ? this.currentStyle[ key ] : window.getComputedStyle(this).getPropertyValue( key );
                 } else {
                     this.style[ key ] = val;
@@ -775,21 +786,29 @@
     };
 
     // 将需要存的值存到当前对象内 可以在回调方法内被取到
-    Overlay.prototype.push = function( val ) {
+    Overlay.prototype.push = function( key, val ) {
         var self = this,
             sn = self.options.serialNumber;
 
-        returnStorage[ sn ] = val;
+        if( key === undef && val === undef ) return self;
+
+        if( key && val === undef ) {
+            val = key;
+            returnStorage[ sn ] = val;
+        } else if( key && val !== undef ) {
+            if( !returnStorage[ sn ] ) returnStorage[ sn ] = {};
+            returnStorage[ sn ][ key ] = val;
+        }
 
         return self;
     }
 
     // 将存储的值拿出来
-    Overlay.prototype.pull = function() {
+    Overlay.prototype.pull = function( key ) {
         var self = this,
             sn = self.options.serialNumber;
 
-        return returnStorage[ sn ];
+        return key ? returnStorage[ sn ][ key ] : returnStorage[ sn ];
     }
 
     // 将弹出框置顶
@@ -874,6 +893,29 @@
     };
 
 
+    // 组件销毁
+    Overlay.prototype.off = function( key ) {
+        var self = this,
+            opts = self.options,
+            sn = opts.serialNumber,
+            handlers = handlersStorage[ sn ],
+            handler,
+            i, j;
+
+        if( typeof key !== 'string' && typeof key !== 'function' || ( handlers[ key ] && !handlers[ key ].length ) ) return self;
+
+        if( typeof key === 'function' ) {
+            for( i in handlers ) {
+                if( handlers[ i ] && handlers[ i ].length && ~handlers[ i ].indexOf( key ) ) {
+                    handlers[ i ].splice( handlers[ i ].indexOf( key ), 1 );
+                }
+            }
+            return self;
+        }
+
+        handlers[ key ].splice( 0, handlers[ key ].length );
+        return self;
+    }
     ////////
     //////// 常用类型弹出框代码块
     ////////
@@ -937,7 +979,7 @@
             eventName = 'click';
         }
 
-        if( eventName === undefined ) eventName = 'click';
+        if( eventName === undef ) eventName = 'click';
         if( typeof eventName === 'string' ) eventName = [ eventName ];
         if( typeof handlerName === 'string' ) handlerName = [ handlerName ];
 
@@ -971,7 +1013,7 @@
             onceFlag,
             returnTemp, i, j;
 
-        i === undefined ? ( i = 0 ) : ( onceFlag = true );
+        i === undef ? ( i = 0 ) : ( onceFlag = true );
 
         if( !handlers ) return;
 
@@ -980,7 +1022,7 @@
             returnStorage[ sn ] = handlers[ i ].call(
                 self,
                 e,
-                returnStorage[ sn ] ? returnStorage[ sn ] : undefined ) || returnStorage[ sn ];
+                returnStorage[ sn ] ? returnStorage[ sn ] : undef ) || returnStorage[ sn ];
 
             if( onceFlag ) break;
         }
@@ -1199,7 +1241,7 @@
         if( cRect.width > windowWidth ) cStyle.width = containerWidth = correctValue(windowWidth);
         if( cRect.height > windowHeight ) cStyle.height = containerHeight = correctValue(windowHeight);
 
-        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) );
+        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) ) + 'px';
     }
 
 
@@ -1210,7 +1252,7 @@
             hasUnitPattern = /\d?\.?\d+?(\%|px)$/g,
             numPattern = /^\d?\.?\d+?$/g;
 
-        if( unit === undefined ) unit = 'px';
+        if( unit === undef ) unit = 'px';
 
         return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) :
                 hasUnitPattern.test(num) ? num : 'auto';

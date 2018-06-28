@@ -59,10 +59,16 @@
                 console.log(this)
             }).full(function( e, obj ) {
                 alert( JSON.stringify(obj) );
-            });
+            }).enter(function() {
+                console.log(1)
+            }).enter(function() {
+                console.log(2)
+            }).enter(enter1);
         //})();
 
-
+            function enter1() {
+                console.log(3);
+            }
     </script>
 </body>
 </html>
