@@ -48,7 +48,7 @@
                 //alert(123)
 
             }).cancel(function( e, obj ) {
-                console.log(obj);
+                console.log(e.handlerName);
             }).once(function( e, obj ) {
                 // return Overlay.alert();
                 console.log(123123123);
@@ -56,13 +56,15 @@
                 // return Overlay.alert();
                 console.log(12312312311+ 'afa');
             }).closed(function( e, obj ) {
-                console.log(this)
+                console.log(e.handlerName);
             }).full(function( e, obj ) {
                 alert( JSON.stringify(obj) );
             }).enter(function() {
                 console.log(1)
             }).enter(function() {
                 console.log(2)
+
+                return {a: 123};
             }).enter(enter1);
         //})();
 

@@ -126,6 +126,8 @@
         windowKey,
         domPrototype,
         undef = undefined,
+        getStyle,
+        currCss,
         easy = {
             addClass: function( cls ) {
                 var clsn = this.className;
@@ -1013,6 +1015,11 @@
             onceFlag,
             returnTemp, i, j;
 
+        e = window.event || e;
+        if( !e ) e = {};
+
+        e.handlerName = handlerName;
+
         i === undef ? ( i = 0 ) : ( onceFlag = true );
 
         if( !handlers ) return;
@@ -1042,6 +1049,8 @@
             opts = self.options,
             eles = self.eles;
 
+        // e = window.event || e;
+
         if( e.target !== eles.container ) return;
 
         if( easy.hasClass.call( eles.container, opts.animClass.enter ) ) {
@@ -1066,6 +1075,8 @@
         var self = this,
             opts = self.options,
             eles = self.eles;
+
+        e = window.event || e;
 
         // mousedown
         if( e.target !== eles.title && e.target !== eles.header ) return;
@@ -1241,9 +1252,8 @@
         if( cRect.width > windowWidth ) cStyle.width = containerWidth = correctValue(windowWidth);
         if( cRect.height > windowHeight ) cStyle.height = containerHeight = correctValue(windowHeight);
 
-        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) ) + 'px';
+        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) );
     }
-
 
 
     // 修正返回值
@@ -1369,6 +1379,9 @@
 
     easy.on.call( document.body, 'mousemove', function( e ) {
         var i;
+
+        e = window.event || e;
+
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
         if(!serialNumber && !dragMoveStorage[ dragFlag ]) return;
 
@@ -1378,7 +1391,23 @@
 
 
 
+    if( window.getComputedStyle ) {
+        getStyle = function( elem ) {
+            return window.getComputedStyle( elem );
+        };
 
+        currCss = function( elem ) {
+
+        }
+    } else if( document.documentElement.currentStyle ) {
+        getStyle = function( elem ) {
+            return elem.currentStyle;
+        };
+
+        currCss = function( elem ) {
+            
+        }
+    }
 
     return Overlay;
 
