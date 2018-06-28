@@ -28,7 +28,20 @@
     window.Overlay = factory();
 })(this, function() {
 
-    var _slice = Array.prototype.slice;
+    var _slice = Array.prototype.slice,
+        zIndex = parseInt(Math.random() * 100000),
+        serialNumber = 0,
+        sheets, rules,
+        urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
+        windowKey,
+        domPrototype,
+        undef = undefined,
+        getStyle,
+        currCss,
+        isInteger = function( val ) {
+            return val%1 === 0;
+        },
+        whPattern = /width|height/;
 
     if( typeof Function.prototype.bind === 'undefined' ) {
         Function.prototype.bind = function( oThis ) {
@@ -57,32 +70,44 @@
                 self = this,
                 len = this.length, i = 0;
 
-            if( !arr ) return index;
+            if( start !== undef && start !== 0 && !isInteger( start ) || !len || start > len - 1 || start < 0 ) return index;
+            if( start !== undef && start > index && start < len - 1 ) i = start;
 
             for( ; i < len; i++ ) {
-                if( self[i] === val ) {
-                    return i;
-                }
+                if( self[i] === val ) return i;
             }
+
+            return index;
         };
 
-        Array.prototype.indexOf = function (elt /*, from*/) {
-            var len = this.length >>> 0;
+    }
 
-            var from = Number(arguments[1]) || 0;
-            from = (from < 0)
-             ? Math.ceil(from)
-             : Math.floor(from);
-            if (from < 0)
-                from += len;
-
-            for (; from < len; from++) {
-                if (from in this &&
-              this[from] === elt)
-                    return from;
-            }
-            return -1;
+    if( window.getComputedStyle ) {
+        getStyle = function( elem ) {
+            return window.getComputedStyle( elem );
         };
+
+        currCss = function( elem, key ) {
+            return getStyle( elem ).getPropertyValue( key );
+        }
+    } else if( document.documentElement.currentStyle ) {
+        getStyle = function( elem ) {
+            return elem.currentStyle;
+        };
+
+        currCss = function( elem, key ) {
+            var val = getStyle( elem )[ key ],
+                style = elem.style,
+                _val = style[ key ];
+
+            if( whPattern.test( key ) && _val === '' && !parseInt(val) && val !== 'auto' ) {
+                val = '0px';
+            } else if( _val && !val ) {
+                val = _val;
+            }
+
+            return val;
+        }
     }
 
     var extend = function() {
@@ -119,15 +144,6 @@
 
             return baseObj;
         }, i1, i2,
-        zIndex = parseInt(Math.random() * 100000),
-        serialNumber = 0,
-        sheets, rules,
-        urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
-        windowKey,
-        domPrototype,
-        undef = undefined,
-        getStyle,
-        currCss,
         easy = {
             addClass: function( cls ) {
                 var clsn = this.className;
@@ -229,23 +245,21 @@
                 }
             },
             css: function( key, val ) {
-                var unitPattern = /(px|%)$/;
+                var i;
 
-                // if( modePattern.test( key ) ) {
-                //     _key = key.match( modePattern );
-                //     for( ; i < _key.length; i++ ) {
-                //         key = key.replace( _key[i], _key[i].split('-')[1].toUpperCase() );
-                //     }
-                //
-                //     console.log()
-                // }
-
-
-                if( val === undef ) {
-                    return this.currentStyle ? this.currentStyle[ key ] : window.getComputedStyle(this).getPropertyValue( key );
-                } else {
-                    this.style[ key ] = val;
+                if( typeof key === 'string' ) {
+                    if( val === undef ) {
+                        return currCss( this, key );
+                    } else if( val ) {
+                        this.style[ key ] = val;
+                    }
+                } else if( typeof key === 'object' ) {
+                    for( i in key ) {
+                        val = key[i];
+                        this.style[ i ] = val;
+                    }
                 }
+
 
             },
             trim: function( val ) {
@@ -283,7 +297,6 @@
         handlersStorage = {},
         supportAnim = 'onanimationend' in window,
         //defaultCallbackHandlerName = [ 'once', 'ready' ],
-        dchni = 0,
         dragInit = { x: 0, y: 0 },
         dragCurr = { x: 0, y: 0 },
         dragD = { x: 0, y: 0 },
@@ -322,14 +335,14 @@
 
         // self.options.width = 10000;
         self.options.zIndex = ++zIndex;
-        if( Object.defineProperty ) {
-            Object.defineProperty( self.options, 'serialNumber', {
-                value: ++serialNumber,
-                configurable: true
-            } );
-        } else {
+        // if( Object.defineProperty ) {
+        //     Object.defineProperty( self.options, 'serialNumber', {
+        //         value: ++serialNumber,
+        //         configurable: true
+        //     } );
+        // } else {
             self.options.serialNumber = ++serialNumber;
-        }
+        //}
 
 
         return self.init();
@@ -357,7 +370,7 @@
         urlPattern: urlPattern,                                                     // url正则匹配规则
         duration: 300,                                                              // 动画过程时间
 
-        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed' ],        // 默认的执行回调函数方法
+        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed', 'beforeOpen' ],        // 默认的执行回调函数方法
 
         keyframes: {                                                                // 默认动画配置，可在创建实例前，追加新的动画名称
             fade: {
@@ -490,11 +503,13 @@
             opts = self.options,
             sn = self.options.serialNumber,
             hasUrl = Overlay.config.urlPattern.test(opts.content),
-            dchn = Overlay.config.defaultCallbackHandlerName;
+            dchn = Overlay.config.defaultCallbackHandlerName,
+            dchni = 0;
 
         // 将默认的回调方法输出
-        for( dchni = 0; dchni < dchn.length; dchni++ ) {
+        for( ; dchni < dchn.length; dchni++ ) {
             (function( hn, sn ) {
+
                 if( hn in self ) return;
 
                 self[hn] = function( fn ) {
@@ -503,10 +518,10 @@
                         opts = self.options,
                         handlers = handlersStorage[ sn ];
 
-                    if( !(hn in handlersStorage[ sn ]) ) handlers[ hn ] = [];
-                    // once 在打开界面后，执行一次即可
+                    if( !(hn in handlers) ) handlers[ hn ] = [];
 
-                    if( hn === 'once' && handlers[ hn ].length === 1 ) return self;
+                    // once 在打开界面后，执行一次即可
+                    if( hn === 'once' && handlers[ hn ].length === 1 || typeof fn !== 'function' ) return self;
 
                     handlers[ hn ].push(fn);
 
@@ -517,9 +532,12 @@
 
                     return self;
                 };
+
+                //consoe
             })( dchn[dchni], sn );
 
         }
+
     }
 
     // 初始化遮罩
@@ -685,7 +703,8 @@
 
             (function( fnName ) {
                 self[ fnName ] = function( fn ) {
-                    handlers[ fnName ].push(fn);
+
+                    if( typeof fn === 'function' ) handlers[ fnName ].push(fn);
 
                     return self;
                 }
@@ -757,11 +776,16 @@
             easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
             setTimeout(function() {
                 triggerEventHandler.call( self, 'once' );
-            });
+                triggerEventHandler.call( self, 'beforeOpen' );
+            }, 0);
         } else {
             easy.addClass.call( self.eles.container, 'open');
-            triggerEventHandler.call( self, 'once' );
-            triggerEventHandler.call( self, 'opened' );
+            setTimeout(function() {
+                triggerEventHandler.call( self, 'once' );
+                triggerEventHandler.call( self, 'beforeOpen' );
+                triggerEventHandler.call( self, 'opened' );
+            }, 0);
+
         }
 
         setStyle.call( self );
@@ -1015,17 +1039,18 @@
             onceFlag,
             returnTemp, i, j;
 
-        e = window.event || e;
+        e = e || window.event;
         if( !e ) e = {};
 
         e.handlerName = handlerName;
 
         i === undef ? ( i = 0 ) : ( onceFlag = true );
 
-        if( !handlers ) return;
+        if( !handlers || !handlers.length ) return;
 
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
+
             returnStorage[ sn ] = handlers[ i ].call(
                 self,
                 e,
@@ -1042,6 +1067,7 @@
 
         return self;
     }
+
 
     // 支持css延时动画的，会在这里执行
     function animationEndHandler( e ) {
@@ -1074,12 +1100,16 @@
     function dragDownOrUpHandler( e ) {
         var self = this,
             opts = self.options,
-            eles = self.eles;
+            eles = self.eles,
+            target;
 
-        e = window.event || e;
+        e = e || window.event;
 
+        target = e.target || e.srcElement;
         // mousedown
-        if( e.target !== eles.title && e.target !== eles.header ) return;
+
+
+        if( target !== eles.title && target !== eles.header ) return;
 
         if( e.type === 'mousedown' ) {
 
@@ -1119,11 +1149,11 @@
         var self = this,
             opts = self.options,
             mask = self.eles.mask,
-            container = self.eles.container,
-            cStyle = container.style;
+            container = self.eles.container;
 
-        mask.style.zIndex = opts.zIndex;
-        cStyle.zIndex = opts.zIndex;
+        easy.css.call( mask, 'z-index', opts.zIndex );
+        easy.css.call( container, 'z-index', opts.zIndex );
+
     }
 
     // 设置组件位置
@@ -1135,10 +1165,10 @@
             cStyle = container.style;
 
         if( opts.offset && opts.offset.x && opts.offset.y && !opts.isTips ) {
-
-            cStyle.top = correctValue(opts.offset.y);
-            cStyle.left = correctValue(opts.offset.x);
-
+            easy.css.call( container, {
+                top: correctValue(opts.offset.y),
+                left: correctValue(opts.offset.x)
+            } );
         } else if( opts.isTips ) { // 判断是否是提示组件
 
 
@@ -1156,8 +1186,10 @@
                     case 'center' :
                     case 'c' :
                     //
-                    container.style.top = correctValue( ( windowHeight - easy.height.call(container) ) / 2 );
-                    container.style.left = correctValue( ( windowWidth - easy.width.call(container) ) / 2 );
+                    easy.css.call( container, {
+                        top: correctValue( ( windowHeight - easy.height.call(container) ) / 2 ),
+                        left: correctValue( ( windowWidth - easy.width.call(container) ) / 2 )
+                    } );
 
                     break;
 
@@ -1252,7 +1284,8 @@
         if( cRect.width > windowWidth ) cStyle.width = containerWidth = correctValue(windowWidth);
         if( cRect.height > windowHeight ) cStyle.height = containerHeight = correctValue(windowHeight);
 
-        eles.body.style.height = correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) );
+        easy.css.call( eles.body, 'height', correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) ) );
+
     }
 
 
@@ -1380,34 +1413,13 @@
     easy.on.call( document.body, 'mousemove', function( e ) {
         var i;
 
-        e = window.event || e;
-
+        e = e || window.event;
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
         if(!serialNumber && !dragMoveStorage[ dragFlag ]) return;
 
-        typeof dragMoveStorage[ dragFlag ] === 'function' && dragMoveStorage[ dragFlag ]( e );
+        if( typeof dragMoveStorage[ dragFlag ] === 'function' ) dragMoveStorage[ dragFlag ]( e );
 
     } );
-
-
-
-    if( window.getComputedStyle ) {
-        getStyle = function( elem ) {
-            return window.getComputedStyle( elem );
-        };
-
-        currCss = function( elem ) {
-
-        }
-    } else if( document.documentElement.currentStyle ) {
-        getStyle = function( elem ) {
-            return elem.currentStyle;
-        };
-
-        currCss = function( elem ) {
-            
-        }
-    }
 
     return Overlay;
 

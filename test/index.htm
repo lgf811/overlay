@@ -45,27 +45,30 @@
                     'full.fu123123': '全屏'
                 }
             }).enter(function( e ) {
-                //alert(123)
+                alert(123)
 
             }).cancel(function( e, obj ) {
-                console.log(e.handlerName);
+                // console.log(e.handlerName);
             }).once(function( e, obj ) {
                 // return Overlay.alert();
-                console.log(123123123);
-            }).once(function( e, obj ) {
-                // return Overlay.alert();
-                console.log(12312312311+ 'afa');
+                // console.log(123123123);
+                alert(123)
+                console.log('once');
             }).closed(function( e, obj ) {
-                console.log(e.handlerName);
+                // console.log(e.handlerName);
             }).full(function( e, obj ) {
                 alert( JSON.stringify(obj) );
             }).enter(function() {
-                console.log(1)
+                // console.log(1)
             }).enter(function() {
-                console.log(2)
+                // console.log(2)
 
                 return {a: 123};
-            }).enter(enter1);
+            }).enter(enter1).beforeOpen(function() {
+                console.log('beforeOpen')
+            }).opened(function() {
+                console.log('opened');
+            });
         //})();
 
             function enter1() {
