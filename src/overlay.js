@@ -302,22 +302,6 @@
         dragD = { x: 0, y: 0 },
         dragFlag = false;
 
-    // if( ~location.protocol.indexOf('http')) {
-    //     sheets = document.styleSheets;
-    //
-    //     for( i1 = 0; i1 < sheets.length; i1++ ) {
-    //         rules = sheets[i1].rules;
-    //
-    //         for( i2 in rules ) {
-    //             if( rules[i2].style && rules[i2].style.zIndex > zIndex ) {
-    //                 zIndex = Number(rules[i2].style.zIndex);
-    //             }
-    //         }
-    //     }
-    // }
-
-
-
     // Overlay 构造函数
     function Overlay( options ) {
 
@@ -369,8 +353,8 @@
     Overlay.config = {
         urlPattern: urlPattern,                                                     // url正则匹配规则
         duration: 300,                                                              // 动画过程时间
-
-        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed', 'beforeOpen' ],        // 默认的执行回调函数方法
+        zIndex: null,
+        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed', 'beforeOpen', 'movestart', 'moveing', 'moveend' ],        // 默认的执行回调函数方法
 
         keyframes: {                                                                // 默认动画配置，可在创建实例前，追加新的动画名称
             fade: {
@@ -751,6 +735,7 @@
                 var opts = self.options,
                     eles = self.eles;
 
+                triggerEventHandler.call( self, 'moveing' );
                 easy.css.call( eles.container, 'top', e.clientY - dragD.y + 'px' );
                 easy.css.call( eles.container, 'left', e.clientX - dragD.x + 'px' );
 
@@ -901,6 +886,9 @@
         }
         // 移除事件存储对象
         delete handlersStorage[sn];
+
+        // 移除所有存储的数据
+        delete returnStorage[sn];
 
         // 移除内置回调函数对象
         for( i = 0; i < dchn.length; i++ ) {
@@ -1113,6 +1101,8 @@
 
         if( e.type === 'mousedown' ) {
 
+            triggerEventHandler.call( self, 'movestart' );
+
             dragInit.x = e.clientX;
             dragInit.y = e.clientY;
             dragCurr.x = eles.container.offsetLeft;
@@ -1122,11 +1112,15 @@
 
             dragFlag = opts.serialNumber;
 
-            return;
+            return self;
         }
+
+        triggerEventHandler.call( self, 'moveend' );
 
         dragFlag = 0;
         // mouseup
+
+        return self;
     }
 
 
@@ -1161,8 +1155,7 @@
         var self = this,
             opts = self.options,
             position = self.position,
-            container = self.eles.container,
-            cStyle = container.style;
+            container = self.eles.container;
 
         if( opts.offset && opts.offset.x && opts.offset.y && !opts.isTips ) {
             easy.css.call( container, {
@@ -1268,7 +1261,6 @@
             opts = self.options,
             eles = self.eles,
             container = eles.container,
-            cStyle = container.style,
             windowWidth = document.documentElement.clientWidth,
             windowHeight = document.documentElement.clientHeight,
             containerWidth, containerHeight,
@@ -1276,13 +1268,26 @@
             footerHeight = eles.footer ? easy.outerHeight.call( eles.footer) : 0,
             cRect;
 
-        if( opts.width ) cStyle.width = containerWidth = correctValue(opts.width);
-        if( opts.height ) cStyle.height = containerHeight = correctValue(opts.height);
+        if( opts.width ) {
+            containerWidth = correctValue(opts.width);
+            easy.css.call( container, 'width', containerWidth );
+        }
+
+        if( opts.height ) {
+            containerHeight = correctValue(opts.height);
+            easy.css.call( container, 'height', containerHeight );
+        }
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = container.getBoundingClientRect();
-        if( cRect.width > windowWidth ) cStyle.width = containerWidth = correctValue(windowWidth);
-        if( cRect.height > windowHeight ) cStyle.height = containerHeight = correctValue(windowHeight);
+        if( cRect.width > windowWidth ) {
+            containerWidth = correctValue(windowWidth);
+            easy.css.call( container, 'width', containerWidth );
+        }
+        if( cRect.height > windowHeight ) {
+            containerHeight = correctValue(windowHeight);
+            easy.css.call( container, 'height', containerHeight );
+        }
 
         easy.css.call( eles.body, 'height', correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) ) );
 

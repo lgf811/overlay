@@ -82,7 +82,10 @@
 }
 
 
-.overlay-body { overflow: auto }
+.overlay-body {
+    min-height: 30px;
+    overflow: auto
+}
 
 .overlay-footer {
     padding: 15px 10px 15px;

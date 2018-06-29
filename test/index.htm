@@ -21,8 +21,7 @@
             var win = new Overlay({
                 el: '.o',
                 // content: '你好好',
-                width: '100',
-                height: '100',
+                width: '300',
                 title: '标题',
                 // defOpen: true,
                 anim: 'scale',
@@ -52,7 +51,7 @@
             }).once(function( e, obj ) {
                 // return Overlay.alert();
                 // console.log(123123123);
-                alert(123)
+                //alert(123)
                 console.log('once');
             }).closed(function( e, obj ) {
                 // console.log(e.handlerName);
@@ -68,6 +67,12 @@
                 console.log('beforeOpen')
             }).opened(function() {
                 console.log('opened');
+            }).movestart(function() {
+                console.log('start');
+            }).moveing(function() {
+                console.log('ing');
+            }).moveend(function() {
+                console.log('end');
             });
         //})();
 
