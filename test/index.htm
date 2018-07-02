@@ -41,10 +41,10 @@
                 buttons: {
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消',
-                    'full.fu123123': '全屏'
+                    'clear.fu123123': '清除'
                 }
             }).enter(function( e ) {
-                alert(123)
+                alert(123);
 
             }).cancel(function( e, obj ) {
                 // console.log(e.handlerName);
@@ -55,8 +55,6 @@
                 console.log('once');
             }).closed(function( e, obj ) {
                 // console.log(e.handlerName);
-            }).full(function( e, obj ) {
-                alert( JSON.stringify(obj) );
             }).enter(function() {
                 // console.log(1)
             }).enter(function() {
@@ -73,6 +71,8 @@
                 console.log('ing');
             }).moveend(function() {
                 console.log('end');
+            }).destroyed(function() {
+                win2 = null;
             });
         //})();
 

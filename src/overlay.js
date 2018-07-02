@@ -41,7 +41,7 @@
         isInteger = function( val ) {
             return val%1 === 0;
         },
-        whPattern = /width|height/;
+        whPattern = /width|height|top|right|bottom|left/;
 
     if( typeof Function.prototype.bind === 'undefined' ) {
         Function.prototype.bind = function( oThis ) {
@@ -100,7 +100,7 @@
                 style = elem.style,
                 _val = style[ key ];
 
-            if( whPattern.test( key ) && _val === '' && !parseInt(val) && val !== 'auto' ) {
+            if( whPattern.test( key ) && !_val && isNaN(parseInt(val)) && val !== 'auto' ) {
                 val = '0px';
             } else if( _val && !val ) {
                 val = _val;
@@ -250,7 +250,7 @@
                 if( typeof key === 'string' ) {
                     if( val === undef ) {
                         return currCss( this, key );
-                    } else if( val ) {
+                    } else if( this.style ) {
                         this.style[ key ] = val;
                     }
                 } else if( typeof key === 'object' ) {
@@ -259,7 +259,6 @@
                         this.style[ i ] = val;
                     }
                 }
-
 
             },
             trim: function( val ) {
@@ -345,8 +344,9 @@
         opacity: 0.4,
         drag: true,
         footAlign: 'center',
-        showClose: true,
-        bodyClass: null
+        close: true,
+        bodyClass: null,
+        maskClose: true
     };
 
     // Overlay 默认配置
@@ -354,7 +354,28 @@
         urlPattern: urlPattern,                                                     // url正则匹配规则
         duration: 300,                                                              // 动画过程时间
         zIndex: null,
-        defaultCallbackHandlerName: [ 'once', 'ready', 'opened', 'closed', 'beforeOpen', 'movestart', 'moveing', 'moveend' ],        // 默认的执行回调函数方法
+        defaultCallbackHandlerName: [
+            'once',
+            'ready',
+
+            'beforeOpen',
+            'opened',
+            'closed',
+
+            'movestart',
+            'moveing',
+            'moveend',
+
+            'destroyed',
+
+            'fullBefore',
+            'fullAfter',
+
+            'resizeStart',
+            'resizing',
+            'resizeEnd'
+
+        ],        // 默认的执行回调函数方法
 
         keyframes: {                                                                // 默认动画配置，可在创建实例前，追加新的动画名称
             fade: {
@@ -463,7 +484,7 @@
             easy.css.call( eles.header, 'display', 'none' );
         }
 
-        if( !opts.showClose ) easy.css.call( eles.close, 'display', 'none' );
+        if( !opts.close ) easy.css.call( eles.close, 'display', 'none' );
 
         // 根据配置，操作footer内的元素
         if( opts.buttons && typeof opts.buttons === 'object' ) {
@@ -610,8 +631,6 @@
         $header.appendChild( $title );
         $header.appendChild( $tool );
 
-
-
         return $header;
     };
 
@@ -727,6 +746,10 @@
             easy.on.call( eles.close, 'click', closeHandler.bind( self ) );
         }
 
+        if( opts.maskClose ) {
+            easy.on.call( eles.mask, 'click', closeHandler.bind( self ) );
+        }
+
         if( opts.drag ) {
             easy.on.call( eles.header, 'mousedown', dragDownOrUpHandler.bind( self ) );
 
@@ -789,7 +812,6 @@
         } else {
             easy.removeClass.call( self.eles.container, 'open');
             triggerEventHandler.call( self, 'closed' );
-
             if( opts.closedDestroy ) self.destroy();
         }
 
@@ -847,6 +869,8 @@
             i,
             dchn = Overlay.config.defaultCallbackHandlerName;
 
+        triggerEventHandler.call( self, 'destroyed' );
+
         delete returnStorage[ sn ]; // 移除存储的当前实例的数据
         delete resizeStorage[ sn ]; // 移除存储的当前实例的重置函数
         delete dragMoveStorage[ sn ]; // 移除存储的当前实例的拖拽函数
@@ -861,21 +885,28 @@
         // 移除按钮集合对象
         delete self.buttonsGroup;
 
+        // 解除对实例的引用
+        delete eles.el.overlay;
+
         // 判断el是否为原本就存在的dom节点，是的话，则还原到原来的位置
         if( opts.el ) {
-            delete eles.el.overlay;
             eles.container.parentNode.insertBefore( eles.el, eles.container );
             easy.removeAttr.call( eles.el, 'style' );
-            delete eles.el;
         }
 
+        // 解除对主元素的引用
+        delete eles.el;
+
         // 将所有实例创建的dom节点移除
-        for( i in self.eles ) {
-            if( self.eles[i] && self.eles[i].parentNode ) {
-                self.eles[i].parentNode.removeChild( self.eles[i] );
-                delete self.eles[i];
+        for( i in eles ) {
+            if( eles[i] && eles[i].parentNode ) {
+                eles[i].parentNode.removeChild( self.eles[i] );
+                delete eles[i];
             }
         }
+
+        // 删除元素集合对象
+        delete self.eles;
 
         // 移除所有实例监听的事件函数
         for( i in handlers ) {
@@ -884,7 +915,7 @@
                 delete self[i];
             }
         }
-        // 移除事件存储对象
+        // 移除事件存储对象内对应的存储对象
         delete handlersStorage[sn];
 
         // 移除所有存储的数据
@@ -942,10 +973,11 @@
             title: '提示',
             content: '',
             closedDestroy: true,
-            showClose: false,
+            close: false,
             defOpen: true,
             width: 280,
             bodyClass: 'overlay-alert-body',
+            maskClose: false,
             buttons: {
                 'enter.enter-btn': '确定'
             }
@@ -962,9 +994,10 @@
             title: '提示',
             content: '',
             closedDestroy: true,
-            showClose: false,
+            close: false,
             defOpen: true,
             width: 280,
+            maskClose: false,
             bodyClass: 'overlay-alert-body',
             buttons: {
                 'enter.enter-btn': '确定',
@@ -1001,7 +1034,6 @@
         for( ; i < eventName.length; i++ ) {
             for( ; j < handlerName.length; j++ ) {
                 easy.on.call( $elem, eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ) );
-                // $elem.addEventListener(eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ), false );
             }
         }
 
@@ -1143,10 +1175,20 @@
         var self = this,
             opts = self.options,
             mask = self.eles.mask,
-            container = self.eles.container;
+            container = self.eles.container,
+            config = Overlay.config,
+            czIndex = easy.css.call( container, 'z-index' ),
+            zi;
 
-        easy.css.call( mask, 'z-index', opts.zIndex );
-        easy.css.call( container, 'z-index', opts.zIndex );
+        // 1 czIndex
+        // 2 config.zIndex
+        // 3 opts.zIndex
+        if( czIndex === 'auto' ) czIndex = 0;
+
+        opts.zIndex = zIndex = Math.max( czIndex, config.zIndex, opts.zIndex, zIndex );
+
+        easy.css.call( mask, 'z-index', zIndex );
+        easy.css.call( container, 'z-index', zIndex );
 
     }
 
