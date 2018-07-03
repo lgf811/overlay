@@ -82,6 +82,18 @@
 
     }
 
+    if( ~location.protocol.indexOf('http')) {
+        sheets = _slice.call(document.styleSheets, 0);
+
+        for( i1 = 0; i1 < sheets.length; i1++ ) {
+            rules = _slice.call(sheets[i1].rules, 0);
+
+            for( i2 in rules) {
+                if( rules[i2].style.zIndex > zIndex && rules[i2].selectorText === '.overlay-container' ) zIndex = Number(rules[i2].style.zIndex);
+            }
+        }
+    }
+
     if( window.getComputedStyle ) {
         getStyle = function( elem ) {
             return window.getComputedStyle( elem );
@@ -192,7 +204,7 @@
                     if( ~clsn.indexOf( cls[i] ) ) {
                         flag = true;
                     } else {
-                        flag = false;
+                        return false;
                     }
                 }
 
@@ -316,17 +328,25 @@
 
         if( !defOpts.el && !('content' in defOpts) && defOpts.content !== null ) return;
 
-        // self.options.width = 10000;
-        self.options.zIndex = ++zIndex;
-        // if( Object.defineProperty ) {
+        if( !self.options.zIndex && !Overlay.config.zIndex || Overlay.config.zIndex && Overlay.config.zIndex < zIndex || self.options.zIndex && self.options.zIndex < zIndex && !Overlay.config.zIndex) {
+            self.options.zIndex = ++zIndex;
+        } else if( self.options.zIndex && self.options.zIndex > zIndex && !Overlay.config.zIndex ) {
+            zIndex = self.options.zIndex;
+        } else if ( Overlay.config.zIndex && Overlay.config.zIndex > zIndex ) {
+            self.options.zIndex = zIndex = Overlay.config.zIndex + 1;
+        }
+
+
+        // if( 'defineProperty' in Object ) {
         //     Object.defineProperty( self.options, 'serialNumber', {
         //         value: ++serialNumber,
         //         configurable: true
         //     } );
         // } else {
-            self.options.serialNumber = ++serialNumber;
-        //}
+        //     self.options.serialNumber = ++serialNumber;
+        // }
 
+        self.options.serialNumber = ++serialNumber;
 
         return self.init();
     }
@@ -780,6 +800,8 @@
 
         easy.addClass.call( self.eles.mask, 'open');
 
+        if( easy.hasClass.call( self.eles.container, 'open') ) return self;
+
         if( supportAnim ) {
             easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
             setTimeout(function() {
@@ -805,6 +827,8 @@
     Overlay.prototype.close = function() {
         var self = this,
             opts = self.options;
+
+        if( !easy.hasClass.call( self.eles.container, 'open') ) return self;
 
         easy.removeClass.call( self.eles.mask, 'open');
         if( supportAnim ) {
@@ -1172,23 +1196,32 @@
 
     // 设置 z-index 层顺序
     function setZIndex() {
-        var self = this,
-            opts = self.options,
-            mask = self.eles.mask,
-            container = self.eles.container,
-            config = Overlay.config,
-            czIndex = easy.css.call( container, 'z-index' ),
-            zi;
+        // var self = this,
+        //     opts = self.options,
+        //     mask = self.eles.mask,
+        //     container = self.eles.container,
+        //     config = Overlay.config,
+        //     czIndex = easy.css.call( container, 'z-index' ),
+        //     zi;
 
         // 1 czIndex
         // 2 config.zIndex
         // 3 opts.zIndex
-        if( czIndex === 'auto' ) czIndex = 0;
+        // if( czIndex === 'auto' ) czIndex = 0;
+        //
+        // opts.zIndex = zIndex = Math.max( czIndex, config.zIndex, opts.zIndex, zIndex );
+        //
+        // easy.css.call( mask, 'z-index', zIndex );
+        // easy.css.call( container, 'z-index', zIndex );
 
-        opts.zIndex = zIndex = Math.max( czIndex, config.zIndex, opts.zIndex, zIndex );
+        var self = this,
+            opts = self.options,
+            mask = self.eles.mask,
+            container = self.eles.container,
+            cStyle = container.style;
 
-        easy.css.call( mask, 'z-index', zIndex );
-        easy.css.call( container, 'z-index', zIndex );
+        easy.css.call( mask, 'z-index', opts.zIndex );
+        easy.css.call( container, 'z-index', opts.zIndex );
 
     }
 
