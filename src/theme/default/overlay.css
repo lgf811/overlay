@@ -20,7 +20,7 @@
     position: fixed;
     display: none;
     overflow: hidden;
-    border-radius: 2px;
+    border-radius: 3px;
     background-color: #ffffff;
     box-shadow: 0 2px 35px rgba(0, 0, 0, 0.2);
 
@@ -57,7 +57,8 @@
 .overlay-head-tool {
     position: absolute;
     top: 50%;
-    right: 10px;
+    right: 5px;
+    height: 0;
     margin-top: -12px;
     font-size: 0
 }
@@ -66,10 +67,13 @@
     display: inline-block;
     width: 14px;
     height: 14px;
-    margin: 0 0 0 10px;
+    margin: 0 0 0 5px;
     border: 5px solid transparent;
     vertical-align: top;
-    cursor: pointer
+    cursor: pointer;
+    background-image: url('overlay_btn_bg.svg');
+    background-image: url('overlay_btn_bg.png')\0;
+    background-repeat: no-repeat;
 }
 
 .overlay-head-tool a:first-child {
@@ -77,10 +81,14 @@
 }
 
 .overlay-close-btn {
-    background: url('overlay_btn_bg.svg') no-repeat 0 0;
-    background: url('overlay_btn_bg.png') no-repeat\0;
+    background-position: 0 0
 }
-
+.overlay-full-btn {
+    background-position: -30px 0
+}
+.overlay-full-btn.fullscreen {
+    background-position: -60px 0
+}
 
 .overlay-body {
     min-height: 30px;

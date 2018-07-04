@@ -38,7 +38,6 @@
                 width: 340,
                 height: 260,
                 defOpen: true,
-                zIndex: 100000,
                 buttons: {
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消',
@@ -74,6 +73,14 @@
                 console.log('end');
             }).destroyed(function() {
                 win2 = null;
+            }).fullBefore(function() {
+                console.log('全屏前')
+            }).fullAfter(function() {
+                console.log('全屏后');
+            }).cancelFullBefore(function() {
+                console.log('取消全屏前')
+            }).cancelFullAfter(function() {
+                console.log('取消全屏后');
             });
         //})();
 

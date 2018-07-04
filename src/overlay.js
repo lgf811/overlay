@@ -157,26 +157,26 @@
             return baseObj;
         }, i1, i2,
         easy = {
-            addClass: function( cls ) {
-                var clsn = this.className;
+            addClass: function( elem, cls ) {
+                var clsn = elem.className;
 
-                if( !cls || cls && easy.hasClass.call( this, cls ) ) return;
+                if( !cls || cls && easy.hasClass( elem, cls ) ) return;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                if( ~clsn.indexOf( cls ) ) return this;
+                if( ~clsn.indexOf( cls ) ) return elem;
 
                 clsn.push(cls);
                 clsn = easy.trim( clsn.join(' ') );
-                this.className = clsn;
+                elem.className = clsn;
             },
-            removeClass: function( cls ) {
-                var clsn = this.className,
+            removeClass: function( elem, cls ) {
+                var clsn = elem.className,
                     i = 0;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                if( !cls ) return this;
+                if( !cls ) return elem;
 
                 if( ~cls.indexOf(' ') ) cls = cls.split(' ');
 
@@ -190,10 +190,10 @@
                     }
                 }
 
-                this.className = clsn.join(' ');
+                elem.className = clsn.join(' ');
             },
-            hasClass: function( cls ) {
-                var clsn = this.className,
+            hasClass: function( elem, cls ) {
+                var clsn = elem.className,
                     i = 0, flag = false;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
@@ -210,12 +210,12 @@
 
                 return flag;
             },
-            parents: function( cls ) {
-                var self = this,
+            parents: function( elem, cls ) {
+                var self = elem,
                     parent = self.parentNode;
 
 
-                while( !easy.hasClass.call( parent, cls ) ) {
+                while( !easy.hasClass( parent, cls ) ) {
                     if(parent.parentNode) {
                         parent = parent.parentNode
                     } else {
@@ -225,7 +225,7 @@
 
                 return parent;
             },
-            trigger: function( eventName ) {
+            trigger: function( elem, eventName ) {
 
                 var e;
 
@@ -237,68 +237,83 @@
 
                 } else if( document.createEventObject ) {
                     e = document.createEventObject();
-                    this.fireEvent('on' + eventName, e);
-                } else if( typeof this['on' + eventName] === 'function' ) {
-                    this['on' + eventName]();
+                    elem.fireEvent('on' + eventName, e);
+                } else if( typeof elem['on' + eventName] === 'function' ) {
+                    elem['on' + eventName]();
                 }
             },
-            on: function( eventName, handler ) {
+            on: function( elem, eventName, handler ) {
                 if( document.all ) {
-                    this.attachEvent( 'on' + eventName, handler );
+                    elem.attachEvent( 'on' + eventName, handler );
                 } else {
-                    this.addEventListener( eventName, handler, false );
+                    elem.addEventListener( eventName, handler, false );
                 }
             },
-            off: function( eventName, handler ) {
+            off: function( elem, eventName, handler ) {
                 if( document.all ) {
-                    this.detachEvent( 'on' + eventName, handler );
+                    elem.detachEvent( 'on' + eventName, handler );
                 } else {
-                    this.removeEventListener( eventName, handler, false );
+                    elem.removeEventListener( eventName, handler, false );
                 }
             },
-            css: function( key, val ) {
+            css: function( elem, key, val ) {
                 var i;
 
                 if( typeof key === 'string' ) {
                     if( val === undef ) {
-                        return currCss( this, key );
-                    } else if( this.style ) {
-                        this.style[ key ] = val;
+                        return currCss( elem, key );
+                    } else if( elem.style ) {
+                        elem.style[ key ] = val;
                     }
                 } else if( typeof key === 'object' ) {
                     for( i in key ) {
                         val = key[i];
-                        this.style[ i ] = val;
+                        elem.style[ i ] = val;
                     }
                 }
 
             },
+
             trim: function( val ) {
                 return val ? val.replace(/^\s+|\s$/, '') : val;
             },
-            width: function() {
-                return this.clientWidth - parseInt(easy.css.call( this, 'padding-right' )) - parseInt(easy.css.call( this, 'padding-left' ));
+
+            width: function( elem ) {
+
+                if( elem === window || elem === document ) elem = document.documentElement;
+
+                return elem.clientWidth - ( elem.nodeType === 1 ? parseInt(easy.css( elem, 'padding-right' )) + parseInt(easy.css( elem, 'padding-left' )) + parseInt(easy.css( elem, 'border-right-width' )) + parseInt(easy.css( elem, 'border-left-width' )) : 0 );
+
             },
-            height: function() {
-                return this.clientHeight - parseInt(easy.css.call( this, 'padding-top' )) - parseInt(easy.css.call( this, 'padding-bottom' ));
+
+            height: function( elem ) {
+
+                if( elem === window || elem === document ) elem = document.documentElement;
+
+                return elem.clientHeight - ( elem.nodeType === 1 ? parseInt(easy.css( elem, 'padding-top' )) + parseInt(easy.css( elem, 'padding-bottom' )) + parseInt(easy.css( elem, 'border-top-width' )) + parseInt(easy.css( elem, 'border-bottom-width' )) : 0 )
+
             },
-            outerWidth: function() {
-                return this.offsetWidth;
+
+            outerWidth: function( elem, flag ) {
+                return elem.offsetWidth;
             },
-            outerHeight: function() {
-                return this.offsetHeight;
+
+            outerHeight: function( elem, flag ) {
+                return elem.offsetHeight;
             },
-            attr: function( key, val ) {
-                if( val !== undefined ) {
-                    this.setAttribute(key, val)
-                    return this;
+
+            attr: function( elem, key, val ) {
+                if( val !== undef ) {
+                    elem.setAttribute(key, val)
+                    return elem;
                 }
-                return this.getAttribute(key);
+                return elem.getAttribute(key);
             },
-            removeAttr: function( key ) {
-                if( key === undefined ) return this;
-                this.removeAttribute(key);
-                return this
+
+            removeAttr: function( elem, key ) {
+                if( key === undef ) return elem;
+                elem.removeAttribute(key);
+                return elem;
             }
 
         },
@@ -366,7 +381,10 @@
         footAlign: 'center',
         close: true,
         bodyClass: null,
-        maskClose: true
+        maskClose: true,
+        full: true,
+        originWidth: null,
+        originHeight: null
     };
 
     // Overlay 默认配置
@@ -390,6 +408,9 @@
 
             'fullBefore',
             'fullAfter',
+
+            'cancelFullBefore',
+            'cancelFullAfter',
 
             'resizeStart',
             'resizing',
@@ -485,8 +506,8 @@
         // 将实例绑到dom对象上，方便查找调用
         $el.overlay = self;
 
-        if( easy.css.call( $el, 'display' ) === 'none' ) {
-            easy.css.call( $el, 'display', 'block' );
+        if( easy.css( $el, 'display' ) === 'none' ) {
+            easy.css( $el, 'display', 'block' );
         }
 
         // 创建包含元素，将核心元素放到包含元素内
@@ -501,10 +522,12 @@
         if( opts.title ) {
             eles.title.innerText = opts.title;
         } else {
-            easy.css.call( eles.header, 'display', 'none' );
+            easy.css( eles.header, 'display', 'none' );
         }
 
-        if( !opts.close ) easy.css.call( eles.close, 'display', 'none' );
+        if( !opts.close ) easy.css( eles.close, 'display', 'none' );
+
+        if( !opts.full ) easy.css( eles.full, 'display', 'none' );
 
         // 根据配置，操作footer内的元素
         if( opts.buttons && typeof opts.buttons === 'object' ) {
@@ -573,9 +596,9 @@
 
         $mask = document.createElement('div');
         self.eles.mask = $mask;
-        easy.addClass.call( $mask, 'overlay-mask' );
-        easy.css.call( $mask, 'opacity', opts.opacity );
-        easy.css.call( $mask, 'filter', 'alpha(opacity=' + ( opts.opacity * 100 ) + ')' );
+        easy.addClass( $mask, 'overlay-mask' );
+        easy.css( $mask, 'opacity', opts.opacity );
+        easy.css( $mask, 'filter', 'alpha(opacity=' + ( opts.opacity * 100 ) + ')' );
 
         return $mask;
     };
@@ -601,7 +624,7 @@
 
         } else {
             $el = document.createElement('div');
-            easy.addClass.call( $el, 'overlay-custom-wrapper' );
+            easy.addClass( $el, 'overlay-custom-wrapper' );
             // $el.className += 'overlay-custom-wrapper';
             $el.innerHTML = opts.content;
         }
@@ -618,7 +641,7 @@
             $container = document.createElement('div');
 
         self.eles.container = $container;
-        easy.addClass.call( $container, 'overlay-container' );
+        easy.addClass( $container, 'overlay-container' );
         // $container.className += 'overlay-container';
 
         return $container;
@@ -631,22 +654,27 @@
             $header = document.createElement('div'),
             $title = document.createElement('span'),
             $close = document.createElement('a'),
+            $full = document.createElement('a'),
             $tool = document.createElement('div');
 
         self.eles.header = $header;
-        easy.addClass.call( $header, 'overlay-header' );
+        easy.addClass( $header, 'overlay-header' );
         // $header.className += 'overlay-header';
 
         self.eles.title = $title;
-        easy.addClass.call( $title, 'overlay-title' );
+        easy.addClass( $title, 'overlay-title' );
         // $title.className += 'overlay-title';
 
         self.eles.tool = $tool;
-        easy.addClass.call( $tool, 'overlay-head-tool' );
+        easy.addClass( $tool, 'overlay-head-tool' );
+
+        self.eles.full = $full;
+        easy.addClass( $full, 'overlay-full-btn' );
+        $tool.appendChild( $full );
 
         self.eles.close = $close;
-        easy.addClass.call( $close, 'overlay-close-btn' );
-        $tool.appendChild( $close )
+        easy.addClass( $close, 'overlay-close-btn' );
+        $tool.appendChild( $close );
 
         $header.appendChild( $title );
         $header.appendChild( $tool );
@@ -661,7 +689,7 @@
             $body = document.createElement('div');
 
         self.eles.body = $body;
-        easy.addClass.call( $body, 'overlay-body' + ( opts.bodyClass ? ( ' ' + opts.bodyClass ) : '' ) );
+        easy.addClass( $body, 'overlay-body' + ( opts.bodyClass ? ( ' ' + opts.bodyClass ) : '' ) );
         // $body.className += 'overlay-body';
 
         $body.appendChild( self.eles.el );
@@ -677,9 +705,9 @@
             $title = document.createElement('div');
 
         self.eles.footer = $footer;
-        easy.addClass.call( $footer, 'overlay-footer overlay-footer-' + ( opts.footAlign ) );
+        easy.addClass( $footer, 'overlay-footer overlay-footer-' + ( opts.footAlign ) );
         if( !opts.buttons ) {
-            easy.css.call( $footer, 'display', 'none' );
+            easy.css( $footer, 'display', 'none' );
         }
 
         // $footer.className += 'overlay-footer';
@@ -695,7 +723,7 @@
 
         btn.appendChild( document.createTextNode(text) );
 
-        easy.addClass.call( btn, 'overlay-btn overlay-btn-' + i + ( className.length ? (' ' + className.join(' ')) : '' ) );
+        easy.addClass( btn, 'overlay-btn overlay-btn-' + i + ( className.length ? (' ' + className.join(' ')) : '' ) );
 
         self.eles[fnName] = btn;
 
@@ -758,20 +786,24 @@
 
         // 监听窗口动画事件
         if( supportAnim ) {
-            easy.on.call( eles.container, 'webkitAnimationEnd', animationEndHandler.bind(self) );
-            easy.on.call( eles.container, 'animationend', animationEndHandler.bind(self) );
+            easy.on( eles.container, 'webkitAnimationEnd', animationEndHandler.bind(self) );
+            easy.on( eles.container, 'animationend', animationEndHandler.bind(self) );
         }
 
-        if( eles.close ) {
-            easy.on.call( eles.close, 'click', closeHandler.bind( self ) );
+        if( opts.close ) {
+            easy.on( eles.close, 'click', closeHandler.bind( self ) );
+        }
+
+        if( opts.full ) {
+            easy.on( eles.full, 'click', fullHandler.bind( self ) );
         }
 
         if( opts.maskClose ) {
-            easy.on.call( eles.mask, 'click', closeHandler.bind( self ) );
+            easy.on( eles.mask, 'click', closeHandler.bind( self ) );
         }
 
         if( opts.drag ) {
-            easy.on.call( eles.header, 'mousedown', dragDownOrUpHandler.bind( self ) );
+            easy.on( eles.header, 'mousedown', dragDownOrUpHandler.bind( self ) );
 
             dragMoveStorage[ opts.serialNumber ] = function( e ) {
                 if( !dragFlag ) return;
@@ -779,13 +811,13 @@
                     eles = self.eles;
 
                 triggerEventHandler.call( self, 'moveing' );
-                easy.css.call( eles.container, 'top', e.clientY - dragD.y + 'px' );
-                easy.css.call( eles.container, 'left', e.clientX - dragD.x + 'px' );
+                easy.css( eles.container, 'top', e.clientY - dragD.y + 'px' );
+                easy.css( eles.container, 'left', e.clientX - dragD.x + 'px' );
 
             }
-            easy.on.call( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
+            easy.on( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
         } else {
-            easy.addClass.call( eles.header, 'not-drag' );
+            easy.addClass( eles.header, 'not-drag' );
         }
 
         return self;
@@ -798,18 +830,18 @@
             opts = self.options,
             config = Overlay.config;
 
-        easy.addClass.call( self.eles.mask, 'open');
+        easy.addClass( self.eles.mask, 'open');
 
-        if( easy.hasClass.call( self.eles.container, 'open') ) return self;
+        if( easy.hasClass( self.eles.container, 'open') ) return self;
 
         if( supportAnim ) {
-            easy.addClass.call( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
+            easy.addClass( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
             setTimeout(function() {
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
             }, 0);
         } else {
-            easy.addClass.call( self.eles.container, 'open');
+            easy.addClass( self.eles.container, 'open');
             setTimeout(function() {
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
@@ -828,19 +860,73 @@
         var self = this,
             opts = self.options;
 
-        if( !easy.hasClass.call( self.eles.container, 'open') ) return self;
+        if( !easy.hasClass( self.eles.container, 'open') ) return self;
 
-        easy.removeClass.call( self.eles.mask, 'open');
+        easy.removeClass( self.eles.mask, 'open');
         if( supportAnim ) {
-            easy.addClass.call( self.eles.container, opts.animClass.leave);
+            easy.addClass( self.eles.container, opts.animClass.leave);
         } else {
-            easy.removeClass.call( self.eles.container, 'open');
+            easy.removeClass( self.eles.container, 'open');
             triggerEventHandler.call( self, 'closed' );
             if( opts.closedDestroy ) self.destroy();
         }
 
         return self;
     };
+
+    // 关闭窗口方法
+    Overlay.prototype.full = function() {
+        var self = this,
+            opts = self.options,
+            eles = self.eles,
+            windowWidth = easy.width( window ),
+            windowHeight = easy.height( window ),
+            containerWidth = easy.width( eles.container ),
+            containerHeight = easy.width( eles.container );
+
+        if( easy.hasClass( eles.full, 'fullscreen' ) ) return;
+
+        triggerEventHandler.call( self, 'fullBefore' );
+
+        easy.addClass( eles.full, 'fullscreen' );
+
+        opts.originWidth = containerWidth;
+        opts.originHeight = containerHeight;
+        opts.width = windowWidth;
+        opts.height = windowHeight;
+
+        setSize.call( self );
+        setOffset.call( self );
+
+        triggerEventHandler.call( self, 'fullAfter' );
+
+        return self;
+    };
+
+    Overlay.prototype.cancelFull = function() {
+        var self = this,
+            opts = self.options,
+            eles = self.eles;
+
+
+        if( !easy.hasClass( eles.full, 'fullscreen' ) ) return self;
+
+        triggerEventHandler.call( self, 'cancelFullBefore' );
+
+        easy.removeClass( eles.full, 'fullscreen' );
+
+        opts.width = opts.originWidth;
+        opts.height = opts.originHeight;
+        opts.originWidth = null;
+        opts.originHeight = null;
+
+        setSize.call( self );
+        setOffset.call( self );
+
+        triggerEventHandler.call( self, 'cancelFullAfter' );
+
+        return self;
+    }
 
     // 将需要存的值存到当前对象内 可以在回调方法内被取到
     Overlay.prototype.push = function( key, val ) {
@@ -915,7 +1001,7 @@
         // 判断el是否为原本就存在的dom节点，是的话，则还原到原来的位置
         if( opts.el ) {
             eles.container.parentNode.insertBefore( eles.el, eles.container );
-            easy.removeAttr.call( eles.el, 'style' );
+            easy.removeAttr( eles.el, 'style' );
         }
 
         // 解除对主元素的引用
@@ -1057,7 +1143,7 @@
 
         for( ; i < eventName.length; i++ ) {
             for( ; j < handlerName.length; j++ ) {
-                easy.on.call( $elem, eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ) );
+                easy.on( $elem, eventName[i], triggerEventHandler.bind( self, handlerName[j], callback ) );
             }
         }
 
@@ -1123,13 +1209,13 @@
 
         if( e.target !== eles.container ) return;
 
-        if( easy.hasClass.call( eles.container, opts.animClass.enter ) ) {
+        if( easy.hasClass( eles.container, opts.animClass.enter ) ) {
             triggerEventHandler.call( self, 'opened' );
-            easy.removeClass.call( eles.container, opts.animClass.enter);
-        } else if( easy.hasClass.call( eles.container, opts.animClass.leave ) ) {
+            easy.removeClass( eles.container, opts.animClass.enter);
+        } else if( easy.hasClass( eles.container, opts.animClass.leave ) ) {
             triggerEventHandler.call( self, 'closed' );
-            easy.removeClass.call( eles.container, opts.animClass.leave + ' open');
-            easy.removeClass.call( eles.mask, 'open');
+            easy.removeClass( eles.container, opts.animClass.leave + ' open');
+            easy.removeClass( eles.mask, 'open');
             if( opts.closedDestroy ) self.destroy();
         }
 
@@ -1138,6 +1224,18 @@
     // 关闭事件监听函数
     function closeHandler() {
         this.close();
+    }
+
+    // 全屏事件监听函数
+    function fullHandler() {
+        var self = this,
+            eles = self.eles;
+
+        if( easy.hasClass( eles.full, 'fullscreen' ) ) {
+            return self.cancelFull();;
+        }
+
+        return self.full();;
     }
 
     // 拖拽事件监听函数
@@ -1201,7 +1299,7 @@
         //     mask = self.eles.mask,
         //     container = self.eles.container,
         //     config = Overlay.config,
-        //     czIndex = easy.css.call( container, 'z-index' ),
+        //     czIndex = easy.css( container, 'z-index' ),
         //     zi;
 
         // 1 czIndex
@@ -1211,8 +1309,8 @@
         //
         // opts.zIndex = zIndex = Math.max( czIndex, config.zIndex, opts.zIndex, zIndex );
         //
-        // easy.css.call( mask, 'z-index', zIndex );
-        // easy.css.call( container, 'z-index', zIndex );
+        // easy.css( mask, 'z-index', zIndex );
+        // easy.css( container, 'z-index', zIndex );
 
         var self = this,
             opts = self.options,
@@ -1220,8 +1318,8 @@
             container = self.eles.container,
             cStyle = container.style;
 
-        easy.css.call( mask, 'z-index', opts.zIndex );
-        easy.css.call( container, 'z-index', opts.zIndex );
+        easy.css( mask, 'z-index', opts.zIndex );
+        easy.css( container, 'z-index', opts.zIndex );
 
     }
 
@@ -1229,11 +1327,12 @@
     function setOffset() {
         var self = this,
             opts = self.options,
+            eles = self.eles,
             position = self.position,
             container = self.eles.container;
 
         if( opts.offset && opts.offset.x && opts.offset.y && !opts.isTips ) {
-            easy.css.call( container, {
+            easy.css( container, {
                 top: correctValue(opts.offset.y),
                 left: correctValue(opts.offset.x)
             } );
@@ -1245,18 +1344,27 @@
 
             resizeStorage[ opts.serialNumber ] = function() {
 
-                if( !easy.hasClass.call( container, 'open' ) ) return;
+                if( !easy.hasClass( container, 'open' ) ) return;
 
-                var windowWidth = document.documentElement.clientWidth,
-                    windowHeight = document.documentElement.clientHeight;
+                var windowWidth = easy.width( window ),
+                    windowHeight = easy.height( window );
+
+                // 如果是全屏，则重置弹出窗口的尺寸
+                if( easy.hasClass( eles.full, 'fullscreen' ) ) {
+
+                    opts.width = windowWidth;
+                    opts.height = windowHeight;
+                    setSize.call( self );
+
+                }
 
                 switch( opts.position ) {
                     case 'center' :
                     case 'c' :
                     //
-                    easy.css.call( container, {
-                        top: correctValue( ( windowHeight - easy.height.call(container) ) / 2 ),
-                        left: correctValue( ( windowWidth - easy.width.call(container) ) / 2 )
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
                     } );
 
                     break;
@@ -1339,32 +1447,32 @@
             windowWidth = document.documentElement.clientWidth,
             windowHeight = document.documentElement.clientHeight,
             containerWidth, containerHeight,
-            headerHeight = eles.header ? easy.outerHeight.call( eles.header) : 0,
-            footerHeight = eles.footer ? easy.outerHeight.call( eles.footer) : 0,
+            headerHeight = eles.header ? easy.outerHeight( eles.header) : 0,
+            footerHeight = eles.footer ? easy.outerHeight( eles.footer) : 0,
             cRect;
 
         if( opts.width ) {
             containerWidth = correctValue(opts.width);
-            easy.css.call( container, 'width', containerWidth );
+            easy.css( container, 'width', containerWidth );
         }
 
         if( opts.height ) {
             containerHeight = correctValue(opts.height);
-            easy.css.call( container, 'height', containerHeight );
+            easy.css( container, 'height', containerHeight );
         }
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = container.getBoundingClientRect();
         if( cRect.width > windowWidth ) {
             containerWidth = correctValue(windowWidth);
-            easy.css.call( container, 'width', containerWidth );
+            easy.css( container, 'width', containerWidth );
         }
         if( cRect.height > windowHeight ) {
             containerHeight = correctValue(windowHeight);
-            easy.css.call( container, 'height', containerHeight );
+            easy.css( container, 'height', containerHeight );
         }
 
-        easy.css.call( eles.body, 'height', correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css.call( eles.body, 'padding-top' )) - parseInt(easy.css.call( eles.body, 'padding-bottom' )) - parseInt(easy.css.call( eles.body, 'border-top-width' )) - parseInt(easy.css.call( eles.body, 'border-bottom-width' )) ) );
+        easy.css( eles.body, 'height', correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css( eles.body, 'padding-top' )) - parseInt(easy.css( eles.body, 'padding-bottom' )) - parseInt(easy.css( eles.body, 'border-top-width' )) - parseInt(easy.css( eles.body, 'border-bottom-width' )) ) );
 
     }
 
@@ -1477,7 +1585,7 @@
 
 
     // 监听窗口调整事件 用于窗口位置调整
-    easy.on.call( window, 'resize', function() {
+    easy.on( window, 'resize', function() {
         var i;
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
         if(!serialNumber) return;
@@ -1490,7 +1598,7 @@
 
     } );
 
-    easy.on.call( document.body, 'mousemove', function( e ) {
+    easy.on( document.body, 'mousemove', function( e ) {
         var i;
 
         e = e || window.event;
