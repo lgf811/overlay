@@ -870,7 +870,7 @@
         }
 
         if( opts.resize ) {
-
+            console.log(123);
             easy.on( eles.resize, 'mousedown', adjustDownOrUpHandler.bind( self ) );
 
             adjustStorage[ opts.serialNumber ] = function( e ) {
@@ -1361,18 +1361,19 @@
 
         target = e.target || e.srcElement;
 
-        if( target !== eles.title && target !== eles.header ) return;
-
         if( e.type === 'mousedown' ) {
 
             triggerEventHandler.call( self, 'movestart' );
 
             adjustInit.x = e.clientX;
             adjustInit.y = e.clientY;
-            adjustCurr.x = eles.container.offsetLeft;
-            adjustCurr.y = eles.container.offsetTop;
+            adjustCurr.x = eles.resize.offsetLeft;
+            adjustCurr.y = eles.resize.offsetTop;
             adjustD.x = adjustInit.x - adjustCurr.x;
             adjustD.y = adjustInit.y - adjustCurr.y;
+
+            console.log(adjustCurr)
+            console.log(adjustInit)
 
             adjustFlag = opts.serialNumber;
 
