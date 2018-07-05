@@ -152,6 +152,14 @@
     text-align: left
 }
 
+.overlay-resize-btn {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 10px;
+    height: 10px;
+    cursor: se-resize;
+}
 
 .overlay-alert-body {
     padding: 20px 15px 10px

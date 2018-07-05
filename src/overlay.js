@@ -317,16 +317,28 @@
             }
 
         },
-        returnStorage = {},
-        resizeStorage = {},
-        dragMoveStorage = {},
-        handlersStorage = {},
+
+
+        returnStorage = {},                             // 数据存储区
+        resizeStorage = {},                             // 实例位置重置函数存储区
+        dragMoveStorage = {},                           // 实例拖拽移动函数存储区
+        handlersStorage = {},                           // 实例回调函数存储区
+        adjustStorage = {},                             // 实例调整大小函数存储区
+
         supportAnim = 'onanimationend' in window,
         //defaultCallbackHandlerName = [ 'once', 'ready' ],
+
         dragInit = { x: 0, y: 0 },
         dragCurr = { x: 0, y: 0 },
         dragD = { x: 0, y: 0 },
-        dragFlag = false;
+        dragFlag = false,
+
+        adjustInit = { x: 0, y: 0 },
+        adjustCurr = { x: 0, y: 0 },
+        adjustD = { x: 0, y: 0 },
+        adjustFlag = false,
+
+        triggerResizeEndSpeed = 200;
 
     // Overlay 构造函数
     function Overlay( options ) {
@@ -371,6 +383,8 @@
         title: null,                                                                // 标题
         width: null,                                                                // 宽度
         height: null,                                                               // 高度
+        minWidth: 280,
+        minHeight: 120,
         content: null,                                                              // 被包含的字符串或是地址
         el: null,                                                                   // 被包含的元素
         defOpen: false,
@@ -384,7 +398,8 @@
         maskClose: true,
         full: true,
         originWidth: null,
-        originHeight: null
+        originHeight: null,
+        resize: true
     };
 
     // Overlay 默认配置
@@ -420,37 +435,59 @@
 
         keyframes: {                                                                // 默认动画配置，可在创建实例前，追加新的动画名称
             fade: {
-                'enter': {
+                enter: {
                     "0%": "opacity: 0;",
                     "100%": "opacity: 1;"
                 },
-                'leave': {
+                leave: {
                     "0%": "opacity: 1;",
                     "100%": "opacity: 0;"
                 }
             },
 
             scale: {
-                'enter': {
+                enter: {
                     "0%": "opacity: 0; transform: scale(0.6)",
                     "100%": "opacity: 1; transform: scale(1)"
                 },
-                'leave': {
+                leave: {
                     "0%": "opacity: 1; transform: scale(1)",
                     "100%": "opacity: 0; transform: scale(0.6)"
                 }
             },
 
             spring: {
-                'enter': {
+                enter: {
                     "0%": "opacity: 0; transform: scale(0.6)",
-                    "80%": "opacity: 0.8; transform: scale(1.05)",
+                    "70%": "opacity: 0.8; transform: scale(1.05)",
                     "100%": "opacity: 1; transform: scale(1)"
                 },
-                'leave': {
+                leave: {
                     "0%": "opacity: 1; transform: scale(1)",
-                    "20%": "opacity: 0.8; transform: scale(1.05)",
+                    "30%": "opacity: 0.8; transform: scale(1.05)",
                     "100%": "opacity: 0; transform: scale(0.6)"
+                }
+            },
+
+            fadeSlideUp: {
+                enter: {
+                    "0%": "opacity: 0; transform: translateY(10%)",
+                    "100%": "opacity: 1; transform: translateY(0)"
+                },
+                leave: {
+                    "0%": "opacity: 1; transform: translateY(0)",
+                    "100%": "opacity: 0; transform: translateY(10%)"
+                }
+            },
+
+            fadeSlideDown: {
+                enter: {
+                    "0%": "opacity: 0; transform: translateY(-10%)",
+                    "100%": "opacity: 1; transform: translateY(0)"
+                },
+                leave: {
+                    "0%": "opacity: 1; transform: translateY(0)",
+                    "100%": "opacity: 0; transform: translateY(-10%)"
                 }
             }
         }
@@ -517,6 +554,9 @@
         $container.appendChild( self.headerInit() );
         $container.appendChild( self.bodyInit() );
         $container.appendChild( self.footerInit() );
+
+        if( opts.resize ) $container.appendChild( self.resizeInit() );
+
 
         // 根据配置，操作 header内的元素
         if( opts.title ) {
@@ -710,9 +750,18 @@
             easy.css( $footer, 'display', 'none' );
         }
 
-        // $footer.className += 'overlay-footer';
-
         return $footer;
+    };
+
+    Overlay.prototype.resizeInit = function() {
+        var self = this,
+            opts = self.options,
+            $resize = document.createElement('a');
+
+        self.eles.resize = $resize;
+        easy.addClass( $resize, 'overlay-resize-btn');
+
+        return $resize;
     };
 
     // 初始化按钮
@@ -778,7 +827,7 @@
             fnName, fnGroup,
             $btn;
 
-        // 为
+        // 将初始化好的按钮绑定事件
         for( fnName in btnGroup ) {
             $btn = btnGroup[fnName];
             elemsBindEvent.call( self, $btn, fnName );
@@ -818,6 +867,24 @@
             easy.on( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
         } else {
             easy.addClass( eles.header, 'not-drag' );
+        }
+
+        if( opts.resize ) {
+
+            easy.on( eles.resize, 'mousedown', adjustDownOrUpHandler.bind( self ) );
+
+            adjustStorage[ opts.serialNumber ] = function( e ) {
+                if( !dragFlag ) return;
+                var opts = self.options,
+                    eles = self.eles;
+
+                triggerEventHandler.call( self, 'resizing' );
+                easy.css( eles.container, 'top', e.clientY - dragD.y + 'px' );
+                easy.css( eles.container, 'left', e.clientX - dragD.x + 'px' );
+
+            }
+            easy.on( eles.resize, 'mouseup', adjustDownOrUpHandler.bind( self ) );
+
         }
 
         return self;
@@ -882,13 +949,11 @@
             windowWidth = easy.width( window ),
             windowHeight = easy.height( window ),
             containerWidth = easy.width( eles.container ),
-            containerHeight = easy.width( eles.container );
+            containerHeight = easy.height( eles.container );
 
-        if( easy.hasClass( eles.full, 'fullscreen' ) ) return;
+        if( easy.hasClass( eles.full, 'fullscreen' ) || !opts.full ) return self;
 
         triggerEventHandler.call( self, 'fullBefore' );
-
-        easy.addClass( eles.full, 'fullscreen' );
 
         opts.originWidth = containerWidth;
         opts.originHeight = containerHeight;
@@ -897,6 +962,8 @@
 
         setSize.call( self );
         setOffset.call( self );
+
+        easy.addClass( eles.full, 'fullscreen' );
 
         triggerEventHandler.call( self, 'fullAfter' );
 
@@ -909,7 +976,7 @@
             eles = self.eles;
 
 
-        if( !easy.hasClass( eles.full, 'fullscreen' ) ) return self;
+        if( !easy.hasClass( eles.full, 'fullscreen' ) || !opts.full ) return self;
 
         triggerEventHandler.call( self, 'cancelFullBefore' );
 
@@ -917,6 +984,7 @@
 
         opts.width = opts.originWidth;
         opts.height = opts.originHeight;
+
         opts.originWidth = null;
         opts.originHeight = null;
 
@@ -984,6 +1052,7 @@
         delete returnStorage[ sn ]; // 移除存储的当前实例的数据
         delete resizeStorage[ sn ]; // 移除存储的当前实例的重置函数
         delete dragMoveStorage[ sn ]; // 移除存储的当前实例的拖拽函数
+        delete adjustStorage[ sn ]; // 移除存储的当前实例的调整函数
 
         // 移除按钮集合内的dom节点与对象
         for( i in self.buttonsGroup ) {
@@ -1198,6 +1267,10 @@
         return self;
     }
 
+    function triggerResizeEndHandler( triggerHandler, self, handlerName ) {
+        triggerHandler.call( self, handlerName );
+    }
+
 
     // 支持css延时动画的，会在这里执行
     function animationEndHandler( e ) {
@@ -1277,6 +1350,43 @@
         return self;
     }
 
+    // 实例调整大小事件监听函数
+    function adjustDownOrUpHandler( e ) {
+        var self = this,
+            opts = self.options,
+            eles = self.eles,
+            target;
+
+        e = e || window.event;
+
+        target = e.target || e.srcElement;
+
+        if( target !== eles.title && target !== eles.header ) return;
+
+        if( e.type === 'mousedown' ) {
+
+            triggerEventHandler.call( self, 'movestart' );
+
+            adjustInit.x = e.clientX;
+            adjustInit.y = e.clientY;
+            adjustCurr.x = eles.container.offsetLeft;
+            adjustCurr.y = eles.container.offsetTop;
+            adjustD.x = adjustInit.x - adjustCurr.x;
+            adjustD.y = adjustInit.y - adjustCurr.y;
+
+            adjustFlag = opts.serialNumber;
+
+            return self;
+        }
+
+        triggerEventHandler.call( self, 'moveend' );
+
+        adjustFlag = 0;
+        // mouseup
+
+        return self;
+    }
+
 
     ////////
     ////////  设置组件样式代码块
@@ -1330,6 +1440,9 @@
             eles = self.eles,
             position = self.position,
             container = self.eles.container;
+            windowWidth = easy.width( window ),
+            windowHeight = easy.height( window ),
+            resizeEndTimer = null;
 
         if( opts.offset && opts.offset.x && opts.offset.y && !opts.isTips ) {
             easy.css( container, {
@@ -1346,15 +1459,18 @@
 
                 if( !easy.hasClass( container, 'open' ) ) return;
 
-                var windowWidth = easy.width( window ),
-                    windowHeight = easy.height( window );
+                windowWidth = easy.width( window );
+                windowHeight = easy.height( window );
 
                 // 如果是全屏，则重置弹出窗口的尺寸
-                if( easy.hasClass( eles.full, 'fullscreen' ) ) {
-
+                if( easy.hasClass( eles.full, 'fullscreen' ) && opts.full ) {
                     opts.width = windowWidth;
                     opts.height = windowHeight;
                     setSize.call( self );
+                    triggerEventHandler.call( self, 'resizing' );
+
+                    clearTimeout( resizeEndTimer );
+                    resizeEndTimer = setTimeout(triggerResizeEndHandler, triggerResizeEndSpeed, triggerEventHandler, self, 'resizeEnd');
 
                 }
 
@@ -1603,9 +1719,11 @@
 
         e = e || window.event;
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
-        if(!serialNumber && !dragMoveStorage[ dragFlag ]) return;
+        if(!serialNumber && ( !dragMoveStorage[ dragFlag ] || !adjustStorage[ adjustFlag ] ) ) return;
 
         if( typeof dragMoveStorage[ dragFlag ] === 'function' ) dragMoveStorage[ dragFlag ]( e );
+
+        if( typeof adjustStorage[ adjustFlag ] === 'function' ) adjustStorage[ adjustFlag ]( e );
 
     } );
 

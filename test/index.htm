@@ -38,6 +38,7 @@
                 width: 340,
                 height: 260,
                 defOpen: true,
+                anim: 'fadeSlideDown',
                 buttons: {
                     'enter.enter.enter-1': '确定',
                     'cancel.cancel': '取消',
@@ -81,6 +82,10 @@
                 console.log('取消全屏前')
             }).cancelFullAfter(function() {
                 console.log('取消全屏后');
+            }).resizing(function() {
+                console.log('调整中');
+            }).resizeEnd(function() {
+                console.log('调整结束');
             });
         //})();
 
