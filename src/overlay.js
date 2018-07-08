@@ -870,17 +870,18 @@
         }
 
         if( opts.resize ) {
-            console.log(123);
             easy.on( eles.resize, 'mousedown', adjustDownOrUpHandler.bind( self ) );
 
             adjustStorage[ opts.serialNumber ] = function( e ) {
-                if( !dragFlag ) return;
+                if( !adjustFlag ) return;
                 var opts = self.options,
                     eles = self.eles;
 
+                opts.width = adjustD.x + ( e.clientX - eles.container.offsetLeft );
+                opts.height = adjustD.y + ( e.clientY - eles.container.offsetTop );
+                setSize.call( self );
+
                 triggerEventHandler.call( self, 'resizing' );
-                easy.css( eles.container, 'top', e.clientY - dragD.y + 'px' );
-                easy.css( eles.container, 'left', e.clientX - dragD.x + 'px' );
 
             }
             easy.on( eles.resize, 'mouseup', adjustDownOrUpHandler.bind( self ) );
@@ -1355,7 +1356,8 @@
         var self = this,
             opts = self.options,
             eles = self.eles,
-            target;
+            target,
+            rect;
 
         e = e || window.event;
 
@@ -1367,13 +1369,13 @@
 
             adjustInit.x = e.clientX;
             adjustInit.y = e.clientY;
-            adjustCurr.x = eles.resize.offsetLeft;
-            adjustCurr.y = eles.resize.offsetTop;
-            adjustD.x = adjustInit.x - adjustCurr.x;
-            adjustD.y = adjustInit.y - adjustCurr.y;
 
-            console.log(adjustCurr)
-            console.log(adjustInit)
+            rect = eles.resize.getBoundingClientRect();
+            adjustCurr.x = rect.left;
+            adjustCurr.y = rect.top;
+
+            adjustD.x = rect.width - ( adjustInit.x - adjustCurr.x );
+            adjustD.y = rect.height - ( adjustInit.y - adjustCurr.y );
 
             adjustFlag = opts.serialNumber;
 
