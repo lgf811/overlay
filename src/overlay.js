@@ -383,8 +383,8 @@
         title: null,                                                                // 标题
         width: null,                                                                // 宽度
         height: null,                                                               // 高度
-        minWidth: 280,
-        minHeight: 120,
+        minWidth: 180,
+        minHeight: 20,
         content: null,                                                              // 被包含的字符串或是地址
         el: null,                                                                   // 被包含的元素
         defOpen: false,
@@ -1178,7 +1178,7 @@
             defOpen: true,
             width: 280,
             maskClose: false,
-            bodyClass: 'overlay-alert-body',
+            bodyClass: 'overlay-confirm-body',
             buttons: {
                 'enter.enter-btn': '确定',
                 'cancel.cancel-btn': '取消'
@@ -1570,12 +1570,12 @@
             footerHeight = eles.footer ? easy.outerHeight( eles.footer) : 0,
             cRect;
 
-        if( opts.width ) {
+        if( opts.width > opts.minWidth + parseInt( easy.css( eles.body, 'padding-right' ) ) + parseInt( easy.css( eles.body, 'padding-left' ) ) + parseInt( easy.css( eles.body, 'border-right-width' ) ) + parseInt( easy.css( eles.body, 'border-left-width' ) ) ) {
             containerWidth = correctValue(opts.width);
             easy.css( container, 'width', containerWidth );
         }
 
-        if( opts.height ) {
+        if( opts.height > opts.minHeight + headerHeight + footerHeight ) {
             containerHeight = correctValue(opts.height);
             easy.css( container, 'height', containerHeight );
         }
@@ -1724,11 +1724,18 @@
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
         if(!serialNumber && ( !dragMoveStorage[ dragFlag ] || !adjustStorage[ adjustFlag ] ) ) return;
 
+        if( e.preventDefault ) {
+            e.preventDefault();
+        } else {
+            e.returnValue = false;
+        }
+
         if( typeof dragMoveStorage[ dragFlag ] === 'function' ) dragMoveStorage[ dragFlag ]( e );
 
         if( typeof adjustStorage[ adjustFlag ] === 'function' ) adjustStorage[ adjustFlag ]( e );
 
     } );
+
 
     return Overlay;
 
