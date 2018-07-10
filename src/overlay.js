@@ -1575,26 +1575,35 @@
             containerWidth, containerHeight,
             headerHeight = eles.header ? easy.outerHeight( eles.header) : 0,
             footerHeight = eles.footer ? easy.outerHeight( eles.footer) : 0,
-            cRect;
+            cRect,
+            extraLR = parseInt( easy.css( eles.body, 'padding-right' ) ) + parseInt( easy.css( eles.body, 'padding-left' ) ) + parseInt( easy.css( eles.body, 'border-right-width' ) ) + parseInt( easy.css( eles.body, 'border-left-width' ) ),
+            extraTB = parseInt( easy.css( eles.body, 'padding-top' ) ) + parseInt( easy.css( eles.body, 'padding-bottom' ) ) + parseInt( easy.css( eles.body, 'border-top-width' ) ) + parseInt( easy.css( eles.body, 'border-bottom-width' ) ),
+            cExtraLR = parseInt( easy.css( container, 'padding-right' ) ) + parseInt( easy.css( container, 'padding-left' ) ) + parseInt( easy.css( container, 'border-right-width' ) ) + parseInt( easy.css( container, 'border-left-width' ) ),
+            cExtraTB = parseInt( easy.css( container, 'padding-top' ) ) + parseInt( easy.css( container, 'padding-bottom' ) ) + parseInt( easy.css( container, 'border-top-width' ) ) + parseInt( easy.css( container, 'border-bottom-width' ) );
 
-        if( opts.width > opts.minWidth + parseInt( easy.css( eles.body, 'padding-right' ) ) + parseInt( easy.css( eles.body, 'padding-left' ) ) + parseInt( easy.css( eles.body, 'border-right-width' ) ) + parseInt( easy.css( eles.body, 'border-left-width' ) ) ) {
-            containerWidth = correctValue(opts.width);
+        if( opts.width > opts.minWidth + extraLR ) {
+            containerWidth = correctValue( opts.width - extraLR );
             easy.css( container, 'width', containerWidth );
         }
 
-        if( opts.height > opts.minHeight + headerHeight + footerHeight ) {
-            containerHeight = correctValue(opts.height);
+        if( opts.height > opts.minHeight + headerHeight + footerHeight + extraTB ) {
+            containerHeight = correctValue(opts.height - extraTB);
             easy.css( container, 'height', containerHeight );
         }
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
-        cRect = container.getBoundingClientRect();
+        cRect = {
+            width: easy.outerWidth( container ),
+            height: easy.outerHeight( container ),
+        };
+
         if( cRect.width > windowWidth ) {
-            containerWidth = correctValue(windowWidth);
+            containerWidth = correctValue(windowWidth - cExtraLR);
             easy.css( container, 'width', containerWidth );
         }
+
         if( cRect.height > windowHeight ) {
-            containerHeight = correctValue(windowHeight);
+            containerHeight = correctValue(windowHeight - cExtraTB);
             easy.css( container, 'height', containerHeight );
         }
 
@@ -1737,9 +1746,14 @@
             e.returnValue = false;
         }
 
-        if( typeof dragMoveStorage[ dragFlag ] === 'function' ) dragMoveStorage[ dragFlag ]( e );
+        if( typeof dragMoveStorage[ dragFlag ] === 'function' ) {
+            dragMoveStorage[ dragFlag ]( e );
+        }
 
-        if( typeof adjustStorage[ adjustFlag ] === 'function' ) adjustStorage[ adjustFlag ]( e );
+        if( typeof adjustStorage[ adjustFlag ] === 'function' ) {
+            easy.css( this, 'cursor', 'se-resize' );
+            adjustStorage[ adjustFlag ]( e );
+        }
 
     } );
 
@@ -1756,7 +1770,10 @@
             e.returnValue = false;
         }
 
-        if( typeof adjustUpStorage[ adjustFlag ] === 'function' ) adjustUpStorage[ adjustFlag ]( e );
+        if( typeof adjustUpStorage[ adjustFlag ] === 'function' ) {
+            easy.css( this, 'cursor', 'auto' );
+            adjustUpStorage[ adjustFlag ]( e );
+        }
 
     } );
 
