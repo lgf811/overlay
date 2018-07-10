@@ -384,7 +384,7 @@
         title: null,                                                                // 标题
         width: null,                                                                // 宽度
         height: null,                                                               // 高度
-        minWidth: 180,
+        minWidth: 200,
         minHeight: 20,
         content: null,                                                              // 被包含的字符串或是地址
         el: null,                                                                   // 被包含的元素
@@ -400,7 +400,8 @@
         full: true,
         originWidth: null,
         originHeight: null,
-        resize: true
+        resize: true,
+        skin: null
     };
 
     // Overlay 默认配置
@@ -408,6 +409,7 @@
         urlPattern: urlPattern,                                                     // url正则匹配规则
         duration: 300,                                                              // 动画过程时间
         zIndex: null,
+        skin: null,
         defaultCallbackHandlerName: [
             'once',
             'ready',
@@ -679,10 +681,12 @@
     Overlay.prototype.containerInit = function() {
         var self = this,
             opts = self.options,
-            $container = document.createElement('div');
+            $container = document.createElement('div'),
+            config = Overlay.config;
 
         self.eles.container = $container;
         easy.addClass( $container, 'overlay-container' );
+        easy.addClass( $container, opts.skin || config.skin );
         // $container.className += 'overlay-container';
 
         return $container;
