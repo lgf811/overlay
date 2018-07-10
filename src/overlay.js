@@ -324,6 +324,7 @@
         dragMoveStorage = {},                           // 实例拖拽移动函数存储区
         handlersStorage = {},                           // 实例回调函数存储区
         adjustStorage = {},                             // 实例调整大小函数存储区
+        adjustUpStorage = {},                           // 实例调整大小按键离开函数存储区
 
         supportAnim = 'onanimationend' in window,
         //defaultCallbackHandlerName = [ 'once', 'ready' ],
@@ -870,7 +871,7 @@
         }
 
         if( opts.resize ) {
-            easy.on( eles.resize, 'mousedown', adjustDownOrUpHandler.bind( self ) );
+            easy.on( eles.resize, 'mousedown', adjustDownHandler.bind( self ) );
 
             adjustStorage[ opts.serialNumber ] = function( e ) {
                 if( !adjustFlag ) return;
@@ -884,7 +885,13 @@
                 triggerEventHandler.call( self, 'resizing' );
 
             }
-            easy.on( eles.resize, 'mouseup', adjustDownOrUpHandler.bind( self ) );
+
+            adjustUpStorage[ opts.serialNumber ] = function() {
+
+                triggerEventHandler.call( self, 'moveend' );
+
+                adjustFlag = 0;
+            };
 
         }
 
@@ -1352,7 +1359,7 @@
     }
 
     // 实例调整大小事件监听函数
-    function adjustDownOrUpHandler( e ) {
+    function adjustDownHandler( e ) {
         var self = this,
             opts = self.options,
             eles = self.eles,
@@ -1365,7 +1372,7 @@
 
         if( e.type === 'mousedown' ) {
 
-            triggerEventHandler.call( self, 'movestart' );
+            triggerEventHandler.call( self, 'resizestart' );
 
             adjustInit.x = e.clientX;
             adjustInit.y = e.clientY;
@@ -1382,7 +1389,7 @@
             return self;
         }
 
-        triggerEventHandler.call( self, 'moveend' );
+        triggerEventHandler.call( self, 'resizeend' );
 
         adjustFlag = 0;
         // mouseup
@@ -1733,6 +1740,23 @@
         if( typeof dragMoveStorage[ dragFlag ] === 'function' ) dragMoveStorage[ dragFlag ]( e );
 
         if( typeof adjustStorage[ adjustFlag ] === 'function' ) adjustStorage[ adjustFlag ]( e );
+
+    } );
+
+    easy.on( document.body, 'mouseup', function( e ) {
+        var i;
+
+        e = e || window.event;
+        // 查看序号是否是原始值，是的话，则说明没有创建过组件
+        if(!serialNumber && ( !dragMoveStorage[ dragFlag ] || !adjustStorage[ adjustFlag ] ) ) return;
+
+        if( e.preventDefault ) {
+            e.preventDefault();
+        } else {
+            e.returnValue = false;
+        }
+
+        if( typeof adjustUpStorage[ adjustFlag ] === 'function' ) adjustUpStorage[ adjustFlag ]( e );
 
     } );
 
