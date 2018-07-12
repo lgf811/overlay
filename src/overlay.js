@@ -401,7 +401,9 @@
         originWidth: null,
         originHeight: null,
         resize: true,
-        skin: null
+        skin: null,
+        defFull: false,
+        outBound: false
     };
 
     // Overlay 默认配置
@@ -862,14 +864,33 @@
             dragMoveStorage[ opts.serialNumber ] = function( e ) {
                 if( !dragFlag ) return;
                 var opts = self.options,
-                    eles = self.eles;
+                    eles = self.eles,
+                    windowWidth, windowHeight,
+                    cWidth, cHeight,
+                    setX = e.clientX - dragD.x,
+                    setY = e.clientY - dragD.y;
+
+
+                if( !opts.outBound ) {
+                    windowWidth = easy.width( window );
+                    windowHeight = easy.height( window );
+                    cWidth = easy.outerWidth( eles.container );
+                    cHeight = easy.outerHeight( eles.container );
+
+                    setX = setX < 0 ? 0 : setX + cWidth > windowWidth ? windowWidth - cWidth : setX;
+                    setY = setY < 0 ? 0 : setY + cHeight > windowHeight ? windowHeight - cHeight : setY;
+
+                }
+
+                easy.css( eles.container, 'top', setY + 'px' );
+                easy.css( eles.container, 'left', setX + 'px' );
 
                 triggerEventHandler.call( self, 'moveing' );
-                easy.css( eles.container, 'top', e.clientY - dragD.y + 'px' );
-                easy.css( eles.container, 'left', e.clientX - dragD.x + 'px' );
 
             }
+
             easy.on( eles.header, 'mouseup', dragDownOrUpHandler.bind( self ) );
+
         } else {
             easy.addClass( eles.header, 'not-drag' );
         }
@@ -1065,6 +1086,7 @@
         delete resizeStorage[ sn ]; // 移除存储的当前实例的重置函数
         delete dragMoveStorage[ sn ]; // 移除存储的当前实例的拖拽函数
         delete adjustStorage[ sn ]; // 移除存储的当前实例的调整函数
+        delete adjustUpStorage[ sn ]; // 移除存储的当前调整大小按键离开函数存储区
 
         // 移除按钮集合内的dom节点与对象
         for( i in self.buttonsGroup ) {
