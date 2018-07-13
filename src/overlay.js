@@ -28,7 +28,11 @@
     window.Overlay = factory();
 })(this, function() {
 
-    var _slice = Array.prototype.slice,
+    var isIE8 = document.documentMode === 8,
+        _slice = Array.prototype.slice,
+        toArr = function( val, index ) {
+            return isIE8 ? Array.prototype.concat.apply([], val).slice( index ) : _slice.call( val, index );
+        },
         zIndex = parseInt(Math.random() * 100000),
         serialNumber = 0,
         sheets, rules,
@@ -50,7 +54,7 @@
             }
 
             var fToBind = this,
-                argus = _slice.call( arguments, 1 ),
+                argus = toArr( arguments, 1 ),
                 fNOP = function() {},
                 fBound = function( e ) {
                     return fToBind.apply( this instanceof fNOP && oThis ? this : oThis || window, [].concat( argus, e ) );
@@ -83,13 +87,13 @@
     }
 
     if( ~location.protocol.indexOf('http')) {
-        sheets = _slice.call(document.styleSheets, 0);
+        sheets = toArr(document.styleSheets, 0);
 
         for( i1 = 0; i1 < sheets.length; i1++ ) {
-            rules = _slice.call(sheets[i1].rules, 0);
+            rules = toArr( sheets[i1].rules, 0 );
 
             for( i2 in rules) {
-                if( rules[i2].style.zIndex > zIndex && rules[i2].selectorText === '.overlay-container' ) zIndex = Number(rules[i2].style.zIndex);
+                if( rules[i2].style && rules[i2].style.zIndex > zIndex && rules[i2].selectorText === '.overlay-container' ) zIndex = Number(rules[i2].style.zIndex);
             }
         }
     }
@@ -123,7 +127,7 @@
     }
 
     var extend = function() {
-            var argus = _slice.call(arguments),
+            var argus = toArr(arguments),
                 newFlag, baseObj, mergeObjGroup, mergeObj,
                 i1, i2;
 
@@ -903,8 +907,11 @@
                 var opts = self.options,
                     eles = self.eles;
 
+                e = e || window.event;
+
                 opts.width = adjustD.x + ( e.clientX - eles.container.offsetLeft );
                 opts.height = adjustD.y + ( e.clientY - eles.container.offsetTop );
+
                 setSize.call( self );
 
                 triggerEventHandler.call( self, 'resizing' );
@@ -974,7 +981,7 @@
         return self;
     };
 
-    // 关闭窗口方法
+    // 窗口全屏方法
     Overlay.prototype.full = function() {
         var self = this,
             opts = self.options,
@@ -1003,6 +1010,7 @@
         return self;
     };
 
+    // 取消全屏方法
     Overlay.prototype.cancelFull = function() {
         var self = this,
             opts = self.options,
@@ -1270,26 +1278,25 @@
             sn = opts.serialNumber,
             handlers = handlersStorage[ sn ][ handlerName ],
             onceFlag,
-            returnTemp, i, j;
+            returnTemp, i = 0, j;
+
 
         e = e || window.event;
         if( !e ) e = {};
 
         e.handlerName = handlerName;
 
-        i === undef ? ( i = 0 ) : ( onceFlag = true );
+        // i === undef ? ( i = 0 ) : ( onceFlag = true );
 
         if( !handlers || !handlers.length ) return;
 
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
-
             returnStorage[ sn ] = handlers[ i ].call(
                 self,
                 e,
-                returnStorage[ sn ] ? returnStorage[ sn ] : undef ) || returnStorage[ sn ];
-
-            if( onceFlag ) break;
+                returnStorage[ sn ] ? returnStorage[ sn ] : undef
+            ) || returnStorage[ sn ];
         }
 
         if( handlerName === 'once' ) {
@@ -1297,7 +1304,6 @@
         }
         // 执行补充的回调函数
         typeof callback === 'function' && callback();
-
         return self;
     }
 
@@ -1357,7 +1363,6 @@
         target = e.target || e.srcElement;
         // mousedown
 
-
         if( target !== eles.title && target !== eles.header ) return;
 
         if( e.type === 'mousedown' ) {
@@ -1404,11 +1409,12 @@
             adjustInit.y = e.clientY;
 
             rect = eles.resize.getBoundingClientRect();
+
             adjustCurr.x = rect.left;
             adjustCurr.y = rect.top;
 
-            adjustD.x = rect.width - ( adjustInit.x - adjustCurr.x );
-            adjustD.y = rect.height - ( adjustInit.y - adjustCurr.y );
+            adjustD.x = ( !( 'width' in rect ) ? easy.width( eles.resize ) : rect.width ) - ( adjustInit.x - adjustCurr.x );
+            adjustD.y = ( !( 'height' in rect ) ? easy.height( eles.resize ) : rect.height ) - ( adjustInit.y - adjustCurr.y );
 
             adjustFlag = opts.serialNumber;
 
@@ -1599,6 +1605,7 @@
             windowWidth = document.documentElement.clientWidth,
             windowHeight = document.documentElement.clientHeight,
             containerWidth, containerHeight,
+            bodyHeight,
             headerHeight = eles.header ? easy.outerHeight( eles.header) : 0,
             footerHeight = eles.footer ? easy.outerHeight( eles.footer) : 0,
             cRect,
@@ -1610,11 +1617,15 @@
         if( opts.width > opts.minWidth + extraLR ) {
             containerWidth = correctValue( opts.width - extraLR );
             easy.css( container, 'width', containerWidth );
+        } else {
+            containerWidth = opts.minWidth + extraLR;
         }
 
         if( opts.height > opts.minHeight + headerHeight + footerHeight + extraTB ) {
-            containerHeight = correctValue(opts.height - extraTB);
+            containerHeight = correctValue( opts.height - extraTB);
             easy.css( container, 'height', containerHeight );
+        } else {
+            containerHeight = opts.minHeight + headerHeight + footerHeight + extraTB;
         }
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
@@ -1633,7 +1644,10 @@
             easy.css( container, 'height', containerHeight );
         }
 
-        easy.css( eles.body, 'height', correctValue( parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css( eles.body, 'padding-top' )) - parseInt(easy.css( eles.body, 'padding-bottom' )) - parseInt(easy.css( eles.body, 'border-top-width' )) - parseInt(easy.css( eles.body, 'border-bottom-width' )) ) );
+        bodyHeight = parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css( eles.body, 'padding-top' )) - parseInt(easy.css( eles.body, 'padding-bottom' )) - parseInt(easy.css( eles.body, 'border-top-width' )) - parseInt(easy.css( eles.body, 'border-bottom-width' ));
+
+        bodyHeight = correctValue( bodyHeight < opts.minHeight ? opts.minHeight : bodyHeight );
+        easy.css( eles.body, 'height', bodyHeight );
 
     }
 
@@ -1764,7 +1778,8 @@
 
         e = e || window.event;
         // 查看序号是否是原始值，是的话，则说明没有创建过组件
-        if(!serialNumber && ( !dragMoveStorage[ dragFlag ] || !adjustStorage[ adjustFlag ] ) ) return;
+
+        if(!serialNumber || ( !dragMoveStorage[ dragFlag ] && !adjustStorage[ adjustFlag ] ) ) return;
 
         if( e.preventDefault ) {
             e.preventDefault();
