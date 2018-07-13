@@ -36,7 +36,7 @@
         zIndex = parseInt(Math.random() * 100000),
         serialNumber = 0,
         sheets, rules,
-        urlPattern = new RegExp('^\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
+        urlPattern = new RegExp('^\\.\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
         windowKey,
         domPrototype,
         undef = undefined,
@@ -247,6 +247,9 @@
                 }
             },
             on: function( elem, eventName, handler ) {
+
+                if( !elem ) return;
+
                 if( document.all ) {
                     elem.attachEvent( 'on' + eventName, handler );
                 } else {
@@ -550,7 +553,7 @@
         }
 
         // 将实例绑到dom对象上，方便查找调用
-        $el.overlay = self;
+        $el.$overlay = self;
 
         if( easy.css( $el, 'display' ) === 'none' ) {
             easy.css( $el, 'display', 'block' );
@@ -566,6 +569,7 @@
 
         if( opts.resize ) $container.appendChild( self.resizeInit() );
 
+        if( eles.el.tagName.toLowerCase() === 'iframe' ) easy.addClass(eles.body, 'overlay-iframe loading');
 
         // 根据配置，操作 header内的元素
         if( opts.title ) {
@@ -656,9 +660,10 @@
     Overlay.prototype.elInit = function() {
         var self = this,
             opts = self.options,
+            eles = self.eles,
             $el, loadedCallback,
             name = 'overlay-frame-' + opts.serialNumber,
-            hasUrl = opts.content.match(opts.urlPattern);
+            hasUrl = opts.content.match(opts.urlPattern || Overlay.config.urlPattern);
 
         // 如果 content 是链接，则装入iframe中
         if( hasUrl && hasUrl.length && hasUrl[0] ) {
@@ -668,6 +673,9 @@
             $el.src = opts.content;
 
             elemsBindEvent.call( self, $el, 'ready', 'load', function() {
+
+                self.iframeWindow = window.frames[name];
+                easy.removeClass(eles.body, 'loading');
                 elemsUnbindEvent.call( self, $el, 'load' );
             } );
 
@@ -1023,11 +1031,7 @@
 
         easy.removeClass( eles.full, 'fullscreen' );
 
-        opts.width = opts.originWidth;
-        opts.height = opts.originHeight;
-
-        opts.originWidth = null;
-        opts.originHeight = null;
+        self.restore();
 
         setSize.call( self );
         setOffset.call( self );
@@ -1107,7 +1111,7 @@
         delete self.buttonsGroup;
 
         // 解除对实例的引用
-        delete eles.el.overlay;
+        delete eles.el.$overlay;
 
         // 判断el是否为原本就存在的dom节点，是的话，则还原到原来的位置
         if( opts.el ) {
@@ -1149,6 +1153,8 @@
             }
         }
 
+        if( self.iframeWindow ) delete self.iframeWindow;
+
         // 移除dom节点存储对象
         delete self.eles;
 
@@ -1159,7 +1165,7 @@
     };
 
 
-    // 组件销毁
+    // 解绑事件回调函数
     Overlay.prototype.off = function( key ) {
         var self = this,
             opts = self.options,
@@ -1182,6 +1188,31 @@
         handlers[ key ].splice( 0, handlers[ key ].length );
         return self;
     }
+
+    Overlay.prototype.restore = function() {
+        var self = this,
+            opts = self.options;
+
+        opts.width = opts.originWidth;
+        opts.height = opts.originHeight;
+        opts.originWidth = null;
+        opts.originHeight = null;
+
+        return self;
+    }
+
+    Overlay.prototype.setSize = function() {
+        var self = this,
+            opts = self.options;
+
+        opts.width = opts.originWidth;
+        opts.height = opts.originHeight;
+        opts.originWidth = null;
+        opts.originHeight = null;
+
+        return self;
+    }
+
     ////////
     //////// 常用类型弹出框代码块
     ////////
@@ -1286,9 +1317,10 @@
 
         e.handlerName = handlerName;
 
-        // i === undef ? ( i = 0 ) : ( onceFlag = true );
-
-        if( !handlers || !handlers.length ) return;
+        if( !handlers || !handlers.length ) {
+            typeof callback === 'function' && callback();
+            return;
+        };
 
         // 循环已经装载好的所有可执行回调函数
         for( ; i < handlers.length; i++ ) {
@@ -1303,6 +1335,7 @@
             handlersStorage[ sn ][ handlerName ] = null;
         }
         // 执行补充的回调函数
+
         typeof callback === 'function' && callback();
         return self;
     }
@@ -1648,6 +1681,11 @@
 
         bodyHeight = correctValue( bodyHeight < opts.minHeight ? opts.minHeight : bodyHeight );
         easy.css( eles.body, 'height', bodyHeight );
+
+        if( eles.el.tagName.toLowerCase() === 'iframe' ) {
+            // easy.css( eles.el, 'width', containerWidth );
+            easy.css( eles.el, 'height', bodyHeight );
+        }
 
     }
 

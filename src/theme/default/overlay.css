@@ -23,15 +23,12 @@
     border-radius: 3px;
     background-color: #ffffff;
     box-shadow: 0 2px 35px rgba(0, 0, 0, 0.2);
-
-
 }
 
 .overlay-container.open,
 .overlay-mask.open {
     display: block;
 }
-
 
 .overlay-container.overlay-anim {
     animation-fill-mode: both;
@@ -94,6 +91,27 @@
 .overlay-body {
     min-height: 20px;
     overflow: auto
+}
+
+.overlay-body.loading {
+    background: url('loading.gif') no-repeat 50% 50%
+}
+.overlay-body.loading > iframe {
+    visibility: hidden
+}
+
+.overlay-iframe {
+    overflow: hidden
+}
+.overlay-iframe iframe {
+    width: 100%
+}
+
+@media screen and ( -webkit-min-device-pixel-ratio: 2 ) {
+    .overlay-body.loading {
+        background-image: url('loading@2x.gif');
+        background-size: 56px 56px
+    }
 }
 
 .overlay-footer {
