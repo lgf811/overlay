@@ -1033,7 +1033,6 @@
 
         self.restore();
 
-        setSize.call( self );
         setOffset.call( self );
 
         triggerEventHandler.call( self, 'cancelFullAfter' );
@@ -1193,17 +1192,36 @@
         var self = this,
             opts = self.options;
 
-        opts.width = opts.originWidth;
-        opts.height = opts.originHeight;
-        opts.originWidth = null;
-        opts.originHeight = null;
+        if( opts.originWidth === null && opts.originHeight === null ) return self;
+
+        if( opts.originWidth !== null ) {
+            opts.width = opts.originWidth;
+            opts.originWidth = null;
+        }
+        if( opts.originHeight !== null ) {
+            opts.height = opts.originHeight;
+            opts.originHeight = null;
+        }
+
+        setSize.call( self );
 
         return self;
     }
 
-    Overlay.prototype.setSize = function() {
+    Overlay.prototype.setSize = function( obj ) {
         var self = this,
-            opts = self.options;
+            opts = self.options,
+            width, height;
+
+        if( opts.originWidth === null ) opts.originWidth = opts.width;
+        if( opts.originHeight === null ) opts.originHeight = opts.height;
+
+        width = obj.width || null;
+        height = obj.height || null;
+
+        if( width < opts.minWidth ) {
+            width = opts.minWidth;
+        }
 
         opts.width = opts.originWidth;
         opts.height = opts.originHeight;
