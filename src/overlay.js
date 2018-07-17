@@ -45,7 +45,10 @@
         isInteger = function( val ) {
             return val%1 === 0;
         },
-        whPattern = /width|height|top|right|bottom|left/;
+        whPattern = /width|height|top|right|bottom|left/,
+        numPattern = /^(\d+)$/,
+        pixelPattern = /^([^0]\d{0,})px$/,
+        percentPattern = /^(([^0]\d{0,})|(\d+\.\d+))%$/;
 
     if( typeof Function.prototype.bind === 'undefined' ) {
         Function.prototype.bind = function( oThis ) {
@@ -369,6 +372,10 @@
             zIndex = self.options.zIndex;
         } else if ( Overlay.config.zIndex && Overlay.config.zIndex > zIndex ) {
             self.options.zIndex = zIndex = Overlay.config.zIndex + 1;
+        }
+
+        if( typeof opts.width === 'string' ) {
+            //opts.width = 
         }
 
 
@@ -1213,6 +1220,8 @@
             opts = self.options,
             width, height;
 
+        if( !obj.width && !obj.height ) return self;
+
         if( opts.originWidth === null ) opts.originWidth = opts.width;
         if( opts.originHeight === null ) opts.originHeight = opts.height;
 
@@ -1220,6 +1229,9 @@
         height = obj.height || null;
 
         if( width < opts.minWidth ) {
+            width = opts.minWidth;
+        }
+        if( height < opts.minHeight ) {
             width = opts.minWidth;
         }
 
@@ -1663,7 +1675,13 @@
             extraLR = parseInt( easy.css( eles.body, 'padding-right' ) ) + parseInt( easy.css( eles.body, 'padding-left' ) ) + parseInt( easy.css( eles.body, 'border-right-width' ) ) + parseInt( easy.css( eles.body, 'border-left-width' ) ),
             extraTB = parseInt( easy.css( eles.body, 'padding-top' ) ) + parseInt( easy.css( eles.body, 'padding-bottom' ) ) + parseInt( easy.css( eles.body, 'border-top-width' ) ) + parseInt( easy.css( eles.body, 'border-bottom-width' ) ),
             cExtraLR = parseInt( easy.css( container, 'padding-right' ) ) + parseInt( easy.css( container, 'padding-left' ) ) + parseInt( easy.css( container, 'border-right-width' ) ) + parseInt( easy.css( container, 'border-left-width' ) ),
-            cExtraTB = parseInt( easy.css( container, 'padding-top' ) ) + parseInt( easy.css( container, 'padding-bottom' ) ) + parseInt( easy.css( container, 'border-top-width' ) ) + parseInt( easy.css( container, 'border-bottom-width' ) );
+            cExtraTB = parseInt( easy.css( container, 'padding-top' ) ) + parseInt( easy.css( container, 'padding-bottom' ) ) + parseInt( easy.css( container, 'border-top-width' ) ) + parseInt( easy.css( container, 'border-bottom-width' ) ),
+            width = opts.width,
+            height = opts.height;
+
+        if( 1 ) {
+
+        }
 
         if( opts.width > opts.minWidth + extraLR ) {
             containerWidth = correctValue( opts.width - extraLR );

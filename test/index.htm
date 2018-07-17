@@ -14,6 +14,7 @@
     <div class="o2">123123123</div>
     <br><br><br><br><br>
     <div id="a">123123213</div>
+    <a href="javascript:;" class="aa">打开</a>
     <script src="../src/overlay.js"></script>
     <script>
         //(function() {
@@ -37,7 +38,6 @@
                 title: '标题',
                 width: 340,
                 height: 260,
-                defOpen: true,
                 anim: 'fadeSlideDown',
                 buttons: {
                     'enter.enter.enter-1': '确定',
@@ -98,6 +98,10 @@
             function enter1() {
                 // console.log(3);
             }
+
+            document.querySelector('.aa').addEventListener('click', function() {
+                win2.open();
+            });
     </script>
 </body>
 </html>
