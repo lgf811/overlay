@@ -374,8 +374,12 @@
             self.options.zIndex = zIndex = Overlay.config.zIndex + 1;
         }
 
-        if( typeof opts.width === 'string' ) {
-            //opts.width = 
+        if( typeof self.options.width === 'string' ) {
+            self.options.width = getSizeNumber( self.options.width );
+        }
+
+        if( typeof self.options.height === 'string' ) {
+            self.options.height = getSizeNumber( self.options.height );
         }
 
 
@@ -1676,26 +1680,26 @@
             extraTB = parseInt( easy.css( eles.body, 'padding-top' ) ) + parseInt( easy.css( eles.body, 'padding-bottom' ) ) + parseInt( easy.css( eles.body, 'border-top-width' ) ) + parseInt( easy.css( eles.body, 'border-bottom-width' ) ),
             cExtraLR = parseInt( easy.css( container, 'padding-right' ) ) + parseInt( easy.css( container, 'padding-left' ) ) + parseInt( easy.css( container, 'border-right-width' ) ) + parseInt( easy.css( container, 'border-left-width' ) ),
             cExtraTB = parseInt( easy.css( container, 'padding-top' ) ) + parseInt( easy.css( container, 'padding-bottom' ) ) + parseInt( easy.css( container, 'border-top-width' ) ) + parseInt( easy.css( container, 'border-bottom-width' ) ),
-            width = opts.width,
-            height = opts.height;
+            width = typeof opts.width === 'function' ? opts.width() : opts.width,
+            height = typeof opts.height === 'function' ? opts.height() : opts.height;
 
-        if( 1 ) {
 
-        }
 
-        if( opts.width > opts.minWidth + extraLR ) {
-            containerWidth = correctValue( opts.width - extraLR );
-            easy.css( container, 'width', containerWidth );
+        if( width > opts.minWidth + extraLR ) {
+            containerWidth = correctValue( width - extraLR );
         } else {
-            containerWidth = opts.minWidth + extraLR;
+            containerWidth = correctValue( opts.minWidth + extraLR );
         }
 
-        if( opts.height > opts.minHeight + headerHeight + footerHeight + extraTB ) {
-            containerHeight = correctValue( opts.height - extraTB);
-            easy.css( container, 'height', containerHeight );
+        easy.css( container, 'width', containerWidth );
+
+        if( height > opts.minHeight + headerHeight + footerHeight + extraTB ) {
+            containerHeight = correctValue( height - extraTB);
         } else {
-            containerHeight = opts.minHeight + headerHeight + footerHeight + extraTB;
+            containerHeight = correctValue( opts.minHeight + headerHeight + footerHeight + extraTB );
         }
+
+        easy.css( container, 'height', containerHeight );
 
         // 如果组件的宽度或高度大于了窗口的高或宽，则让组件的宽或高等于窗口的宽或高
         cRect = {
@@ -1723,6 +1727,23 @@
             easy.css( eles.el, 'height', bodyHeight );
         }
 
+    }
+
+    function getSizeNumber( val ) {
+
+        var $1;
+
+        if( numPattern.test( val ) || pixelPattern.test( val ) ) {
+            $1 = RegExp.$1;
+            return Number( $1 );
+        } else if ( percentPattern.test( val ) ) {
+            $1 = RegExp.$1;
+            return function() {
+                return Number( $1 ) * 0.01 * easy.width( window );
+            }
+        }
+
+        return val;
     }
 
 
