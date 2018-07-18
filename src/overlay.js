@@ -375,11 +375,12 @@
         }
 
         if( typeof self.options.width === 'string' ) {
-            self.options.width = getSizeNumber( self.options.width );
+            self.options.width = getSizeNumber( self.options, self.options.width, 'width' );
         }
 
         if( typeof self.options.height === 'string' ) {
-            self.options.height = getSizeNumber( self.options.height );
+            self.options.height = getSizeNumber( self.options, self.options.height, 'height' );
+
         }
 
 
@@ -1010,7 +1011,7 @@
             containerWidth = easy.width( eles.container ),
             containerHeight = easy.height( eles.container );
 
-        if( easy.hasClass( eles.full, 'fullscreen' ) || !opts.full ) return self;
+        if( easy.hasClass( eles.full, 'fullscreen' ) || !opts.full || !easy.hasClass( self.eles.container, 'open' ) ) return self;
 
         triggerEventHandler.call( self, 'fullBefore' );
 
@@ -1036,7 +1037,7 @@
             eles = self.eles;
 
 
-        if( !easy.hasClass( eles.full, 'fullscreen' ) || !opts.full ) return self;
+        if( !easy.hasClass( eles.full, 'fullscreen' ) || !opts.full || !easy.hasClass( self.eles.container, 'open' ) ) return self;
 
         triggerEventHandler.call( self, 'cancelFullBefore' );
 
@@ -1050,6 +1051,62 @@
 
         return self;
     }
+
+
+    // 恢复初始宽度与高度
+    Overlay.prototype.restore = function() {
+        var self = this,
+            opts = self.options;
+
+        if( opts.originWidth === null && opts.originHeight === null || !easy.hasClass( self.eles.container, 'open' ) || easy.hasClass( self.eles.full, 'fullscreen' ) ) return self;
+
+        if( opts.originWidth !== null ) {
+            opts.width = opts.originWidth;
+            opts.originWidth = null;
+        }
+
+        if( opts.originHeight !== null ) {
+            opts.height = opts.originHeight;
+            opts.originHeight = null;
+        }
+
+        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) {
+            console.log(123);
+            setSize.call( self );
+        }
+        setOffset.call( self );
+
+        return self;
+    }
+
+    Overlay.prototype.setSize = function( obj ) {
+        var self = this,
+            opts = self.options,
+            width, height;
+
+        if( !obj.width && !obj.height ) return self;
+
+        if( obj.width && opts.originWidth === null ) opts.originWidth = opts.width;
+        if( obj.height && opts.originHeight === null ) opts.originHeight = opts.height;
+
+        if( obj.width ) {
+            opts.width = typeof obj.width === 'number' || typeof obj.width === 'function' ? obj.width :
+                typeof obj.width === 'string' ? getSizeNumber( opts, opts.width, 'width' ) : opts.minWidth;
+        }
+
+        if( obj.height ) {
+            opts.height = typeof obj.height === 'number' || typeof obj.height === 'function' ? obj.height :
+                typeof obj.height === 'string' ? getSizeNumber( opts, opts.height, 'width' ) : opts.minHeight;
+        }
+
+        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) {
+            setSize.call( self );
+        }
+        setOffset.call( self );
+
+        return self;
+    };
+
 
     // 将需要存的值存到当前对象内 可以在回调方法内被取到
     Overlay.prototype.push = function( key, val ) {
@@ -1090,6 +1147,34 @@
 
         return self;
     }
+
+
+    // 解绑事件回调函数
+    Overlay.prototype.off = function( key ) {
+        var self = this,
+            opts = self.options,
+            sn = opts.serialNumber,
+            handlers = handlersStorage[ sn ],
+            handler,
+            i, j;
+
+        if( typeof key !== 'string' && typeof key !== 'function' || ( handlers[ key ] && !handlers[ key ].length ) ) return self;
+
+        if( typeof key === 'function' ) {
+            for( i in handlers ) {
+                if( handlers[ i ] && handlers[ i ].length && ~handlers[ i ].indexOf( key ) ) {
+                    handlers[ i ].splice( handlers[ i ].indexOf( key ), 1 );
+                }
+            }
+            return self;
+        }
+
+        handlers[ key ].splice( 0, handlers[ key ].length );
+        return self;
+    }
+
+
+
 
 
     // 组件销毁
@@ -1174,78 +1259,6 @@
         return self;
     };
 
-
-    // 解绑事件回调函数
-    Overlay.prototype.off = function( key ) {
-        var self = this,
-            opts = self.options,
-            sn = opts.serialNumber,
-            handlers = handlersStorage[ sn ],
-            handler,
-            i, j;
-
-        if( typeof key !== 'string' && typeof key !== 'function' || ( handlers[ key ] && !handlers[ key ].length ) ) return self;
-
-        if( typeof key === 'function' ) {
-            for( i in handlers ) {
-                if( handlers[ i ] && handlers[ i ].length && ~handlers[ i ].indexOf( key ) ) {
-                    handlers[ i ].splice( handlers[ i ].indexOf( key ), 1 );
-                }
-            }
-            return self;
-        }
-
-        handlers[ key ].splice( 0, handlers[ key ].length );
-        return self;
-    }
-
-    Overlay.prototype.restore = function() {
-        var self = this,
-            opts = self.options;
-
-        if( opts.originWidth === null && opts.originHeight === null ) return self;
-
-        if( opts.originWidth !== null ) {
-            opts.width = opts.originWidth;
-            opts.originWidth = null;
-        }
-        if( opts.originHeight !== null ) {
-            opts.height = opts.originHeight;
-            opts.originHeight = null;
-        }
-
-        setSize.call( self );
-
-        return self;
-    }
-
-    Overlay.prototype.setSize = function( obj ) {
-        var self = this,
-            opts = self.options,
-            width, height;
-
-        if( !obj.width && !obj.height ) return self;
-
-        if( opts.originWidth === null ) opts.originWidth = opts.width;
-        if( opts.originHeight === null ) opts.originHeight = opts.height;
-
-        width = obj.width || null;
-        height = obj.height || null;
-
-        if( width < opts.minWidth ) {
-            width = opts.minWidth;
-        }
-        if( height < opts.minHeight ) {
-            width = opts.minWidth;
-        }
-
-        opts.width = opts.originWidth;
-        opts.height = opts.originHeight;
-        opts.originWidth = null;
-        opts.originHeight = null;
-
-        return self;
-    }
 
     ////////
     //////// 常用类型弹出框代码块
@@ -1734,7 +1747,7 @@
 
     }
 
-    function getSizeNumber( val ) {
+    function getSizeNumber( opts, val, key ) {
 
         var $1;
 
@@ -1744,12 +1757,11 @@
         } else if ( percentPattern.test( val ) ) {
             $1 = RegExp.$1;
             return function() {
-                console.log(this)
-                return Number( $1 ) * 0.01 * easy.width( window );
+                return Number( $1 ) * 0.01 * easy[key]( window );
             }
         }
-
-        return val;
+        key = key.charAt(0).toUpperCase() + key.substr(1, key.length);
+        return opts[ 'min' + key ];
     }
 
 
