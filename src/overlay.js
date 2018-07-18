@@ -1503,10 +1503,13 @@
 
     // 设置弹出框位置
     function setStyle() {
-        var self = this;
+        var self = this,
+            opts = self.options;
 
         setZIndex.call( self );
-        setSize.call( self );
+        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) {
+            setSize.call( self );
+        }
         setOffset.call( self );
 
     }
@@ -1581,6 +1584,8 @@
                     clearTimeout( resizeEndTimer );
                     resizeEndTimer = setTimeout(triggerResizeEndHandler, triggerResizeEndSpeed, triggerEventHandler, self, 'resizeEnd');
 
+                } else if( typeof opts.width === 'function' || typeof opts.height === 'function' ) {
+                    setSize.call( self );
                 }
 
                 switch( opts.position ) {
@@ -1680,8 +1685,8 @@
             extraTB = parseInt( easy.css( eles.body, 'padding-top' ) ) + parseInt( easy.css( eles.body, 'padding-bottom' ) ) + parseInt( easy.css( eles.body, 'border-top-width' ) ) + parseInt( easy.css( eles.body, 'border-bottom-width' ) ),
             cExtraLR = parseInt( easy.css( container, 'padding-right' ) ) + parseInt( easy.css( container, 'padding-left' ) ) + parseInt( easy.css( container, 'border-right-width' ) ) + parseInt( easy.css( container, 'border-left-width' ) ),
             cExtraTB = parseInt( easy.css( container, 'padding-top' ) ) + parseInt( easy.css( container, 'padding-bottom' ) ) + parseInt( easy.css( container, 'border-top-width' ) ) + parseInt( easy.css( container, 'border-bottom-width' ) ),
-            width = typeof opts.width === 'function' ? opts.width() : opts.width,
-            height = typeof opts.height === 'function' ? opts.height() : opts.height;
+            width = typeof opts.width === 'function' ? opts.width.call( self ) : opts.width,
+            height = typeof opts.height === 'function' ? opts.height.call( self ) : opts.height;
 
 
 
@@ -1739,6 +1744,7 @@
         } else if ( percentPattern.test( val ) ) {
             $1 = RegExp.$1;
             return function() {
+                console.log(this)
                 return Number( $1 ) * 0.01 * easy.width( window );
             }
         }
