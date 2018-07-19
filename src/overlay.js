@@ -374,13 +374,15 @@
             self.options.zIndex = zIndex = Overlay.config.zIndex + 1;
         }
 
-        if( typeof self.options.width === 'string' ) {
-            self.options.width = getSizeNumber( self.options, self.options.width, 'width' );
+        setContainerSizeNumber( self.options, 'width' );
+        setContainerSizeNumber( self.options, 'height' );
+
+        if( self.options.offset && typeof self.options.offset.x === 'string' ) {
+            setContainerOffsetNumber( self.options, 'x' );
         }
 
-        if( typeof self.options.height === 'string' ) {
-            self.options.height = getSizeNumber( self.options, self.options.height, 'height' );
-
+        if( self.options.offset && typeof self.options.offset.y === 'string' ) {
+            setContainerOffsetNumber( self.options, 'y' );
         }
 
 
@@ -410,6 +412,7 @@
         defOpen: false,
         anim: 'scale',
         position: 'center',
+        offset: null,
         opacity: 0.4,
         drag: true,
         footAlign: 'center',
@@ -1058,7 +1061,7 @@
         var self = this,
             opts = self.options;
 
-        if( opts.originWidth === null && opts.originHeight === null || !easy.hasClass( self.eles.container, 'open' ) || easy.hasClass( self.eles.full, 'fullscreen' ) ) return self;
+        if( ( opts.originWidth === null && opts.originHeight === null && 'originOffset' in opts && opts.originOffset.x === null && opts.originOffset.y === null ) || !easy.hasClass( self.eles.container, 'open' ) || easy.hasClass( self.eles.full, 'fullscreen' ) ) return self;
 
         if( opts.originWidth !== null ) {
             opts.width = opts.originWidth;
@@ -1068,6 +1071,16 @@
         if( opts.originHeight !== null ) {
             opts.height = opts.originHeight;
             opts.originHeight = null;
+        }
+
+        if( opts.originOffset && opts.originOffset.x !== null ) {
+            opts.offset.x = opts.originOffset.x;
+            opts.originOffset.x = null;
+        }
+
+        if( opts.originOffset && opts.originOffset.y !== null ) {
+            opts.offset.y = opts.originOffset.y;
+            opts.originOffset.y = null;
         }
 
         if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) setSize.call( self );
@@ -1088,13 +1101,13 @@
         if( obj.height && opts.originHeight === null ) opts.originHeight = opts.height;
 
         if( obj.width ) {
-            opts.width = typeof obj.width === 'number' || typeof obj.width === 'function' ? obj.width :
-                typeof obj.width === 'string' ? getSizeNumber( opts, obj.width, 'width' ) : opts.minWidth;
+            opts.width = obj.width;
+            if( typeof opts.width === 'string' ) setContainerSizeNumber( opts, 'width' );
         }
 
         if( obj.height ) {
-            opts.height = typeof obj.height === 'number' || typeof obj.height === 'function' ? obj.height :
-                typeof obj.height === 'string' ? getSizeNumber( opts, obj.height, 'height' ) : opts.minHeight;
+            opts.height = obj.height;
+            if( typeof opts.height === 'string' ) setContainerSizeNumber( opts, 'height' );
         }
 
         if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
@@ -1105,43 +1118,51 @@
         return self;
     };
 
-
-    // 将需要存的值存到当前对象内 可以在回调方法内被取到
-    Overlay.prototype.push = function( key, val ) {
+    // 设置窗口尺寸
+    Overlay.prototype.setOffset = function( obj ) {
         var self = this,
-            sn = self.options.serialNumber;
+            opts = self.options,
+            x, y;
 
-        if( key === undef && val === undef ) return self;
+        if( !obj.x && !obj.y ) return self;
 
-        if( key && val === undef ) {
-            val = key;
-            returnStorage[ sn ] = val;
-        } else if( key && val !== undef ) {
-            if( !returnStorage[ sn ] ) returnStorage[ sn ] = {};
-            returnStorage[ sn ][ key ] = val;
+        if( !( 'originOffset' in opts ) ) {
+            opts.originOffset = {
+                x: null,
+                y: null
+            }
         }
 
+        if( obj.x && opts.originOffset.x === null ) opts.originOffset.x = opts.offset.x;
+        if( obj.y && opts.originOffset.y === null ) opts.originOffset.y = opts.offset.y;
+
+        if( obj.x ) {
+            opts.offset.x = obj.x;
+            if( typeof opts.offset.x === 'string' ) setContainerSizeNumber( opts, 'x' );
+        }
+
+        if( obj.y ) {
+            opts.offset.y = obj.y;
+            if( typeof opts.offset.y === 'string' ) setContainerSizeNumber( opts, 'y' );
+        }
+
+        if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
+
+        setOffset.call( self );
+
         return self;
-    }
-
-    // 将存储的值拿出来
-    Overlay.prototype.pull = function( key ) {
-        var self = this,
-            sn = self.options.serialNumber;
-
-        return key ? returnStorage[ sn ][ key ] : returnStorage[ sn ];
-    }
+    };
 
     // 将弹出框置顶
     Overlay.prototype.setTop = function() {
         var self = this,
             opts = self.options;
 
-        if( opts.zIndex < zIndex ) {
-            opts.zIndex = ++zIndex;
+        if( opts.zIndex < zIndex ) opts.zIndex = ++zIndex;
 
-            setZIndex.call( self );
-        }
+        if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
+
+        setZIndex.call( self );
 
         return self;
     }
@@ -1172,7 +1193,31 @@
     }
 
 
+    // 将需要存的值存到当前对象内 可以在回调方法内被取到
+    Overlay.prototype.push = function( key, val ) {
+        var self = this,
+            sn = self.options.serialNumber;
 
+        if( key === undef && val === undef ) return self;
+
+        if( key && val === undef ) {
+            val = key;
+            returnStorage[ sn ] = val;
+        } else if( key && val !== undef ) {
+            if( !returnStorage[ sn ] ) returnStorage[ sn ] = {};
+            returnStorage[ sn ][ key ] = val;
+        }
+
+        return self;
+    }
+
+    // 将存储的值拿出来
+    Overlay.prototype.pull = function( key ) {
+        var self = this,
+            sn = self.options.serialNumber;
+
+        return key ? returnStorage[ sn ][ key ] : returnStorage[ sn ];
+    }
 
 
     // 组件销毁
@@ -1454,6 +1499,14 @@
             dragD.x = dragInit.x - dragCurr.x;
             dragD.y = dragInit.y - dragCurr.y;
 
+            if( ( !( 'originOffset' in opts ) || ( !opts.originOffset.x && !opts.originOffset.y ) ) && opts.offset ) {
+
+                if( !( 'originOffset' in opts ) ) opts.originOffset = {};
+
+                opts.originOffset.x = opts.offset.x;
+                opts.originOffset.y = opts.offset.y;
+            }
+
             dragFlag = opts.serialNumber;
 
             return self;
@@ -1563,12 +1616,15 @@
             container = self.eles.container;
             windowWidth = easy.width( window ),
             windowHeight = easy.height( window ),
-            resizeEndTimer = null;
+            resizeEndTimer = null,
+            x = opts.offset && typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset ? opts.offset.x : null,
+            y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null;
 
-        if( opts.offset && opts.offset.x && opts.offset.y && !opts.isTips ) {
+        if( opts.offset && x && y && !opts.isTips ) {
+
             easy.css( container, {
-                top: correctValue(opts.offset.y),
-                left: correctValue(opts.offset.x)
+                top: correctValue(y),
+                left: correctValue(x)
             } );
         } else if( opts.isTips ) { // 判断是否是提示组件
 
@@ -1609,26 +1665,26 @@
 
                     break;
 
-                    case 'top' :
-                    case 't' :
+                    // case 'top' :
+                    // case 't' :
+                    // //
+                    // break;
                     //
-                    break;
-
-                    case 'right' :
-                    case 'r' :
+                    // case 'right' :
+                    // case 'r' :
+                    // //
                     //
-
-                    break;
-
-                    case 'bottom' :
-                    case 'b' :
+                    // break;
                     //
-                    break;
-
-                    case 'left' :
-                    case 'l' :
+                    // case 'bottom' :
+                    // case 'b' :
+                    // //
+                    // break;
                     //
-                    break;
+                    // case 'left' :
+                    // case 'l' :
+                    // //
+                    // break;
 
                     case 'top-left' :
                     case 'tl' :
@@ -1637,6 +1693,10 @@
                     case 'lt' :
                     case 'l-t' :
                     //
+                    easy.css( container, {
+                        top: correctValue( 0 ),
+                        left: correctValue( 0 )
+                    } );
                     break;
 
                     case 'top-right' :
@@ -1646,6 +1706,10 @@
                     case 'rt' :
                     case 'r-t' :
                     //
+                    easy.css( container, {
+                        top: correctValue( 0 ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) )
+                    } );
                     break;
 
                     case 'bottom-right' :
@@ -1744,9 +1808,27 @@
 
     }
 
-    function getSizeNumber( opts, val, key ) {
+    function setContainerSizeNumber( opts, key ) {
+        if( typeof opts[ key ] === 'string' ) {
+            opts[ key ] = getRectNumber( opts, opts[ key ], key );
+        }
+    }
 
-        var $1;
+    function setContainerOffsetNumber( opts, key ) {
+
+        if( typeof opts.offset[ key ] === 'string' ) {
+            opts.offset[ key ] = getRectNumber( opts, opts.offset[ key ], key );
+        }
+    }
+
+    // 获取上或左值或宽度或高度值
+    function getRectNumber( opts, val, key ) {
+
+        var $1,
+            relative = {
+                y: 'height',
+                x: 'width'
+            };
 
         if( numPattern.test( val ) || pixelPattern.test( val ) ) {
             $1 = RegExp.$1;
@@ -1754,11 +1836,18 @@
         } else if ( percentPattern.test( val ) ) {
             $1 = RegExp.$1;
             return function() {
-                return Number( $1 ) * 0.01 * easy[key]( window );
+                return Number( $1 ) * 0.01 * easy[key in relative ? relative[key] : key]( window );
             }
         }
-        key = key.charAt(0).toUpperCase() + key.substr(1, key.length);
-        return opts[ 'min' + key ];
+
+        if( !(key in relative) ) {
+            key = key.charAt(0).toUpperCase() + key.substr(1, key.length);
+            key = opts[ 'min' + key ];
+        } else {
+            key = 0;
+        }
+
+        return key;
     }
 
 
