@@ -1070,15 +1070,13 @@
             opts.originHeight = null;
         }
 
-        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) {
-            console.log(123);
-            setSize.call( self );
-        }
+        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) setSize.call( self );
         setOffset.call( self );
 
         return self;
     }
 
+    // 设置窗口尺寸
     Overlay.prototype.setSize = function( obj ) {
         var self = this,
             opts = self.options,
@@ -1091,17 +1089,17 @@
 
         if( obj.width ) {
             opts.width = typeof obj.width === 'number' || typeof obj.width === 'function' ? obj.width :
-                typeof obj.width === 'string' ? getSizeNumber( opts, opts.width, 'width' ) : opts.minWidth;
+                typeof obj.width === 'string' ? getSizeNumber( opts, obj.width, 'width' ) : opts.minWidth;
         }
 
         if( obj.height ) {
             opts.height = typeof obj.height === 'number' || typeof obj.height === 'function' ? obj.height :
-                typeof obj.height === 'string' ? getSizeNumber( opts, opts.height, 'width' ) : opts.minHeight;
+                typeof obj.height === 'string' ? getSizeNumber( opts, obj.height, 'height' ) : opts.minHeight;
         }
 
-        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) {
-            setSize.call( self );
-        }
+        if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
+
+        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) setSize.call( self );
         setOffset.call( self );
 
         return self;
@@ -1520,9 +1518,7 @@
             opts = self.options;
 
         setZIndex.call( self );
-        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) {
-            setSize.call( self );
-        }
+        if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) setSize.call( self );
         setOffset.call( self );
 
     }
@@ -1598,6 +1594,7 @@
                     resizeEndTimer = setTimeout(triggerResizeEndHandler, triggerResizeEndSpeed, triggerEventHandler, self, 'resizeEnd');
 
                 } else if( typeof opts.width === 'function' || typeof opts.height === 'function' ) {
+
                     setSize.call( self );
                 }
 
