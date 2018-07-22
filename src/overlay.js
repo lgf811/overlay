@@ -418,6 +418,7 @@
         footAlign: 'center',
         close: true,
         bodyClass: null,
+        containerClass: null,
         maskClose: true,
         full: true,
         originWidth: null,
@@ -425,7 +426,8 @@
         resize: true,
         skin: null,
         defFull: false,
-        outBound: false
+        outBound: false,
+        buttons: null
     };
 
     // Overlay 默认配置
@@ -578,9 +580,13 @@
         $container = self.containerInit();
 
         $el.parentNode.insertBefore( $container, $el );
-        $container.appendChild( self.headerInit() );
+        if( opts.title ) {
+            $container.appendChild( self.headerInit() );
+        }
         $container.appendChild( self.bodyInit() );
-        $container.appendChild( self.footerInit() );
+        if( opts.buttons ) {
+            $container.appendChild( self.footerInit() );
+        }
 
         if( opts.resize ) $container.appendChild( self.resizeInit() );
 
@@ -589,9 +595,14 @@
         // 根据配置，操作 header内的元素
         if( opts.title ) {
             eles.title.innerText = opts.title;
-        } else {
-            easy.css( eles.header, 'display', 'none' );
         }
+        //  else {
+        //     easy.css( eles.header, 'display', 'none' );
+        // }
+
+        // if( !opts.footer ) {
+        //     easy.css( eles.footer, 'display', 'none' );
+        // }
 
         if( !opts.close ) easy.css( eles.close, 'display', 'none' );
 
@@ -714,7 +725,8 @@
             config = Overlay.config;
 
         self.eles.container = $container;
-        easy.addClass( $container, 'overlay-container' );
+        easy.addClass( $container, 'overlay-container' + ( opts.containerClass ? ( ' ' + opts.containerClass ) : '' ) );
+
         easy.addClass( $container, opts.skin || config.skin );
         // $container.className += 'overlay-container';
 
@@ -1351,7 +1363,22 @@
     };
 
 
+    Overlay.tips = function( options ) {
 
+        if( options.title ) delete options.title;
+        if( options.buttons ) delete options.buttons;
+
+        new Overlay(extend( true, {
+            content: '',
+            containerClass: 'overlay-tips-container',
+            closedDestroy: true,
+            close: false,
+            defOpen: true,
+            minWidth: 0,
+            maskClose: false,
+            bodyClass: 'overlay-tips-body'
+        }, options ))
+    }
 
 
     ////////
@@ -1612,7 +1639,7 @@
         var self = this,
             opts = self.options,
             eles = self.eles,
-            position = self.position,
+            position = opts.position,
             container = self.eles.container;
             windowWidth = easy.width( window ),
             windowHeight = easy.height( window ),
@@ -1621,16 +1648,28 @@
             y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null;
 
         if( opts.offset && x && y && !opts.isTips ) {
+            if( typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function' ) {
 
-            easy.css( container, {
-                top: correctValue(y),
-                left: correctValue(x)
-            } );
+                resizeStorage[ opts.serialNumber ] = function() {
+                    x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
+                    y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
+                    easy.css( container, {
+                        top: correctValue(y),
+                        left: correctValue(x)
+                    } );
+                }
+
+            } else {
+                easy.css( container, {
+                    top: correctValue(y),
+                    left: correctValue(x)
+                } );
+            }
+
+
         } else if( opts.isTips ) { // 判断是否是提示组件
 
-
-
-        } else if( opts.position && !(opts.serialNumber in resizeStorage) ) {
+        } else if( 'position' in opts && !(opts.serialNumber in resizeStorage) ) {
 
             resizeStorage[ opts.serialNumber ] = function() {
 
@@ -1654,7 +1693,7 @@
                     setSize.call( self );
                 }
 
-                switch( opts.position ) {
+                switch( position ) {
                     case 'center' :
                     case 'c' :
                     //
@@ -1664,27 +1703,6 @@
                     } );
 
                     break;
-
-                    // case 'top' :
-                    // case 't' :
-                    // //
-                    // break;
-                    //
-                    // case 'right' :
-                    // case 'r' :
-                    // //
-                    //
-                    // break;
-                    //
-                    // case 'bottom' :
-                    // case 'b' :
-                    // //
-                    // break;
-                    //
-                    // case 'left' :
-                    // case 'l' :
-                    // //
-                    // break;
 
                     case 'top-left' :
                     case 'tl' :
@@ -1696,6 +1714,19 @@
                     easy.css( container, {
                         top: correctValue( 0 ),
                         left: correctValue( 0 )
+                    } );
+                    break;
+
+                    case 'top-center' :
+                    case 'tc' :
+                    case 't-c' :
+                    case 'center-top' :
+                    case 'ct' :
+                    case 'c-t' :
+                    //
+                    easy.css( container, {
+                        top: correctValue( 0 ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
                     } );
                     break;
 
@@ -1712,6 +1743,19 @@
                     } );
                     break;
 
+                    case 'center-right' :
+                    case 'cr' :
+                    case 'c-r' :
+                    case 'right-center' :
+                    case 'rc' :
+                    case 'r-c' :
+                    //
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) )
+                    } );
+                    break;
+
                     case 'bottom-right' :
                     case 'br' :
                     case 'b-r' :
@@ -1719,6 +1763,25 @@
                     case 'rb' :
                     case 'r-b' :
                     //
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) )
+                    } );
+
+                    break;
+
+                    case 'bottom-center' :
+                    case 'bc' :
+                    case 'b-c' :
+                    case 'center-bottom' :
+                    case 'cb' :
+                    case 'c-b' :
+                    //
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                    } );
+
                     break;
 
                     case 'bottom-left' :
@@ -1729,15 +1792,20 @@
                     case 'l-b' :
                     //
                     break;
+
+                    default :
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                    } );
                 }
 
             };
 
         }
 
-        if( opts.position && resizeStorage[ opts.serialNumber ] ) {
-            resizeStorage[ opts.serialNumber ]();
-        }
+        if( resizeStorage[ opts.serialNumber ] ) resizeStorage[ opts.serialNumber ]();
+
     }
 
 
@@ -1752,8 +1820,8 @@
             windowHeight = document.documentElement.clientHeight,
             containerWidth, containerHeight,
             bodyHeight,
-            headerHeight = eles.header ? easy.outerHeight( eles.header) : 0,
-            footerHeight = eles.footer ? easy.outerHeight( eles.footer) : 0,
+            headerHeight = eles.header ? easy.outerHeight( eles.header ) : 0,
+            footerHeight = eles.footer ? easy.outerHeight( eles.footer ) : 0,
             cRect,
             extraLR = parseInt( easy.css( eles.body, 'padding-right' ) ) + parseInt( easy.css( eles.body, 'padding-left' ) ) + parseInt( easy.css( eles.body, 'border-right-width' ) ) + parseInt( easy.css( eles.body, 'border-left-width' ) ),
             extraTB = parseInt( easy.css( eles.body, 'padding-top' ) ) + parseInt( easy.css( eles.body, 'padding-bottom' ) ) + parseInt( easy.css( eles.body, 'border-top-width' ) ) + parseInt( easy.css( eles.body, 'border-bottom-width' ) ),
