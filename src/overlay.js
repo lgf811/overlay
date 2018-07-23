@@ -1791,6 +1791,23 @@
                     case 'lb' :
                     case 'l-b' :
                     //
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) ),
+                        left: correctValue( 0 )
+                    } );
+                    break;
+
+                    case 'center-left' :
+                    case 'cl' :
+                    case 'c-l' :
+                    case 'left-center' :
+                    case 'lc' :
+                    case 'l-c' :
+                    //
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                        left: correctValue( 0 )
+                    } );
                     break;
 
                     default :
