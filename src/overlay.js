@@ -1095,6 +1095,12 @@
             opts.originOffset.y = null;
         }
 
+        if( resizeStorage[ '_' + opts.serialNumber ] ) {
+            resizeStorage[ opts.serialNumber ] = resizeStorage[ '_' + opts.serialNumber ];
+            delete resizeStorage[ '_' + opts.serialNumber ];
+            if( !opts.originOffset.x && !opts.originOffset.y ) opts.offset = null;
+        }
+
         if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) setSize.call( self );
         setOffset.call( self );
 
@@ -1134,9 +1140,10 @@
     Overlay.prototype.setOffset = function( obj ) {
         var self = this,
             opts = self.options,
+            eles = self.eles,
             x, y;
 
-        if( !obj.x && !obj.y ) return self;
+        if( !obj.x && !obj.y || !easy.hasClass( self.eles.container, 'open' ) ) return self;
 
         if( !( 'originOffset' in opts ) ) {
             opts.originOffset = {
@@ -1145,20 +1152,38 @@
             }
         }
 
-        if( obj.x && opts.originOffset.x === null ) opts.originOffset.x = opts.offset.x;
-        if( obj.y && opts.originOffset.y === null ) opts.originOffset.y = opts.offset.y;
+        if( obj.x && opts.offset && opts.originOffset.x === null ) opts.originOffset.x = opts.offset.x;
+        if( obj.y && opts.offset && opts.originOffset.y === null ) opts.originOffset.y = opts.offset.y;
+
+        if( opts.offset === null ) opts.offset = {};
 
         if( obj.x ) {
             opts.offset.x = obj.x;
-            if( typeof opts.offset.x === 'string' ) setContainerSizeNumber( opts, 'x' );
+            if( typeof opts.offset.x === 'string' ) setContainerOffsetNumber( opts, 'x' );
         }
 
         if( obj.y ) {
             opts.offset.y = obj.y;
-            if( typeof opts.offset.y === 'string' ) setContainerSizeNumber( opts, 'y' );
+            if( typeof opts.offset.y === 'string' ) setContainerOffsetNumber( opts, 'y' );
         }
 
-        if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
+        if( typeof opts.offset.x === 'function' || percentPattern.test(opts.offset.x) || typeof opts.offset.y === 'function' || percentPattern.test(opts.offset.y) ) {
+
+            if( !resizeStorage[ '_' + opts.serialNumber ] && resizeStorage[ opts.serialNumber ] ) {
+                resizeStorage[ '_' + opts.serialNumber ] = resizeStorage[ opts.serialNumber ];
+                delete resizeStorage[ opts.serialNumber ];
+            }
+
+            resizeStorage[ opts.serialNumber ] = function() {
+                x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
+                y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
+
+                easy.css( eles.container, {
+                    top: correctValue(y),
+                    left: correctValue(x)
+                } );
+            }
+        }
 
         setOffset.call( self );
 
@@ -1648,7 +1673,7 @@
             y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null;
 
         if( opts.offset && x && y && !opts.isTips ) {
-            if( typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function' ) {
+            if( (typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function') && !resizeStorage[ opts.serialNumber ] ) {
 
                 resizeStorage[ opts.serialNumber ] = function() {
                     x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
@@ -2052,7 +2077,8 @@
         for( i in resizeStorage ) {
             if( !resizeStorage ) return;
 
-            resizeStorage[ i ]();
+            if( !~i.indexOf('_') && typeof resizeStorage[ i ] === 'function' ) resizeStorage[ i ]();
+
         }
 
     } );
