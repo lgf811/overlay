@@ -1073,7 +1073,7 @@
         var self = this,
             opts = self.options;
 
-        if( ( opts.originWidth === null && opts.originHeight === null && 'originOffset' in opts && opts.originOffset.x === null && opts.originOffset.y === null ) || !easy.hasClass( self.eles.container, 'open' ) || easy.hasClass( self.eles.full, 'fullscreen' ) ) return self;
+        if( ( opts.originWidth === null && opts.originHeight === null && 'originOffset' in opts && opts.originOffset.x === null && opts.originOffset.y === null && !resizeStorage[ '_' + opts.serialNumber ] ) || !easy.hasClass( self.eles.container, 'open' ) || easy.hasClass( self.eles.full, 'fullscreen' ) ) return self;
 
         if( opts.originWidth !== null ) {
             opts.width = opts.originWidth;
@@ -1098,7 +1098,7 @@
         if( resizeStorage[ '_' + opts.serialNumber ] ) {
             resizeStorage[ opts.serialNumber ] = resizeStorage[ '_' + opts.serialNumber ];
             delete resizeStorage[ '_' + opts.serialNumber ];
-            if( !opts.originOffset.x && !opts.originOffset.y ) opts.offset = null;
+            if( !opts.originOffset || opts.originOffset.x === null && opts.originOffset.y === null ) opts.offset = null;
         }
 
         if( typeof opts.width !== 'function' && typeof opts.height !== 'function' ) setSize.call( self );
@@ -1143,7 +1143,7 @@
             eles = self.eles,
             x, y;
 
-        if( !obj.x && !obj.y || !easy.hasClass( self.eles.container, 'open' ) ) return self;
+        if( !obj.x && !obj.y ) return self;
 
         if( !( 'originOffset' in opts ) ) {
             opts.originOffset = {
@@ -1152,8 +1152,8 @@
             }
         }
 
-        if( obj.x && opts.offset && opts.originOffset.x === null ) opts.originOffset.x = opts.offset.x;
-        if( obj.y && opts.offset && opts.originOffset.y === null ) opts.originOffset.y = opts.offset.y;
+        if( obj.x && opts.offset && !resizeStorage[ '_' + opts.serialNumber ] && opts.originOffset.x === null ) opts.originOffset.x = opts.offset.x;
+        if( obj.y && opts.offset && !resizeStorage[ '_' + opts.serialNumber ] && opts.originOffset.y === null ) opts.originOffset.y = opts.offset.y;
 
         if( opts.offset === null ) opts.offset = {};
 
@@ -1169,14 +1169,17 @@
 
         if( typeof opts.offset.x === 'function' || percentPattern.test(opts.offset.x) || typeof opts.offset.y === 'function' || percentPattern.test(opts.offset.y) ) {
 
-            if( !resizeStorage[ '_' + opts.serialNumber ] && resizeStorage[ opts.serialNumber ] ) {
+            if( !resizeStorage[ '_' + opts.serialNumber ] ) {
                 resizeStorage[ '_' + opts.serialNumber ] = resizeStorage[ opts.serialNumber ];
                 delete resizeStorage[ opts.serialNumber ];
             }
 
             resizeStorage[ opts.serialNumber ] = function() {
-                x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
-                y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
+
+                if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
+
+                x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : ( opts.offset.x || 0 );
+                y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : ( opts.offset.y || 0 );
 
                 easy.css( eles.container, {
                     top: correctValue(y),
@@ -1185,6 +1188,7 @@
             }
         }
 
+        // if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
         setOffset.call( self );
 
         return self;
@@ -1676,6 +1680,9 @@
             if( (typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function') && !resizeStorage[ opts.serialNumber ] ) {
 
                 resizeStorage[ opts.serialNumber ] = function() {
+
+                    if( !easy.hasClass( container, 'open' ) ) return self;
+
                     x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
                     y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
                     easy.css( container, {
