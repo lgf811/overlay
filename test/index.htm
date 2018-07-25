@@ -7,7 +7,12 @@
     <title>Overlay</title>
     <link rel="stylesheet" href="reset.css">
     <link rel="stylesheet" href="../src/theme/default/overlay.css">
-
+    <style>
+        .tips-box {
+            float: left;
+            clear: both;
+        }
+    </style>
 </head>
 <body>
     <div class="o">123123123</div>
@@ -15,6 +20,18 @@
     <br><br><br><br><br>
     <div id="a">123123213</div>
     <a href="javascript:;" class="aa">打开</a>
+
+    <hr />
+    <span class="tips-box">冒泡测试01</span>
+    <span class="tips-box">冒泡测试02</span>
+    <span class="tips-box">冒泡测试03</span>
+    <span class="tips-box">冒泡测试04</span>
+    <span class="tips-box">冒泡测试05</span>
+    <span class="tips-box">冒泡测试06</span>
+    <span class="tips-box">冒泡测试07</span>
+    <span class="tips-box">冒泡测试08</span>
+    <span class="tips-box">冒泡测试09</span>
+    <span class="tips-box">冒泡测试10</span>
     <script src="../src/overlay.js"></script>
     <script>
         //(function() {
@@ -102,6 +119,11 @@
             function enter1() {
                 // console.log(3);
             }
+
+            Overlay.tips({
+                content: '$.attr.data-info',
+                el: '.tips-box'
+            });
 
             document.querySelector('.aa').addEventListener('click', function() {
                 win2.open();

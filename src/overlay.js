@@ -29,8 +29,10 @@
 })(this, function() {
 
     var isIE8 = document.documentMode === 8,
+        undef = undefined,
         _slice = Array.prototype.slice,
         toArr = function( val, index ) {
+            if( index === undef ) index = 0;
             return isIE8 ? Array.prototype.concat.apply([], val).slice( index ) : _slice.call( val, index );
         },
         zIndex = parseInt(Math.random() * 100000),
@@ -39,7 +41,6 @@
         urlPattern = new RegExp('^\\.\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
         windowKey,
         domPrototype,
-        undef = undefined,
         getStyle,
         currCss,
         isInteger = function( val ) {
@@ -90,10 +91,10 @@
     }
 
     if( ~location.protocol.indexOf('http')) {
-        sheets = toArr(document.styleSheets, 0);
+        sheets = toArr(document.styleSheets);
 
         for( i1 = 0; i1 < sheets.length; i1++ ) {
-            rules = toArr( sheets[i1].rules, 0 );
+            rules = toArr( sheets[i1].rules );
 
             for( i2 in rules) {
                 if( rules[i2].style && rules[i2].style.zIndex > zIndex && rules[i2].selectorText === '.overlay-container' ) zIndex = Number(rules[i2].style.zIndex);
@@ -419,6 +420,7 @@
         close: true,
         bodyClass: null,
         containerClass: null,
+        mask: true,
         maskClose: true,
         full: true,
         originWidth: null,
@@ -552,7 +554,8 @@
         if( !('eles' in self) ) self.eles = {};
         eles = self.eles;
 
-        $mask = self.maskInit();
+        if( opts.mask ) $mask = self.maskInit();
+
 
         el = opts.el;
         content = opts.content;
@@ -561,10 +564,12 @@
             // 找到核心元素 并将遮罩层插入到dom节点中
             eles.el = $el = document.querySelector(el);
 
-            $el.parentNode.insertBefore( $mask, $el );
+            if( $mask ) $el.parentNode.insertBefore( $mask, $el );
+
 
         } else if( typeof content === 'string' ) {
-            document.body.appendChild($mask);
+            if( $mask ) document.body.appendChild($mask);
+
             // 如果没有指定dom 则使用渲染内容的形式
             eles.el = $el = self.elInit();
         }
@@ -604,9 +609,9 @@
         //     easy.css( eles.footer, 'display', 'none' );
         // }
 
-        if( !opts.close ) easy.css( eles.close, 'display', 'none' );
+        if( !opts.close && opts.title ) easy.css( eles.close, 'display', 'none' );
 
-        if( !opts.full ) easy.css( eles.full, 'display', 'none' );
+        if( !opts.full && opts.title ) easy.css( eles.full, 'display', 'none' );
 
         // 根据配置，操作footer内的元素
         if( opts.buttons && typeof opts.buttons === 'object' ) {
@@ -893,7 +898,7 @@
             easy.on( eles.full, 'click', fullHandler.bind( self ) );
         }
 
-        if( opts.maskClose ) {
+        if( opts.maskClose && eles.mask ) {
             easy.on( eles.mask, 'click', closeHandler.bind( self ) );
         }
 
@@ -970,20 +975,21 @@
     Overlay.prototype.open = function() {
         var self = this,
             opts = self.options,
+            eles = self.eles,
             config = Overlay.config;
 
-        easy.addClass( self.eles.mask, 'open');
+        if( eles.mask ) easy.addClass( eles.mask, 'open');
 
-        if( easy.hasClass( self.eles.container, 'open') ) return self;
+        if( easy.hasClass( eles.container, 'open') ) return self;
 
         if( supportAnim ) {
-            easy.addClass( self.eles.container, 'open overlay-anim ' + opts.animClass.enter);
+            easy.addClass( eles.container, 'open overlay-anim ' + opts.animClass.enter);
             setTimeout(function() {
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
             }, 0);
         } else {
-            easy.addClass( self.eles.container, 'open');
+            easy.addClass( eles.container, 'open');
             setTimeout(function() {
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
@@ -1000,15 +1006,17 @@
     // 关闭窗口方法
     Overlay.prototype.close = function() {
         var self = this,
-            opts = self.options;
+            opts = self.options,
+            eles = self.eles;
 
-        if( !easy.hasClass( self.eles.container, 'open') ) return self;
+        if( !easy.hasClass( eles.container, 'open') ) return self;
 
-        easy.removeClass( self.eles.mask, 'open');
+        if( eles.mask ) easy.removeClass( eles.mask, 'open');
+
         if( supportAnim ) {
-            easy.addClass( self.eles.container, opts.animClass.leave);
+            easy.addClass( eles.container, opts.animClass.leave);
         } else {
-            easy.removeClass( self.eles.container, 'open');
+            easy.removeClass( eles.container, 'open');
             triggerEventHandler.call( self, 'closed' );
             if( opts.closedDestroy ) self.destroy();
         }
@@ -1393,20 +1401,30 @@
 
 
     Overlay.tips = function( options ) {
+        var el = options.el,
+            $el = toArr( document.querySelectorAll(el), 0 ),
+            tipsOptions = {
+                position: 't',
+                containerClass: 'overlay-tips-container',
+                closedDestroy: true,
+                close: false,
+                defOpen: true,
+                minWidth: 0,
+                mask: false,
+                bodyClass: 'overlay-tips-body',
+                tips: true
+            };
+
+        delete options.el;
 
         if( options.title ) delete options.title;
         if( options.buttons ) delete options.buttons;
 
-        new Overlay(extend( true, {
-            content: '',
-            containerClass: 'overlay-tips-container',
-            closedDestroy: true,
-            close: false,
-            defOpen: true,
-            minWidth: 0,
-            maskClose: false,
-            bodyClass: 'overlay-tips-body'
-        }, options ))
+        var tips = new Overlay(extend( true, tipsOptions, options ));
+
+        console.log($el);
+
+        return tips;
     }
 
 
@@ -1507,7 +1525,7 @@
         } else if( easy.hasClass( eles.container, opts.animClass.leave ) ) {
             triggerEventHandler.call( self, 'closed' );
             easy.removeClass( eles.container, opts.animClass.leave + ' open');
-            easy.removeClass( eles.mask, 'open');
+            if( eles.mask ) easy.removeClass( eles.mask, 'open');
             if( opts.closedDestroy ) self.destroy();
         }
 
@@ -1654,11 +1672,12 @@
 
         var self = this,
             opts = self.options,
-            mask = self.eles.mask,
-            container = self.eles.container,
+            eles = self.eles,
+            mask = eles.mask,
+            container = eles.container,
             cStyle = container.style;
 
-        easy.css( mask, 'z-index', opts.zIndex );
+        if( mask ) easy.css( mask, 'z-index', opts.zIndex );
         easy.css( container, 'z-index', opts.zIndex );
 
     }
@@ -1701,6 +1720,8 @@
 
         } else if( opts.isTips ) { // 判断是否是提示组件
 
+            
+
         } else if( 'position' in opts && !(opts.serialNumber in resizeStorage) ) {
 
             resizeStorage[ opts.serialNumber ] = function() {
@@ -1711,7 +1732,7 @@
                 windowHeight = easy.height( window );
 
                 // 如果是全屏，则重置弹出窗口的尺寸
-                if( easy.hasClass( eles.full, 'fullscreen' ) && opts.full ) {
+                if( opts.title && easy.hasClass( eles.full, 'fullscreen' ) && opts.full ) {
                     opts.width = windowWidth;
                     opts.height = windowHeight;
                     setSize.call( self );
@@ -1879,11 +1900,9 @@
             width = typeof opts.width === 'function' ? opts.width.call( self ) : opts.width,
             height = typeof opts.height === 'function' ? opts.height.call( self ) : opts.height;
 
-
-
         if( width > opts.minWidth + extraLR ) {
             containerWidth = correctValue( width - extraLR );
-        } else {
+        } else if( width ) {
             containerWidth = correctValue( opts.minWidth + extraLR );
         }
 
@@ -1891,7 +1910,7 @@
 
         if( height > opts.minHeight + headerHeight + footerHeight + extraTB ) {
             containerHeight = correctValue( height - extraTB);
-        } else {
+        } else if( height ) {
             containerHeight = correctValue( opts.minHeight + headerHeight + footerHeight + extraTB );
         }
 
