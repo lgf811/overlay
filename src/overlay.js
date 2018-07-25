@@ -1176,7 +1176,7 @@
 
             resizeStorage[ opts.serialNumber ] = function() {
 
-                if( !easy.hasClass( self.eles.container, 'open' ) ) return self;
+                if( !easy.hasClass( eles.container, 'open' ) ) return self;
 
                 x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : ( opts.offset.x || 0 );
                 y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : ( opts.offset.y || 0 );
