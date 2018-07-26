@@ -49,7 +49,9 @@
         whPattern = /width|height|top|right|bottom|left/,
         numPattern = /^(\d+)$/,
         pixelPattern = /^([^0]\d{0,})px$/,
-        percentPattern = /^(([^0]\d{0,})|(\d+\.\d+))%$/;
+        percentPattern = /^(([^0]\d{0,})|(\d+\.\d+))%$/,
+        getContentPattern = /^\$\.([\w-]+)\.?([\w-]+)?/i,
+        getContentType = [ 'attr', 'html', 'text' ];
 
     if( typeof Function.prototype.bind === 'undefined' ) {
         Function.prototype.bind = function( oThis ) {
@@ -1408,14 +1410,31 @@
                 containerClass: 'overlay-tips-container',
                 closedDestroy: true,
                 close: false,
-                defOpen: true,
+                defOpen: false,
                 minWidth: 0,
                 mask: false,
                 bodyClass: 'overlay-tips-body',
                 tips: true
-            };
+            },
+            content,
+            key, attr,
+            matchResult;
 
         delete options.el;
+
+        console.log(getContentPattern.test( options.content ))
+        if( getContentPattern.test( options.content ) ) {
+            matchResult = options.content.match(getContentPattern);
+            key = matchResult[1];
+            attr = matchResult[2];
+            if( ~getContentType.indexOf(key) ) {
+                //options.content = easy[ key ](  );
+            }
+
+            options.content = '';
+
+        }
+
 
         if( options.title ) delete options.title;
         if( options.buttons ) delete options.buttons;
@@ -1720,7 +1739,7 @@
 
         } else if( opts.isTips ) { // 判断是否是提示组件
 
-            
+
 
         } else if( 'position' in opts && !(opts.serialNumber in resizeStorage) ) {
 
