@@ -987,12 +987,14 @@
         if( supportAnim ) {
             easy.addClass( eles.container, 'open overlay-anim ' + opts.animClass.enter);
             setTimeout(function() {
+                if( opts.full ) self.full();
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
             }, 0);
         } else {
             easy.addClass( eles.container, 'open');
             setTimeout(function() {
+                if( opts.full ) self.full();
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
                 triggerEventHandler.call( self, 'opened' );
@@ -1040,8 +1042,9 @@
 
         triggerEventHandler.call( self, 'fullBefore' );
 
-        opts.originWidth = containerWidth;
-        opts.originHeight = containerHeight;
+        if( !opts.originWidth ) opts.originWidth = containerWidth;
+        if( !opts.originHeight ) opts.originHeight = containerHeight;
+
         opts.width = windowWidth;
         opts.height = windowHeight;
 
@@ -1422,7 +1425,8 @@
 
         delete options.el;
 
-        console.log(getContentPattern.test( options.content ))
+        console.log(getContentPattern.test( options.content ));
+
         if( getContentPattern.test( options.content ) ) {
             matchResult = options.content.match(getContentPattern);
             key = matchResult[1];
