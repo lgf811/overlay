@@ -166,7 +166,26 @@
 
             return baseObj;
         }, i1, i2,
+        // Judgment type
+        judgmentType = {},
+        toString = judgmentType.toString,
+        typePattern = /\[object (array|object|number|string|boolean|function|date|regexp|error)]/i;
         easy = {
+            type: function( obj ) {
+                return typeof obj === 'object' || typeof obj === 'function' ? typePattern.test( toString.call( obj ) ) ? RegExp.$1.toLowerCase() : 'object' : typeof obj;
+            },
+
+            isArray: function( obj ) {
+                return easy.type( obj ) === 'array';
+            },
+
+            each: function( arr, fn ) {
+                var i;
+
+                if( !easy.isArray( arr ) ) arr = [ arr ];
+
+                for( i in arr ) fn.call( arr[i], i, arr[i] );
+            },
             addClass: function( elem, cls ) {
                 var clsn = elem.className;
 
@@ -327,6 +346,22 @@
                 if( key === undef ) return elem;
                 elem.removeAttribute(key);
                 return elem;
+            },
+
+            html: function( elem, html ) {
+                if( typeof html !== undef ) {
+                    elem.innerHTML = html;
+                    return;
+                }
+                return elem.innerHTML;
+            },
+
+            text: function( elem, text ) {
+                if( typeof text !== undef ) {
+                    elem.innerText = text;
+                    return;
+                }
+                return elem.innerText;
             }
 
         },
@@ -424,12 +459,11 @@
         containerClass: null,
         mask: true,
         maskClose: true,
-        full: true,
+        full: false,
         originWidth: null,
         originHeight: null,
         resize: true,
         skin: null,
-        defFull: false,
         outBound: false,
         buttons: null
     };
@@ -1221,6 +1255,17 @@
         return self;
     }
 
+    // 设置显示内容
+    Overlay.prototype.setContent = function( content ) {
+        var self = this,
+            opts = self.options,
+            eles = self.eles;
+
+        easy.html( eles.el, content );
+
+        return self;
+    }
+
 
     // 解绑事件回调函数
     Overlay.prototype.off = function( key ) {
@@ -1407,7 +1452,7 @@
 
     Overlay.tips = function( options ) {
         var el = options.el,
-            $el = toArr( document.querySelectorAll(el), 0 ),
+            $els = toArr( document.querySelectorAll(el), 0 ),
             tipsOptions = {
                 position: 't',
                 containerClass: 'overlay-tips-container',
@@ -1421,33 +1466,36 @@
             },
             content,
             key, attr,
-            matchResult;
+            matchResult,
+            i, tips;
 
         delete options.el;
-
-        console.log(getContentPattern.test( options.content ));
 
         if( getContentPattern.test( options.content ) ) {
             matchResult = options.content.match(getContentPattern);
             key = matchResult[1];
             attr = matchResult[2];
-            if( ~getContentType.indexOf(key) ) {
-                //options.content = easy[ key ](  );
-            }
 
             options.content = '';
-
         }
 
+        if( $els.length ) {
+            easy.each( $els, function() {
+                easy.on( this, 'mouseover', function() {
+                    tips = new Overlay(extend( true, tipsOptions, options ));
+                    tips.setContent( easy[ key ]( this, attr ) ).open();
+
+                } );
+
+                easy.on( this, 'mouseout', function() {
+                    tips.close();
+                } );
+            } );
+        }
 
         if( options.title ) delete options.title;
         if( options.buttons ) delete options.buttons;
 
-        var tips = new Overlay(extend( true, tipsOptions, options ));
-
-        console.log($el);
-
-        return tips;
     }
 
 
