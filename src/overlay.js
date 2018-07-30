@@ -1362,11 +1362,10 @@
         // 将所有实例创建的dom节点移除
         for( i in eles ) {
             if( eles[i] && eles[i].parentNode ) {
-                eles[i].parentNode.removeChild( self.eles[i] );
+                eles[i].parentNode.removeChild( eles[i] );
                 delete eles[i];
             }
         }
-
         // 删除元素集合对象
         delete self.eles;
 
@@ -1467,7 +1466,7 @@
             content,
             key, attr,
             matchResult,
-            i, tips;
+            i;
 
         delete options.el;
 
@@ -1481,6 +1480,8 @@
 
         if( $els.length ) {
             easy.each( $els, function() {
+                var tips;
+
                 easy.on( this, 'mouseover', function() {
                     tips = new Overlay(extend( true, tipsOptions, options ));
                     tips.setContent( easy[ key ]( this, attr ) ).open();
@@ -1590,7 +1591,7 @@
 
         if( e.target !== eles.container ) return;
 
-        if( easy.hasClass( eles.container, opts.animClass.enter ) ) {
+        if( easy.hasClass( eles.container, opts.animClass.enter ) && !easy.hasClass( eles.container, opts.animClass.leave ) ) {
             triggerEventHandler.call( self, 'opened' );
             easy.removeClass( eles.container, opts.animClass.enter);
         } else if( easy.hasClass( eles.container, opts.animClass.leave ) ) {
