@@ -184,3 +184,29 @@
 .overlay-confirm-body {
     padding: 20px 15px 10px
 }
+.overlay-alert-body {
+
+}
+
+.overlay-tips-container {
+    position: absolute;
+    overflow: visible;
+    box-shadow: 0 none;
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+}
+.overlay-tips-body {
+    padding: 3px 15px
+}
+
+.overlay-tips-arrow {
+    position: absolute;
+    display: none
+}
+
+.overlay-tips-arrow.t,
+.overlay-tips-arrow.r,
+.overlay-tips-arrow.b,
+.overlay-tips-arrow.l {
+    display: block
+}

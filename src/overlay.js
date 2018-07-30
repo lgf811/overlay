@@ -51,9 +51,10 @@
         pixelPattern = /^([^0]\d{0,})px$/,
         percentPattern = /^(([^0]\d{0,})|(\d+\.\d+))%$/,
         getContentPattern = /^\$\.([\w-]+)\.?([\w-]+)?/i,
-        getContentType = [ 'attr', 'html', 'text' ];
+        getContentType = [ 'attr', 'html', 'text' ],
+        docBody = document.body;
 
-    if( typeof Function.prototype.bind === 'undefined' ) {
+    if( Function.prototype.bind === undef ) {
         Function.prototype.bind = function( oThis ) {
             if( typeof this !== 'function' ) {
                 throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
@@ -460,6 +461,7 @@
         mask: true,
         maskClose: true,
         full: false,
+        tips: false,
         originWidth: null,
         originHeight: null,
         resize: true,
@@ -604,7 +606,7 @@
 
 
         } else if( typeof content === 'string' ) {
-            if( $mask ) document.body.appendChild($mask);
+            if( $mask ) docBody.appendChild($mask);
 
             // 如果没有指定dom 则使用渲染内容的形式
             eles.el = $el = self.elInit();
@@ -629,7 +631,9 @@
             $container.appendChild( self.footerInit() );
         }
 
-        if( opts.resize ) $container.appendChild( self.resizeInit() );
+        if( opts.resize && !opts.tips ) $container.appendChild( self.resizeInit() );
+
+        if( opts.tips ) $container.appendChild( self.arrowInit() );
 
         if( eles.el.tagName.toLowerCase() === 'iframe' ) easy.addClass(eles.body, 'overlay-iframe loading');
 
@@ -753,7 +757,7 @@
             $el.innerHTML = opts.content;
         }
 
-        document.body.appendChild($el);
+        docBody.appendChild($el);
 
         return $el;
     };
@@ -850,6 +854,19 @@
 
         return $resize;
     };
+
+    Overlay.prototype.arrowInit = function() {
+        var self = this,
+            opts = self.options,
+            $arrow = document.createElement('span');
+
+        self.eles.resize = $arrow;
+        easy.addClass( $arrow, 'overlay-tips-arrow');
+
+        return $arrow;
+    };
+
+    //.overlay-tips-arrow
 
     // 初始化按钮
     Overlay.prototype.buttonInit = function( className, fnName, text, i ) {
@@ -1036,7 +1053,12 @@
 
         }
 
-        setStyle.call( self );
+        if( !opts.full ) {
+            setStyle.call( self );
+        } else {
+            setZIndex.call( self );
+        }
+
 
         return self;
     };
@@ -1455,7 +1477,7 @@
             tipsOptions = {
                 position: 't',
                 containerClass: 'overlay-tips-container',
-                closedDestroy: true,
+                closedDestroy: false,
                 close: false,
                 defOpen: false,
                 minWidth: 0,
@@ -1767,7 +1789,7 @@
             x = opts.offset && typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset ? opts.offset.x : null,
             y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null;
 
-        if( opts.offset && x && y && !opts.isTips ) {
+        if( opts.offset && x && y && !opts.tips ) {
             if( (typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function') && !resizeStorage[ opts.serialNumber ] ) {
 
                 resizeStorage[ opts.serialNumber ] = function() {
@@ -1790,9 +1812,49 @@
             }
 
 
-        } else if( opts.isTips ) { // 判断是否是提示组件
+        } else if( opts.tips ) { // 判断是否是提示组件
 
+            if( !easy.hasClass( container, 'open' ) ) return;
 
+            switch( position ) {
+                case 'top':
+                case 't':
+                //
+                easy.css( container, {
+                    top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                    left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                } );
+                break;
+
+                case 'right':
+                case 'r':
+                //
+
+                break;
+
+                case 'bottom':
+                case 'b':
+                //
+
+                break;
+
+                case 'left':
+                case 'l':
+                //
+
+                break;
+
+                default:
+                //
+                if( easy.type(position) !== 'function' ) {
+                    easy.css( container, {
+                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                    } );
+                } else {
+                    position.call( self, container );
+                }
+            }
 
         } else if( 'position' in opts && !(opts.serialNumber in resizeStorage) ) {
 
@@ -1817,7 +1879,7 @@
 
                     setSize.call( self );
                 }
-
+                console.log(1);
                 switch( position ) {
                     case 'center' :
                     case 'c' :
@@ -1936,10 +1998,15 @@
                     break;
 
                     default :
-                    easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
-                    } );
+                    if( easy.type(position) !== 'function' ) {
+                        easy.css( container, {
+                            top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
+                            left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                        } );
+                    } else {
+                        position.call( self, container );
+                    }
+
                 }
 
             };
@@ -2181,7 +2248,7 @@
 
     } );
 
-    easy.on( document.body, 'mousemove', function( e ) {
+    easy.on( docBody, 'mousemove', function( e ) {
         var i;
 
         e = e || window.event;
@@ -2206,7 +2273,7 @@
 
     } );
 
-    easy.on( document.body, 'mouseup', function( e ) {
+    easy.on( docBody, 'mouseup', function( e ) {
         var i;
 
         e = e || window.event;
