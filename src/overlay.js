@@ -151,11 +151,11 @@
             for( i1 = 0; i1 < mergeObjGroup.length; i1++ ) {
                 mergeObj = mergeObjGroup[i1];
 
-                if( typeof mergeObj !== 'object' ) continue;
+                if( easy.type( mergeObj ) !== 'object' && !easy.isArray( mergeObj ) ) continue;
 
                 for( i2 in mergeObj ) {
-                    if( newFlag && typeof mergeObj[i2] === 'object' && !( mergeObj[i2] instanceof RegExp ) && mergeObj[i2] ) {
-                        if( !(i2 in baseObj) ) baseObj[i2] = 'length' in mergeObj[i2] && mergeObj[i2] instanceof Array ? [] : {};
+                    if( newFlag && ( easy.type( mergeObj[i2] ) === 'object' || easy.isArray( mergeObj[i2] ) ) && mergeObj[i2] ) {
+                        if( !(i2 in baseObj) ) baseObj[i2] = easy.isArray( mergeObj[i2] ) ? [] : {};
                         baseObj[i2] = extend( newFlag, baseObj[i2], mergeObj[i2] );
 
                     } else {
@@ -170,7 +170,7 @@
         // Judgment type
         judgmentType = {},
         toString = judgmentType.toString,
-        typePattern = /\[object (array|object|number|string|boolean|function|date|regexp|error)]/i;
+        typePattern = /\[object (array|object|number|string|boolean|function|date|regexp|error|html)[a-z]{0,}]/i;
         easy = {
             type: function( obj ) {
                 return typeof obj === 'object' || typeof obj === 'function' ? typePattern.test( toString.call( obj ) ) ? RegExp.$1.toLowerCase() : 'object' : typeof obj;
@@ -296,15 +296,24 @@
                     if( val === undef ) {
                         return currCss( elem, key );
                     } else if( elem.style ) {
-                        elem.style[ key ] = val;
+                        elem.style[ key ] = correctValue( val, key === 'opacity' ? '' : undef );
                     }
                 } else if( typeof key === 'object' ) {
                     for( i in key ) {
                         val = key[i];
-                        elem.style[ i ] = val;
+                        elem.style[ i ] = correctValue( val, i === 'opacity' ? '' : undef );
                     }
                 }
 
+            },
+
+            offset: function( elem ) {
+                var rect = elem.getBoundingClientRect();
+
+                return {
+                    top: rect.top + window.pageYOffset,
+                    left: rect.left + window.pageXOffset
+                }
             },
 
             trim: function( val ) {
@@ -467,7 +476,8 @@
         resize: true,
         skin: null,
         outBound: false,
-        buttons: null
+        buttons: null,
+        tipsSpace: 8
     };
 
     // Overlay 默认配置
@@ -600,7 +610,7 @@
 
         if( el ) {
             // 找到核心元素 并将遮罩层插入到dom节点中
-            eles.el = $el = document.querySelector(el);
+            eles.el = $el = easy.type( el ) === 'string' ? document.querySelector(el) : el;
 
             if( $mask ) $el.parentNode.insertBefore( $mask, $el );
 
@@ -1251,8 +1261,8 @@
                 y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : ( opts.offset.y || 0 );
 
                 easy.css( eles.container, {
-                    top: correctValue(y),
-                    left: correctValue(x)
+                    top: y,
+                    left: x
                 } );
             }
         }
@@ -1477,13 +1487,12 @@
             tipsOptions = {
                 position: 't',
                 containerClass: 'overlay-tips-container',
-                closedDestroy: false,
+                closedDestroy: true,
                 close: false,
                 defOpen: false,
                 minWidth: 0,
                 mask: false,
-                bodyClass: 'overlay-tips-body',
-                tips: true
+                bodyClass: 'overlay-tips-body'
             },
             content,
             key, attr,
@@ -1505,7 +1514,7 @@
                 var tips;
 
                 easy.on( this, 'mouseover', function() {
-                    tips = new Overlay(extend( true, tipsOptions, options ));
+                    tips = new Overlay(extend( true, {}, tipsOptions, options, { tips: this } ));
                     tips.setContent( easy[ key ]( this, attr ) ).open();
 
                 } );
@@ -1782,12 +1791,14 @@
             opts = self.options,
             eles = self.eles,
             position = opts.position,
-            container = self.eles.container;
+            container = self.eles.container,
             windowWidth = easy.width( window ),
             windowHeight = easy.height( window ),
             resizeEndTimer = null,
             x = opts.offset && typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset ? opts.offset.x : null,
-            y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null;
+            y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null,
+            tipsOffset,
+            scrollTop;
 
         if( opts.offset && x && y && !opts.tips ) {
             if( (typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function') && !resizeStorage[ opts.serialNumber ] ) {
@@ -1799,15 +1810,15 @@
                     x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
                     y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
                     easy.css( container, {
-                        top: correctValue(y),
-                        left: correctValue(x)
+                        top: y,
+                        left: x
                     } );
                 }
 
             } else {
                 easy.css( container, {
-                    top: correctValue(y),
-                    left: correctValue(x)
+                    top: y,
+                    left: x
                 } );
             }
 
@@ -1816,13 +1827,20 @@
 
             if( !easy.hasClass( container, 'open' ) ) return;
 
+            tipsOffset = easy.offset( opts.tips );
+            console.log(tipsOffset);
+            x = tipsOffset.left;
+            y = tipsOffset.top;
+
+            scrollTop = window.scrollTop;
+
             switch( position ) {
                 case 'top':
                 case 't':
                 //
                 easy.css( container, {
-                    top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                    left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                    top: y - easy.height( container ) - opts.tipsSpace,
+                    left: x
                 } );
                 break;
 
@@ -1848,11 +1866,11 @@
                 //
                 if( easy.type(position) !== 'function' ) {
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                        top: y - easy.height( container ) - tipsSpace,
+                        left: x
                     } );
                 } else {
-                    position.call( self, container );
+                    position.call( self, container, opts.tips );
                 }
             }
 
@@ -1879,14 +1897,14 @@
 
                     setSize.call( self );
                 }
-                console.log(1);
+
                 switch( position ) {
                     case 'center' :
                     case 'c' :
                     //
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                        top: ( windowHeight - easy.height(container) ) / 2,
+                        left: ( windowWidth - easy.width(container) ) / 2
                     } );
 
                     break;
@@ -1899,8 +1917,8 @@
                     case 'l-t' :
                     //
                     easy.css( container, {
-                        top: correctValue( 0 ),
-                        left: correctValue( 0 )
+                        top: 0,
+                        left: 0
                     } );
                     break;
 
@@ -1912,8 +1930,8 @@
                     case 'c-t' :
                     //
                     easy.css( container, {
-                        top: correctValue( 0 ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                        top: 0,
+                        left: ( windowWidth - easy.width(container) ) / 2
                     } );
                     break;
 
@@ -1925,8 +1943,8 @@
                     case 'r-t' :
                     //
                     easy.css( container, {
-                        top: correctValue( 0 ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) )
+                        top: 0,
+                        left: ( windowWidth - easy.width(container) )
                     } );
                     break;
 
@@ -1938,8 +1956,8 @@
                     case 'r-c' :
                     //
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) )
+                        top: ( windowHeight - easy.height(container) ) / 2,
+                        left: ( windowWidth - easy.width(container) )
                     } );
                     break;
 
@@ -1951,8 +1969,8 @@
                     case 'r-b' :
                     //
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) )
+                        top: ( windowHeight - easy.height(container) ),
+                        left: ( windowWidth - easy.width(container) )
                     } );
 
                     break;
@@ -1965,8 +1983,8 @@
                     case 'c-b' :
                     //
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) ),
-                        left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                        top: ( windowHeight - easy.height(container) ),
+                        left: ( windowWidth - easy.width(container) ) / 2
                     } );
 
                     break;
@@ -1979,8 +1997,8 @@
                     case 'l-b' :
                     //
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) ),
-                        left: correctValue( 0 )
+                        top: ( windowHeight - easy.height(container) ),
+                        left: 0
                     } );
                     break;
 
@@ -1992,16 +2010,16 @@
                     case 'l-c' :
                     //
                     easy.css( container, {
-                        top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                        left: correctValue( 0 )
+                        top: ( windowHeight - easy.height(container) ) / 2,
+                        left: 0
                     } );
                     break;
 
                     default :
                     if( easy.type(position) !== 'function' ) {
                         easy.css( container, {
-                            top: correctValue( ( windowHeight - easy.height(container) ) / 2 ),
-                            left: correctValue( ( windowWidth - easy.width(container) ) / 2 )
+                            top: ( windowHeight - easy.height(container) ) / 2,
+                            left: ( windowWidth - easy.width(container) ) / 2
                         } );
                     } else {
                         position.call( self, container );
@@ -2040,17 +2058,17 @@
             height = typeof opts.height === 'function' ? opts.height.call( self ) : opts.height;
 
         if( width > opts.minWidth + extraLR ) {
-            containerWidth = correctValue( width - extraLR );
+            containerWidth = width - extraLR;
         } else if( width ) {
-            containerWidth = correctValue( opts.minWidth + extraLR );
+            containerWidth = opts.minWidth + extraLR;
         }
 
         easy.css( container, 'width', containerWidth );
 
         if( height > opts.minHeight + headerHeight + footerHeight + extraTB ) {
-            containerHeight = correctValue( height - extraTB);
+            containerHeight = height - extraTB;
         } else if( height ) {
-            containerHeight = correctValue( opts.minHeight + headerHeight + footerHeight + extraTB );
+            containerHeight = opts.minHeight + headerHeight + footerHeight + extraTB;
         }
 
         easy.css( container, 'height', containerHeight );
@@ -2062,18 +2080,18 @@
         };
 
         if( cRect.width > windowWidth ) {
-            containerWidth = correctValue(windowWidth - cExtraLR);
+            containerWidth = windowWidth - cExtraLR;
             easy.css( container, 'width', containerWidth );
         }
 
         if( cRect.height > windowHeight ) {
-            containerHeight = correctValue(windowHeight - cExtraTB);
+            containerHeight = windowHeight - cExtraTB;
             easy.css( container, 'height', containerHeight );
         }
 
-        bodyHeight = parseInt(containerHeight) - headerHeight - footerHeight - parseInt(easy.css( eles.body, 'padding-top' )) - parseInt(easy.css( eles.body, 'padding-bottom' )) - parseInt(easy.css( eles.body, 'border-top-width' )) - parseInt(easy.css( eles.body, 'border-bottom-width' ));
+        bodyHeight = containerHeight - headerHeight - footerHeight - parseInt(easy.css( eles.body, 'padding-top' )) - parseInt(easy.css( eles.body, 'padding-bottom' )) - parseInt(easy.css( eles.body, 'border-top-width' )) - parseInt(easy.css( eles.body, 'border-bottom-width' ));
 
-        bodyHeight = correctValue( bodyHeight < opts.minHeight ? opts.minHeight : bodyHeight );
+        bodyHeight = bodyHeight < opts.minHeight ? opts.minHeight : bodyHeight;
         easy.css( eles.body, 'height', bodyHeight );
 
         if( eles.el.tagName.toLowerCase() === 'iframe' ) {
@@ -2129,13 +2147,11 @@
     // 修正返回值
     function correctValue( num, unit ) {
         var _num,
-            hasUnitPattern = /\d?\.?\d+?(\%|px)$/g,
+            hasUnitPattern = /\d?\.?\d+?(\%|px|em|rem)$/g,
             numPattern = /^\d?\.?\d+?$/g;
 
         if( unit === undef ) unit = 'px';
-
-        return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) :
-                hasUnitPattern.test(num) ? num : 'auto';
+        return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) : num;
 
     }
 
