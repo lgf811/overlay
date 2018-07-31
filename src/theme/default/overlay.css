@@ -194,6 +194,7 @@
     box-shadow: 0 none;
     background: rgba(0, 0, 0, 0.8);
     color: #ffffff;
+    pointer-events: none
 }
 .overlay-tips-body {
     padding: 3px 15px
