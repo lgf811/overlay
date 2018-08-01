@@ -1012,6 +1012,9 @@
 
                 e = e || window.event;
 
+                if( opts.originWidth === null ) opts.originWidth = opts.width;
+                if( opts.originHeight === null ) opts.originHeight = opts.height;
+
                 opts.width = adjustD.x + ( e.clientX - eles.container.offsetLeft );
                 opts.height = adjustD.y + ( e.clientY - eles.container.offsetTop );
 
@@ -1048,14 +1051,14 @@
         if( supportAnim ) {
             easy.addClass( eles.container, 'open overlay-anim ' + opts.animClass.enter);
             setTimeout(function() {
-                if( opts.full ) self.full();
+                if( opts.defFull ) self.full();
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
             }, 0);
         } else {
             easy.addClass( eles.container, 'open');
             setTimeout(function() {
-                if( opts.full ) self.full();
+                if( opts.defFull ) self.full();
                 triggerEventHandler.call( self, 'once' );
                 triggerEventHandler.call( self, 'beforeOpen' );
                 triggerEventHandler.call( self, 'opened' );
@@ -1063,7 +1066,7 @@
 
         }
 
-        if( !opts.full ) {
+        if( !opts.defFull ) {
             setStyle.call( self );
         } else {
             setZIndex.call( self );
@@ -1828,7 +1831,7 @@
             if( !easy.hasClass( container, 'open' ) ) return;
 
             tipsOffset = easy.offset( opts.tips );
-            console.log(tipsOffset);
+
             x = tipsOffset.left;
             y = tipsOffset.top;
 
