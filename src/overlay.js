@@ -1519,7 +1519,6 @@
                 easy.on( this, 'mouseover', function() {
                     tips = new Overlay(extend( true, {}, tipsOptions, options, { tips: this } ));
                     tips.setContent( easy[ key ]( this, attr ) ).open();
-
                 } );
 
                 easy.on( this, 'mouseout', function() {
