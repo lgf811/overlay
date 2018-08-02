@@ -188,17 +188,24 @@
                 for( i in arr ) fn.call( arr[i], i, arr[i] );
             },
             addClass: function( elem, cls ) {
-                var clsn = elem.className;
+                var clsn = elem.className, i, len;
 
-                if( !cls || cls && easy.hasClass( elem, cls ) ) return;
+                if( !cls || cls && easy.hasClass( elem, cls ) || !easy.trim( cls ) ) return;
 
                 clsn = ~clsn.indexOf(' ') ? clsn.split(' ') : [ clsn ];
 
-                if( ~clsn.indexOf( cls ) ) return elem;
+                cls = easy.trim( cls );
+                cls = ~cls.indexOf(' ') ? cls.split(' ') : [ cls ];
 
-                clsn.push(cls);
-                clsn = easy.trim( clsn.join(' ') );
-                elem.className = clsn;
+                if( cls.length > 1 ) {
+                    for( i = 0, len = clsn.length; i < len; i++ ) {
+                        if( ~cls.indexOf( clsn[i] ) ) cls.splice( cls.indexOf( clsn[i] ), 1 );
+                    }
+                }
+
+                clsn = clsn.concat(cls);
+
+                elem.className = easy.trim( clsn.join(' ') );
             },
             removeClass: function( elem, cls ) {
                 var clsn = elem.className,
@@ -1485,8 +1492,8 @@
 
 
     Overlay.tips = function( options ) {
-        var el = options.el,
-            $els = toArr( document.querySelectorAll(el), 0 ),
+        var el,
+            $els,
             tipsOptions = {
                 position: 't',
                 containerClass: 'overlay-tips-container',
@@ -1502,7 +1509,12 @@
             matchResult,
             i;
 
-        delete options.el;
+        if( options.tips ) {
+            el = options.tips;
+            $els = toArr( document.querySelectorAll(el), 0 );
+        }
+
+        if( options.el ) delete options.el;
 
         if( getContentPattern.test( options.content ) ) {
             matchResult = options.content.match(getContentPattern);
@@ -1517,8 +1529,11 @@
                 var tips;
 
                 easy.on( this, 'mouseover', function() {
-                    tips = new Overlay(extend( true, {}, tipsOptions, options, { tips: this } ));
-                    tips.setContent( easy[ key ]( this, attr ) ).open();
+                    if( ( options.closedDestroy && tipsOptions.closedDestroy || !('closedDestroy' in options) && tipsOptions.closedDestroy ) || easy.type( options.closedDestroy ) === 'boolean' && !options.closedDestroy && !tips ) {
+                        tips = new Overlay(extend( true, {}, tipsOptions, options, { tips: this } ));
+                    }
+                    
+                    tips.setContent( key ? easy[ key ]( this, attr ) : options.content ).open();
                 } );
 
                 easy.on( this, 'mouseout', function() {

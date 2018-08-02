@@ -17,6 +17,7 @@
 <body>
     <div class="o">123123123</div>
     <div class="o2">123123123</div>
+    <div class="tips">这是tips</div>
     <br><br><br><br><br>
     <div id="a">123123213</div>
     <a href="javascript:;" class="aa">打开</a>
@@ -32,6 +33,8 @@
     <span class="tips-box" data-info="冒泡测试08">冒泡测试08</span>
     <span class="tips-box" data-info="冒泡测试09">冒泡测试09</span>
     <span class="tips-box" data-info="冒泡测试10">冒泡测试10</span>
+    <hr>
+    <span class="tips-box1" data-info="冒泡测试10">冒泡测试10</span>
     <script src="../src/overlay.js"></script>
     <script>
         //(function() {
@@ -125,7 +128,13 @@
 
             Overlay.tips({
                 content: '$.attr.data-info',
-                el: '.tips-box'
+                tips: '.tips-box'
+            });
+
+            Overlay.tips({
+                content: '冒泡测试100000',
+                tips: '.tips-box1',
+                closedDestroy: false
             });
 
             document.querySelector('.aa').addEventListener('click', function() {
