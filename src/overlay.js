@@ -181,11 +181,19 @@
             },
 
             each: function( arr, fn ) {
-                var i;
+                var i, result, isArray = easy.isArray( arr );
 
                 if( !easy.isArray( arr ) ) arr = [ arr ];
 
-                for( i in arr ) fn.call( arr[i], i, arr[i] );
+                for( i in arr ) {
+                    result = fn.call( arr[i], isArray ? Number(i) : i, arr[i] );
+
+                    if( result ) {
+                        continue;
+                    } else if( result !== undef ) {
+                        break;
+                    }
+                }
             },
             addClass: function( elem, cls ) {
                 var clsn = elem.className, i, len;
@@ -1525,19 +1533,25 @@
         }
 
         if( $els.length ) {
-            easy.each( $els, function() {
+
+            easy.each( $els, function( i ) {
                 var tips;
+
+                if( this.$overlay && this.$overlay instanceof Overlay ) return true;
 
                 easy.on( this, 'mouseover', function() {
                     if( ( options.closedDestroy && tipsOptions.closedDestroy || !('closedDestroy' in options) && tipsOptions.closedDestroy ) || easy.type( options.closedDestroy ) === 'boolean' && !options.closedDestroy && !tips ) {
                         tips = new Overlay(extend( true, {}, tipsOptions, options, { tips: this } ));
                     }
-                    
+
                     tips.setContent( key ? easy[ key ]( this, attr ) : options.content ).open();
                 } );
 
                 easy.on( this, 'mouseout', function() {
                     tips.close();
+
+                    if( this.closedDestroy ) tips = null;
+
                 } );
             } );
         }
