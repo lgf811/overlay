@@ -1522,7 +1522,7 @@
             $els = toArr( document.querySelectorAll(el), 0 );
         }
 
-        if( options.el ) delete options.el;
+        if( options.tips && options.el ) delete options.el;
 
         if( getContentPattern.test( options.content ) ) {
             matchResult = options.content.match(getContentPattern);
