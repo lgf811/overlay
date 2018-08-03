@@ -131,10 +131,21 @@
                 tips: '.tips-box'
             });
 
-            Overlay.tips({
+            var tips = Overlay.tips({
                 content: '冒泡测试100000',
-                tips: '.tips-box1',
-                closedDestroy: false
+                el: '.tips-box1'
+            });
+
+            document.querySelector('.tips-box1').addEventListener('mouseenter', function() {
+
+                tips.open();
+
+            });
+
+            document.querySelector('.tips-box1').addEventListener('mouseleave', function() {
+
+                tips.close();
+
             });
 
             document.querySelector('.aa').addEventListener('click', function() {

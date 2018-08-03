@@ -1515,7 +1515,7 @@
             content,
             key, attr,
             matchResult,
-            i;
+            i, tips;
 
         if( options.tips ) {
             el = options.tips;
@@ -1530,6 +1530,16 @@
             attr = matchResult[2];
 
             options.content = '';
+        } else if( !getContentPattern.test( options.content ) && options.content && ( !('tips' in options) || !options.tips ) ) {
+            tipsOptions.closedDestroy = false;
+
+            options.tips = document.querySelector(options.el);
+
+            delete options.el;
+
+            tips = new Overlay(extend( true, {}, tipsOptions, options ));
+
+            return tips;
         }
 
         if( $els.length ) {
@@ -1856,7 +1866,7 @@
 
         } else if( opts.tips ) { // 判断是否是提示组件
 
-            if( !easy.hasClass( container, 'open' ) ) return;
+            if( !easy.hasClass( container, 'open' ) || !opts.tips ) return;
 
             tipsOffset = easy.offset( opts.tips );
 
