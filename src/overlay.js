@@ -38,7 +38,7 @@
         zIndex = parseInt(Math.random() * 100000),
         serialNumber = 0,
         sheets, rules,
-        urlPattern = new RegExp('^\\.\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'gi'),
+        urlPattern = new RegExp('^\\.\\.?\\/|^https?:\\/\\/|\\/$|[a-z0-9-_=\\?]\/[a-z0-9-_=\\?]', 'i'),
         windowKey,
         domPrototype,
         getStyle,
@@ -46,8 +46,9 @@
         isInteger = function( val ) {
             return val%1 === 0;
         },
-        whPattern = /width|height|top|right|bottom|left/,
-        numPattern = /^(\d+)$/,
+        offsetPattern = /width|height|top|right|bottom|left/,
+        //hasUnitPattern = /\d?\.?\d+?(\%|px|em|rem)$/g,
+        numPattern = /(^\d?\.?\d+?$)/,
         pixelPattern = /^([^0]\d{0,})px$/,
         percentPattern = /^(([^0]\d{0,})|(\d+\.\d+))%$/,
         getContentPattern = /^\$\.([\w-]+)\.?([\w-]+)?/i,
@@ -123,13 +124,7 @@
                 style = elem.style,
                 _val = style[ key ];
 
-            if( whPattern.test( key ) && !_val && isNaN(parseInt(val)) && val !== 'auto' ) {
-                val = '0px';
-            } else if( _val && !val ) {
-                val = _val;
-            }
-
-            return val;
+            return offsetPattern.test( key ) && !_val && isNaN(parseInt(val)) && val !== 'auto' ? '0px' : _val && !val ? _val : val;
         }
     }
 
@@ -311,12 +306,12 @@
                     if( val === undef ) {
                         return currCss( elem, key );
                     } else if( elem.style ) {
-                        elem.style[ key ] = correctValue( val, key === 'opacity' ? '' : undef );
+                        elem.style[ key ] = correctValue( val, ~key.indexOf('opacity') ? '' : undef );
                     }
                 } else if( typeof key === 'object' ) {
                     for( i in key ) {
                         val = key[i];
-                        elem.style[ i ] = correctValue( val, i === 'opacity' ? '' : undef );
+                        elem.style[ i ] = correctValue( val, ~i.indexOf('opacity') ? '' : undef );
                     }
                 }
 
@@ -412,7 +407,11 @@
         adjustD = { x: 0, y: 0 },
         adjustFlag = false,
 
-        triggerResizeEndSpeed = 200;
+        triggerResizeEndSpeed = 200,
+        tipsTriggerKey = {
+            click: 'click',
+            hover: [ 'mouseover', 'mouseleave' ]
+        };
 
     // Overlay 构造函数
     function Overlay( options ) {
@@ -476,13 +475,12 @@
         anim: 'scale',
         position: 'center',
         offset: null,
-        opacity: 0.4,
         drag: true,
         footAlign: 'center',
         close: true,
         bodyClass: null,
         containerClass: null,
-        mask: true,
+        mask: 0.4,
         maskClose: true,
         full: false,
         tips: false,
@@ -617,8 +615,7 @@
         if( !('eles' in self) ) self.eles = {};
         eles = self.eles;
 
-        if( opts.mask ) $mask = self.maskInit();
-
+        if( easy.type(opts.mask) === 'number' || numPattern.test(opts.mask) ) $mask = self.maskInit();
 
         el = opts.el;
         content = opts.content;
@@ -746,8 +743,9 @@
         $mask = document.createElement('div');
         self.eles.mask = $mask;
         easy.addClass( $mask, 'overlay-mask' );
-        easy.css( $mask, 'opacity', opts.opacity );
-        easy.css( $mask, 'filter', 'alpha(opacity=' + ( opts.opacity * 100 ) + ')' );
+
+        easy.css( $mask, 'opacity', opts.mask );
+        easy.css( $mask, 'filter', 'alpha(opacity=' + ( opts.mask * 100 ) + ')' );
 
         return $mask;
     };
@@ -1500,6 +1498,8 @@
 
 
     Overlay.tips = function( options ) {
+        if( !options.tips ) return;
+
         var el,
             $els,
             tipsOptions = {
@@ -1510,19 +1510,21 @@
                 defOpen: false,
                 minWidth: 0,
                 mask: false,
-                bodyClass: 'overlay-tips-body'
+                bodyClass: 'overlay-tips-body',
+                trigger: 'hover'
             },
             content,
             key, attr,
             matchResult,
             i, tips;
 
-        if( options.tips ) {
+        if( options.el ) delete options.el;
+
+        if( options.tips && !('trigger' in options) ) {
             el = options.tips;
             $els = toArr( document.querySelectorAll(el), 0 );
+            console.log($els);
         }
-
-        if( options.tips && options.el ) delete options.el;
 
         if( getContentPattern.test( options.content ) ) {
             matchResult = options.content.match(getContentPattern);
@@ -1530,17 +1532,18 @@
             attr = matchResult[2];
 
             options.content = '';
-        } else if( !getContentPattern.test( options.content ) && options.content && ( !('tips' in options) || !options.tips ) ) {
+        }
+
+        if( 'trigger' in options && options.trigger in tipsTriggerKey ) {
             tipsOptions.closedDestroy = false;
-
-            options.tips = document.querySelector(options.el);
-
-            delete options.el;
+            options.tips = document.querySelector(options.tips);
 
             tips = new Overlay(extend( true, {}, tipsOptions, options ));
 
             return tips;
         }
+
+
 
         if( $els.length ) {
 
@@ -1796,24 +1799,6 @@
 
     // 设置 z-index 层顺序
     function setZIndex() {
-        // var self = this,
-        //     opts = self.options,
-        //     mask = self.eles.mask,
-        //     container = self.eles.container,
-        //     config = Overlay.config,
-        //     czIndex = easy.css( container, 'z-index' ),
-        //     zi;
-
-        // 1 czIndex
-        // 2 config.zIndex
-        // 3 opts.zIndex
-        // if( czIndex === 'auto' ) czIndex = 0;
-        //
-        // opts.zIndex = zIndex = Math.max( czIndex, config.zIndex, opts.zIndex, zIndex );
-        //
-        // easy.css( mask, 'z-index', zIndex );
-        // easy.css( container, 'z-index', zIndex );
-
         var self = this,
             opts = self.options,
             eles = self.eles,
@@ -1888,18 +1873,30 @@
                 case 'right':
                 case 'r':
                 //
+                easy.css( container, {
+                    top: y,
+                    left: x + easy.width( opts.tips ) + opts.tipsSpace
+                } );
 
                 break;
 
                 case 'bottom':
                 case 'b':
                 //
+                easy.css( container, {
+                    top: y + easy.height( opts.tips ) + opts.tipsSpace,
+                    left: x
+                } );
 
                 break;
 
                 case 'left':
                 case 'l':
                 //
+                easy.css( container, {
+                    top: y,
+                    left: x - easy.width( container ) - opts.tipsSpace
+                } );
 
                 break;
 
@@ -1907,11 +1904,11 @@
                 //
                 if( easy.type(position) !== 'function' ) {
                     easy.css( container, {
-                        top: y - easy.height( container ) - tipsSpace,
+                        top: y - easy.height( opts.tips ) - tipsSpace,
                         left: x
                     } );
                 } else {
-                    position.call( self, container, opts.tips );
+                    position.call( self, opts.tips, container );
                 }
             }
 
@@ -2133,6 +2130,7 @@
         bodyHeight = containerHeight - headerHeight - footerHeight - parseInt(easy.css( eles.body, 'padding-top' )) - parseInt(easy.css( eles.body, 'padding-bottom' )) - parseInt(easy.css( eles.body, 'border-top-width' )) - parseInt(easy.css( eles.body, 'border-bottom-width' ));
 
         bodyHeight = bodyHeight < opts.minHeight ? opts.minHeight : bodyHeight;
+
         easy.css( eles.body, 'height', bodyHeight );
 
         if( eles.el.tagName.toLowerCase() === 'iframe' ) {
@@ -2164,6 +2162,8 @@
                 x: 'width'
             };
 
+        //console.log( val, numPattern.test( val ), pixelPattern.test( val ) )
+
         if( numPattern.test( val ) || pixelPattern.test( val ) ) {
             $1 = RegExp.$1;
             return Number( $1 );
@@ -2187,15 +2187,11 @@
 
     // 修正返回值
     function correctValue( num, unit ) {
-        var _num,
-            hasUnitPattern = /\d?\.?\d+?(\%|px|em|rem)$/g,
-            numPattern = /^\d?\.?\d+?$/g;
 
         if( unit === undef ) unit = 'px';
         return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) : num;
 
     }
-
 
     // 帧动画样式初始化到head内
     function keyFramesInit() {
