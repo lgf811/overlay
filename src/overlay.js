@@ -1523,9 +1523,9 @@
         if( options.tips && !('trigger' in options) ) {
             el = options.tips;
             $els = toArr( document.querySelectorAll(el), 0 );
-            console.log($els);
         }
 
+        // 查看内容是否是属性还是普通文本
         if( getContentPattern.test( options.content ) ) {
             matchResult = options.content.match(getContentPattern);
             key = matchResult[1];
@@ -1534,7 +1534,9 @@
             options.content = '';
         }
 
-        if( 'trigger' in options && options.trigger in tipsTriggerKey ) {
+        //
+        // options.trigger in tipsTriggerKey
+        if( 'trigger' in options && !options.trigger || !('trigger' in options) ) {
             tipsOptions.closedDestroy = false;
             options.tips = document.querySelector(options.tips);
 
