@@ -1518,7 +1518,7 @@
             matchResult,
             i, tips;
 
-        if( options.el ) delete options.el;
+        if( options.el && 'content' in options ) delete options.el;
 
         if( options.tips && !('trigger' in options) ) {
             el = options.tips;
@@ -1534,9 +1534,9 @@
             options.content = '';
         }
 
-        //
+        // 如果不需要触发事件，则返回一个实例
         // options.trigger in tipsTriggerKey
-        if( 'trigger' in options && !options.trigger || !('trigger' in options) ) {
+        if( 'trigger' in options && !options.trigger ) {
             tipsOptions.closedDestroy = false;
             options.tips = document.querySelector(options.tips);
 
@@ -1544,8 +1544,6 @@
 
             return tips;
         }
-
-
 
         if( $els.length ) {
 
@@ -1557,15 +1555,17 @@
                 easy.on( this, 'mouseover', function() {
                     if( ( options.closedDestroy && tipsOptions.closedDestroy || !('closedDestroy' in options) && tipsOptions.closedDestroy ) || easy.type( options.closedDestroy ) === 'boolean' && !options.closedDestroy && !tips ) {
                         tips = new Overlay(extend( true, {}, tipsOptions, options, { tips: this } ));
+
+                        if( key || tips.options.content ) tips.setContent( key ? easy[ key ]( this, attr ) : options.content );
                     }
 
-                    tips.setContent( key ? easy[ key ]( this, attr ) : options.content ).open();
+                    tips.open();
                 } );
 
                 easy.on( this, 'mouseout', function() {
                     tips.close();
 
-                    if( this.closedDestroy ) tips = null;
+                    if( tips.closedDestroy ) tips = null;
 
                 } );
             } );

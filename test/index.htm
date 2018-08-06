@@ -57,80 +57,80 @@
             //     }
             // });
 
-            var win2 = new Overlay({
-                // el: '.o2',
-                content: './frame.htm',
-                title: '标题',
-                width: '300',
-                height: '260',
-                // position: 'l-t',
-                position: 'c',
-                full: true,
-                // defFull: true,
-                mask: '0.1',
-                anim: 'fadeSlideDown',
-                // offset: {
-                //     x: '20%',
-                //     y: '100'
-                // },
-                buttons: {
-                    'enter.enter.enter-1123123': '确定',
-                    'cancel.cancel': '取消'
-                }
-            }).enter(function( e ) {
-                //alert(123);
-                //return 123;
-            }).cancel(function( e, obj ) {
-                // console.log(e.handlerName);
-            })
-            // .once(function( e, obj ) {
-                // return Overlay.alert();
-                // console.log(123123123);
-                //alert(123)
-                // console.log('once');
-            // })
-            .closed(function( e, obj ) {
-                // console.log(e.handlerName);
-            }).enter(function() {
-                // console.log(1)
-            }).enter(function() {
-                // console.log(2)
-
-                //return {a: 123};
-            }).enter(enter1)
-            // .beforeOpen(function() {
-            //     // console.log('beforeOpen')
-            // })
-            // .opened(function() {
-            //     // console.log('opened');
-            // })
-            .movestart(function() {
-                // console.log('start');
-                return 123
-            }).moveing(function() {
-                // console.log('ing');
-            }).moveend(function() {
-                // console.log('end');
-            }).destroyed(function() {
-                win2 = null;
-            }).fullBefore(function() {
-                // console.log('全屏前')
-            }).fullAfter(function() {
-                // console.log('全屏后');
-            }).cancelFullBefore(function() {
-                // console.log('取消全屏前')
-            }).cancelFullAfter(function() {
-                // console.log('取消全屏后');
-            }).resizing(function() {
-                // console.log('调整中');
-            }).resizeEnd(function() {
-                // console.log('调整结束');
-            });
-        //})();
-
-            function enter1() {
-                // console.log(3);
-            }
+        //     var win2 = new Overlay({
+        //         // el: '.o2',
+        //         content: './frame.htm',
+        //         title: '标题',
+        //         width: '300',
+        //         height: '260',
+        //         // position: 'l-t',
+        //         position: 'c',
+        //         full: true,
+        //         // defFull: true,
+        //         mask: '0.1',
+        //         anim: 'fadeSlideDown',
+        //         // offset: {
+        //         //     x: '20%',
+        //         //     y: '100'
+        //         // },
+        //         buttons: {
+        //             'enter.enter.enter-1123123': '确定',
+        //             'cancel.cancel': '取消'
+        //         }
+        //     }).enter(function( e ) {
+        //         //alert(123);
+        //         //return 123;
+        //     }).cancel(function( e, obj ) {
+        //         // console.log(e.handlerName);
+        //     })
+        //     // .once(function( e, obj ) {
+        //         // return Overlay.alert();
+        //         // console.log(123123123);
+        //         //alert(123)
+        //         // console.log('once');
+        //     // })
+        //     .closed(function( e, obj ) {
+        //         // console.log(e.handlerName);
+        //     }).enter(function() {
+        //         // console.log(1)
+        //     }).enter(function() {
+        //         // console.log(2)
+        //
+        //         //return {a: 123};
+        //     }).enter(enter1)
+        //     // .beforeOpen(function() {
+        //     //     // console.log('beforeOpen')
+        //     // })
+        //     // .opened(function() {
+        //     //     // console.log('opened');
+        //     // })
+        //     .movestart(function() {
+        //         // console.log('start');
+        //         return 123
+        //     }).moveing(function() {
+        //         // console.log('ing');
+        //     }).moveend(function() {
+        //         // console.log('end');
+        //     }).destroyed(function() {
+        //         win2 = null;
+        //     }).fullBefore(function() {
+        //         // console.log('全屏前')
+        //     }).fullAfter(function() {
+        //         // console.log('全屏后');
+        //     }).cancelFullBefore(function() {
+        //         // console.log('取消全屏前')
+        //     }).cancelFullAfter(function() {
+        //         // console.log('取消全屏后');
+        //     }).resizing(function() {
+        //         // console.log('调整中');
+        //     }).resizeEnd(function() {
+        //         // console.log('调整结束');
+        //     });
+        // //})();
+        //
+        //     function enter1() {
+        //         // console.log(3);
+        //     }
 
             Overlay.tips({
                 content: '$.attr.data-info',
@@ -143,10 +143,11 @@
             //     trigger: false
             // });
 
-            // var tips2 = Overlay.tips({
-            //     el: '.tips-box1',
-            //     tips: ''
-            // });
+            var tips = Overlay.tips({
+                el: '.tips',
+                tips: '.tips-box1',
+                trigger: false
+            });
 
             document.querySelector('.tips-box1').addEventListener('mouseenter', function() {
                 tips.open();
@@ -159,6 +160,11 @@
             document.querySelector('.aa').addEventListener('click', function() {
                 win2.open();
             });
+
+            // t r b l
+            // r b l t
+            // b l t r
+            // l t r b
     </script>
 </body>
 </html>
