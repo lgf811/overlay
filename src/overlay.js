@@ -1833,16 +1833,8 @@
             eles = self.eles,
             position = opts.position,
             container = self.eles.container,
-            windowWidth = easy.width( window ),
-            windowHeight = easy.height( window ),
-            resizeEndTimer = null,
             x = opts.offset && typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset ? opts.offset.x : null,
-            y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null,
-            tipsOffset,
-            scrollTop,
-            tipsDirection,
-            direction, cOffset,
-            tipsWidth, tipsHeight;
+            y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null;
 
         if( opts.offset && x && y && !opts.tips ) {
             if( (easy.type(opts.offset.x) === 'function' || easy.type(opts.offset.y) === 'function') && !resizeStorage[ opts.serialNumber ] ) {
@@ -1871,231 +1863,13 @@
 
             if( !easy.hasClass( container, 'open' ) || !opts.tips ) return;
 
-            tipsOffset = easy.offset( opts.tips );
+            setTipsOffset.call( self );
 
-            if( easy.type( opts.position ) === 'string' ) {
-                if( opts.position.length > 1 ) opts.position = opts.position.charAt(0);
-                if( !isTipsDirectionPattern.test(opts.position) ) opts.position = 't';
-
-                tipsDirection = correctionTipsDirectionOrder( opts.position );
-
-            } else if( easy.type(opts.position) === 'function' ) {
-
-                opts.position.call( self, opts.tips, container );
-
-                return ;
-            }
-
-            x = tipsOffset.left;
-            y = tipsOffset.top;
-
-            scrollTop = window.scrollTop;
-
-            cOffset = easy.offset( container );
-            tipsWidth = easy.outerWidth( opts.tips );
-            tipsHeight = easy.outerHeight( opts.tips );
-
-            while( tipsDirection ) {
-
-                direction = tipsDirection.charAt(0);
-
-                if( direction === 't' && cOffset.top > tipsHeight + opts.tipsSpace ) {
-                    //
-                    easy.css( container, {
-                        top: y - easy.height( container ) - opts.tipsSpace,
-                        left: x
-                    } );
-                    break;
-                } else if( direction === 'r' ) {
-                    //
-
-                    easy.css( container, {
-                        top: y,
-                        left: x + easy.width( opts.tips ) + opts.tipsSpace
-                    } );
-                    break;
-                } else if( direction === 'b' ) {
-                    //
-
-                    easy.css( container, {
-                        top: y + easy.height( opts.tips ) + opts.tipsSpace,
-                        left: x
-                    } );
-                    break;
-                } else if( direction === 'l' ) {
-                    //
-
-                    easy.css( container, {
-                        top: y,
-                        left: x - easy.width( container ) - opts.tipsSpace
-                    } );
-                    break;
-                } else {
-
-                    easy.css( container, {
-                        top: y - easy.height( container ) - opts.tipsSpace,
-                        left: x
-                    } );
-                }
-
-                tipsDirection = tipsDirection.replace( direction, '' );
-            }
 
 
         } else if( 'position' in opts && !(opts.serialNumber in resizeStorage) ) {
 
-            resizeStorage[ opts.serialNumber ] = function() {
-
-                if( !easy.hasClass( container, 'open' ) ) return;
-
-                windowWidth = easy.width( window );
-                windowHeight = easy.height( window );
-
-                // 如果是全屏，则重置弹出窗口的尺寸
-                if( opts.title && easy.hasClass( eles.full, 'fullscreen' ) && opts.full ) {
-                    opts.width = windowWidth;
-                    opts.height = windowHeight;
-                    setSize.call( self );
-                    triggerEventHandler.call( self, 'resizing' );
-
-                    clearTimeout( resizeEndTimer );
-                    resizeEndTimer = setTimeout(triggerResizeEndHandler, triggerResizeEndSpeed, triggerEventHandler, self, 'resizeEnd');
-
-                } else if( typeof opts.width === 'function' || typeof opts.height === 'function' ) {
-
-                    setSize.call( self );
-                }
-
-                switch( position ) {
-                    case 'center' :
-                    case 'c' :
-                    //
-                    easy.css( container, {
-                        top: ( windowHeight - easy.height(container) ) / 2,
-                        left: ( windowWidth - easy.width(container) ) / 2
-                    } );
-
-                    break;
-
-                    case 'top-left' :
-                    case 'tl' :
-                    case 't-l' :
-                    case 'left-top' :
-                    case 'lt' :
-                    case 'l-t' :
-                    //
-                    easy.css( container, {
-                        top: 0,
-                        left: 0
-                    } );
-                    break;
-
-                    case 'top-center' :
-                    case 'tc' :
-                    case 't-c' :
-                    case 'center-top' :
-                    case 'ct' :
-                    case 'c-t' :
-                    //
-                    easy.css( container, {
-                        top: 0,
-                        left: ( windowWidth - easy.width(container) ) / 2
-                    } );
-                    break;
-
-                    case 'top-right' :
-                    case 'tr' :
-                    case 't-r' :
-                    case 'right-top' :
-                    case 'rt' :
-                    case 'r-t' :
-                    //
-                    easy.css( container, {
-                        top: 0,
-                        left: ( windowWidth - easy.width(container) )
-                    } );
-                    break;
-
-                    case 'center-right' :
-                    case 'cr' :
-                    case 'c-r' :
-                    case 'right-center' :
-                    case 'rc' :
-                    case 'r-c' :
-                    //
-                    easy.css( container, {
-                        top: ( windowHeight - easy.height(container) ) / 2,
-                        left: ( windowWidth - easy.width(container) )
-                    } );
-                    break;
-
-                    case 'bottom-right' :
-                    case 'br' :
-                    case 'b-r' :
-                    case 'right-bottom' :
-                    case 'rb' :
-                    case 'r-b' :
-                    //
-                    easy.css( container, {
-                        top: ( windowHeight - easy.height(container) ),
-                        left: ( windowWidth - easy.width(container) )
-                    } );
-
-                    break;
-
-                    case 'bottom-center' :
-                    case 'bc' :
-                    case 'b-c' :
-                    case 'center-bottom' :
-                    case 'cb' :
-                    case 'c-b' :
-                    //
-                    easy.css( container, {
-                        top: ( windowHeight - easy.height(container) ),
-                        left: ( windowWidth - easy.width(container) ) / 2
-                    } );
-
-                    break;
-
-                    case 'bottom-left' :
-                    case 'bl' :
-                    case 'b-l' :
-                    case 'left-bottom' :
-                    case 'lb' :
-                    case 'l-b' :
-                    //
-                    easy.css( container, {
-                        top: ( windowHeight - easy.height(container) ),
-                        left: 0
-                    } );
-                    break;
-
-                    case 'center-left' :
-                    case 'cl' :
-                    case 'c-l' :
-                    case 'left-center' :
-                    case 'lc' :
-                    case 'l-c' :
-                    //
-                    easy.css( container, {
-                        top: ( windowHeight - easy.height(container) ) / 2,
-                        left: 0
-                    } );
-                    break;
-
-                    default :
-                    if( easy.type(position) !== 'function' ) {
-                        easy.css( container, {
-                            top: ( windowHeight - easy.height(container) ) / 2,
-                            left: ( windowWidth - easy.width(container) ) / 2
-                        } );
-                    } else {
-                        position.call( self, container );
-                    }
-
-                }
-
-            };
+            setWindowOffset.call( self );
 
         }
 
@@ -2103,7 +1877,261 @@
 
     }
 
+    function setTipsOffset() {
+        var self = this,
+            opts = self.options,
+            eles = self.eles,
+            container = eles.container,
+            position = opts.position,
+            windowWidth, windowHeight,
+            tipsOffset,
+            scrollTop,
+            tipsDirection,
+            direction, cOffset,
+            tipsWidth, tipsHeight;
 
+        tipsOffset = easy.offset( opts.tips );
+
+        if( easy.type( opts.position ) === 'string' ) {
+            if( opts.position.length > 1 ) opts.position = opts.position.charAt(0);
+            if( !isTipsDirectionPattern.test(opts.position) ) opts.position = 't';
+
+            tipsDirection = correctionTipsDirectionOrder( opts.position );
+
+        } else if( easy.type(opts.position) === 'function' ) {
+
+            opts.position.call( self, opts.tips, container );
+
+            return ;
+        }
+
+        x = tipsOffset.left;
+        y = tipsOffset.top;
+
+        scrollTop = window.scrollTop;
+
+        cOffset = easy.offset( container );
+        tipsWidth = easy.outerWidth( opts.tips );
+        tipsHeight = easy.outerHeight( opts.tips );
+
+        while( tipsDirection ) {
+
+            direction = tipsDirection.charAt(0);
+
+            if( direction === 't' && cOffset.top > tipsHeight + opts.tipsSpace ) {
+                //
+                easy.css( container, {
+                    top: y - easy.height( container ) - opts.tipsSpace,
+                    left: x
+                } );
+
+                tipsDirection = null;
+                break;
+            } else if( direction === 'r' ) {
+                //
+
+                easy.css( container, {
+                    top: y,
+                    left: x + easy.width( opts.tips ) + opts.tipsSpace
+                } );
+
+                tipsDirection = null;
+                break;
+            } else if( direction === 'b' ) {
+                //
+
+                easy.css( container, {
+                    top: y + easy.height( opts.tips ) + opts.tipsSpace,
+                    left: x
+                } );
+
+                tipsDirection = null;
+                break;
+            } else if( direction === 'l' ) {
+                //
+
+                easy.css( container, {
+                    top: y,
+                    left: x - easy.width( container ) - opts.tipsSpace
+                } );
+
+                tipsDirection = null;
+                break;
+            }
+
+            tipsDirection = tipsDirection.replace( direction, '' );
+        }
+
+        if( tipsDirection ) {
+            easy.css( container, {
+                top: y - easy.height( container ) - opts.tipsSpace,
+                left: x
+            } );
+        }
+    }
+
+    function setWindowOffset() {
+        var self = this,
+            opts = self.options,
+            eles = self.eles,
+            container = eles.container,
+            position = opts.position,
+            windowWidth, windowHeight,
+            resizeEndTimer;
+
+        resizeStorage[ opts.serialNumber ] = function() {
+
+            if( !easy.hasClass( container, 'open' ) ) return;
+
+            windowWidth = easy.width( window );
+            windowHeight = easy.height( window );
+
+            // 如果是全屏，则重置弹出窗口的尺寸
+            if( opts.title && easy.hasClass( eles.full, 'fullscreen' ) && opts.full ) {
+                opts.width = windowWidth;
+                opts.height = windowHeight;
+                setSize.call( self );
+                triggerEventHandler.call( self, 'resizing' );
+
+                clearTimeout( resizeEndTimer );
+                resizeEndTimer = setTimeout(triggerResizeEndHandler, triggerResizeEndSpeed, triggerEventHandler, self, 'resizeEnd');
+
+            } else if( typeof opts.width === 'function' || typeof opts.height === 'function' ) {
+
+                setSize.call( self );
+            }
+
+            switch( position ) {
+                case 'center' :
+                case 'c' :
+                //
+                easy.css( container, {
+                    top: ( windowHeight - easy.height(container) ) / 2,
+                    left: ( windowWidth - easy.width(container) ) / 2
+                } );
+
+                break;
+
+                case 'top-left' :
+                case 'tl' :
+                case 't-l' :
+                case 'left-top' :
+                case 'lt' :
+                case 'l-t' :
+                //
+                easy.css( container, {
+                    top: 0,
+                    left: 0
+                } );
+                break;
+
+                case 'top-center' :
+                case 'tc' :
+                case 't-c' :
+                case 'center-top' :
+                case 'ct' :
+                case 'c-t' :
+                //
+                easy.css( container, {
+                    top: 0,
+                    left: ( windowWidth - easy.width(container) ) / 2
+                } );
+                break;
+
+                case 'top-right' :
+                case 'tr' :
+                case 't-r' :
+                case 'right-top' :
+                case 'rt' :
+                case 'r-t' :
+                //
+                easy.css( container, {
+                    top: 0,
+                    left: ( windowWidth - easy.width(container) )
+                } );
+                break;
+
+                case 'center-right' :
+                case 'cr' :
+                case 'c-r' :
+                case 'right-center' :
+                case 'rc' :
+                case 'r-c' :
+                //
+                easy.css( container, {
+                    top: ( windowHeight - easy.height(container) ) / 2,
+                    left: ( windowWidth - easy.width(container) )
+                } );
+                break;
+
+                case 'bottom-right' :
+                case 'br' :
+                case 'b-r' :
+                case 'right-bottom' :
+                case 'rb' :
+                case 'r-b' :
+                //
+                easy.css( container, {
+                    top: ( windowHeight - easy.height(container) ),
+                    left: ( windowWidth - easy.width(container) )
+                } );
+
+                break;
+
+                case 'bottom-center' :
+                case 'bc' :
+                case 'b-c' :
+                case 'center-bottom' :
+                case 'cb' :
+                case 'c-b' :
+                //
+                easy.css( container, {
+                    top: ( windowHeight - easy.height(container) ),
+                    left: ( windowWidth - easy.width(container) ) / 2
+                } );
+
+                break;
+
+                case 'bottom-left' :
+                case 'bl' :
+                case 'b-l' :
+                case 'left-bottom' :
+                case 'lb' :
+                case 'l-b' :
+                //
+                easy.css( container, {
+                    top: ( windowHeight - easy.height(container) ),
+                    left: 0
+                } );
+                break;
+
+                case 'center-left' :
+                case 'cl' :
+                case 'c-l' :
+                case 'left-center' :
+                case 'lc' :
+                case 'l-c' :
+                //
+                easy.css( container, {
+                    top: ( windowHeight - easy.height(container) ) / 2,
+                    left: 0
+                } );
+                break;
+
+                default :
+                if( easy.type(position) !== 'function' ) {
+                    easy.css( container, {
+                        top: ( windowHeight - easy.height(container) ) / 2,
+                        left: ( windowWidth - easy.width(container) ) / 2
+                    } );
+                } else {
+                    position.call( self, container );
+                }
+
+            }
+
+        };
+    }
 
     // 设置组件尺寸
     function setSize() {
@@ -2111,8 +2139,8 @@
             opts = self.options,
             eles = self.eles,
             container = eles.container,
-            windowWidth = document.documentElement.clientWidth,
-            windowHeight = document.documentElement.clientHeight,
+            windowWidth = easy.width( window ),
+            windowHeight = easy.height( window ),
             containerWidth, containerHeight,
             bodyHeight,
             headerHeight = eles.header ? easy.outerHeight( eles.header ) : 0,
