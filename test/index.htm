@@ -132,10 +132,10 @@
         //         // console.log(3);
         //     }
 
-            Overlay.tips({
-                content: '$.attr.data-info',
-                tips: '.tips-box'
-            });
+            // Overlay.tips({
+            //     content: '$.attr.data-info',
+            //     tips: '.tips-box'
+            // });
 
             // var tips = Overlay.tips({
             //     content: '100000',
@@ -146,7 +146,8 @@
             var tips = Overlay.tips({
                 el: '.tips',
                 tips: '.tips-box1',
-                trigger: false
+                trigger: false,
+                position: 'b'
             });
 
             document.querySelector('.tips-box1').addEventListener('mouseenter', function() {

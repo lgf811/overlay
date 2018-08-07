@@ -53,7 +53,20 @@
         percentPattern = /^(([^0]\d{0,})|(\d+\.\d+))%$/,
         getContentPattern = /^\$\.([\w-]+)\.?([\w-]+)?/i,
         getContentType = [ 'attr', 'html', 'text' ],
-        docBody = document.body;
+        docBody = document.body,
+        isTipsDirectionPattern = /t|r|b|l/,
+
+        correctionTipsDirectionOrder = function( direction ) {
+            var order = 'trbl', pattern, first;
+
+            if( direction === 't' ) return order;
+
+            pattern = new RegExp( direction + '[a-z]+');
+            first = order.match( pattern )[0];
+
+            return first + order.replace( first, '' );
+
+        };
 
     if( Function.prototype.bind === undef ) {
         Function.prototype.bind = function( oThis ) {
@@ -306,12 +319,12 @@
                     if( val === undef ) {
                         return currCss( elem, key );
                     } else if( elem.style ) {
-                        elem.style[ key ] = correctValue( val, ~key.indexOf('opacity') ? '' : undef );
+                        elem.style[ key ] = correctionValue( val, ~key.indexOf('opacity') ? '' : undef );
                     }
                 } else if( typeof key === 'object' ) {
                     for( i in key ) {
                         val = key[i];
-                        elem.style[ i ] = correctValue( val, ~i.indexOf('opacity') ? '' : undef );
+                        elem.style[ i ] = correctionValue( val, ~i.indexOf('opacity') ? '' : undef );
                     }
                 }
 
@@ -1826,17 +1839,20 @@
             x = opts.offset && typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset ? opts.offset.x : null,
             y = opts.offset && typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset ? opts.offset.y : null,
             tipsOffset,
-            scrollTop;
+            scrollTop,
+            tipsDirection,
+            direction, cOffset,
+            tipsWidth, tipsHeight;
 
         if( opts.offset && x && y && !opts.tips ) {
-            if( (typeof opts.offset.x === 'function' || typeof opts.offset.y === 'function') && !resizeStorage[ opts.serialNumber ] ) {
+            if( (easy.type(opts.offset.x) === 'function' || easy.type(opts.offset.y) === 'function') && !resizeStorage[ opts.serialNumber ] ) {
 
                 resizeStorage[ opts.serialNumber ] = function() {
 
                     if( !easy.hasClass( container, 'open' ) ) return self;
 
-                    x = typeof opts.offset.x === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
-                    y = typeof opts.offset.y === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
+                    x = easy.type(opts.offset.x) === 'function' ? opts.offset.x.call( self ) : opts.offset.x;
+                    y = easy.type(opts.offset.y) === 'function' ? opts.offset.y.call( self ) : opts.offset.y;
                     easy.css( container, {
                         top: y,
                         left: x
@@ -1857,62 +1873,74 @@
 
             tipsOffset = easy.offset( opts.tips );
 
+            if( easy.type( opts.position ) === 'string' ) {
+                if( opts.position.length > 1 ) opts.position = opts.position.charAt(0);
+                if( !isTipsDirectionPattern.test(opts.position) ) opts.position = 't';
+
+                tipsDirection = correctionTipsDirectionOrder( opts.position );
+
+            } else if( easy.type(opts.position) === 'function' ) {
+
+                opts.position.call( self, opts.tips, container );
+
+                return ;
+            }
+
             x = tipsOffset.left;
             y = tipsOffset.top;
 
             scrollTop = window.scrollTop;
 
-            switch( position ) {
-                case 'top':
-                case 't':
-                //
-                easy.css( container, {
-                    top: y - easy.height( container ) - opts.tipsSpace,
-                    left: x
-                } );
-                break;
+            cOffset = easy.offset( container );
+            tipsWidth = easy.outerWidth( opts.tips );
+            tipsHeight = easy.outerHeight( opts.tips );
 
-                case 'right':
-                case 'r':
-                //
-                easy.css( container, {
-                    top: y,
-                    left: x + easy.width( opts.tips ) + opts.tipsSpace
-                } );
+            while( tipsDirection ) {
 
-                break;
+                direction = tipsDirection.charAt(0);
 
-                case 'bottom':
-                case 'b':
-                //
-                easy.css( container, {
-                    top: y + easy.height( opts.tips ) + opts.tipsSpace,
-                    left: x
-                } );
-
-                break;
-
-                case 'left':
-                case 'l':
-                //
-                easy.css( container, {
-                    top: y,
-                    left: x - easy.width( container ) - opts.tipsSpace
-                } );
-
-                break;
-
-                default:
-                //
-                if( easy.type(position) !== 'function' ) {
+                if( direction === 't' && cOffset.top > tipsHeight + opts.tipsSpace ) {
+                    //
                     easy.css( container, {
-                        top: y - easy.height( opts.tips ) - tipsSpace,
+                        top: y - easy.height( container ) - opts.tipsSpace,
                         left: x
                     } );
+                    break;
+                } else if( direction === 'r' ) {
+                    //
+
+                    easy.css( container, {
+                        top: y,
+                        left: x + easy.width( opts.tips ) + opts.tipsSpace
+                    } );
+                    break;
+                } else if( direction === 'b' ) {
+                    //
+
+                    easy.css( container, {
+                        top: y + easy.height( opts.tips ) + opts.tipsSpace,
+                        left: x
+                    } );
+                    break;
+                } else if( direction === 'l' ) {
+                    //
+
+                    easy.css( container, {
+                        top: y,
+                        left: x - easy.width( container ) - opts.tipsSpace
+                    } );
+                    break;
                 } else {
-                    position.call( self, opts.tips, container );
+
+                    easy.css( container, {
+                        top: y - easy.height( container ) - opts.tipsSpace,
+                        left: x
+                    } );
                 }
+
+                tipsDirection = tipsDirection.replace( direction, '' );
             }
+
 
         } else if( 'position' in opts && !(opts.serialNumber in resizeStorage) ) {
 
@@ -2188,7 +2216,7 @@
 
 
     // 修正返回值
-    function correctValue( num, unit ) {
+    function correctionValue( num, unit ) {
 
         if( unit === undef ) unit = 'px';
         return typeof num === 'number' || typeof num === 'string' && numPattern.test(num) ? ( num + unit ) : num;
