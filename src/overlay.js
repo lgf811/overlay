@@ -1888,7 +1888,8 @@
             scrollTop,
             tipsDirection,
             direction, cOffset,
-            tipsWidth, tipsHeight;
+            tipsWidth, tipsHeight,
+            cWidth, cHeight;
 
         tipsOffset = easy.offset( opts.tips );
 
@@ -1902,7 +1903,7 @@
 
             opts.position.call( self, opts.tips, container );
 
-            return ;
+            return;
         }
 
         x = tipsOffset.left;
@@ -1913,12 +1914,17 @@
         cOffset = easy.offset( container );
         tipsWidth = easy.outerWidth( opts.tips );
         tipsHeight = easy.outerHeight( opts.tips );
+        cWidth = easy.outerWidth( container );
+        cHeight = easy.outerHeight( container );
+
+        windowWidth = easy.width( window );
+        windowHeight = easy.height( window );
 
         while( tipsDirection ) {
 
             direction = tipsDirection.charAt(0);
 
-            if( direction === 't' && cOffset.top > tipsHeight + opts.tipsSpace ) {
+            if( direction === 't' && y > cHeight + opts.tipsSpace ) {
                 //
                 easy.css( container, {
                     top: y - easy.height( container ) - opts.tipsSpace,
@@ -1927,7 +1933,7 @@
 
                 tipsDirection = null;
                 break;
-            } else if( direction === 'r' ) {
+            } else if( direction === 'r' && windowWidth - x - tipsWidth - opts.tipsSpace > cWidth ) {
                 //
 
                 easy.css( container, {
@@ -1937,7 +1943,7 @@
 
                 tipsDirection = null;
                 break;
-            } else if( direction === 'b' ) {
+            } else if( direction === 'b' && windowHeight - y - tipsHeight - opts.tipsSpace > cHeight ) {
                 //
 
                 easy.css( container, {
@@ -1947,7 +1953,7 @@
 
                 tipsDirection = null;
                 break;
-            } else if( direction === 'l' ) {
+            } else if( direction === 'l' && x > cWidth + opts.tipsSpace ) {
                 //
 
                 easy.css( container, {
