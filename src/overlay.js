@@ -896,7 +896,7 @@
             opts = self.options,
             $arrow = document.createElement('span');
 
-        self.eles.resize = $arrow;
+        self.eles.arrow = $arrow;
         easy.addClass( $arrow, 'overlay-tips-arrow');
 
         return $arrow;
@@ -1920,6 +1920,10 @@
         windowWidth = easy.width( window );
         windowHeight = easy.height( window );
 
+        easy.removeClass( eles.arrow, 't r b l');
+
+        console.log( tipsOffset.top - window.scrollY );
+
         while( tipsDirection ) {
 
             direction = tipsDirection.charAt(0);
@@ -1974,6 +1978,8 @@
                 left: x
             } );
         }
+
+        easy.addClass( eles.arrow, direction);
     }
 
     function setWindowOffset() {
