@@ -395,6 +395,18 @@
                     return;
                 }
                 return elem.innerText;
+            },
+
+            scrollTop: function( elem ) {
+                if( elem === undef ) elem = document.documentElement;
+
+                return elem.scrollTop;
+            },
+
+            scrollLeft: function( elem ) {
+                if( elem === undef ) elem = document.documentElement;
+
+                return elem.scrollLeft;
             }
 
         },
@@ -1886,6 +1898,7 @@
             windowWidth, windowHeight,
             tipsOffset,
             scrollTop,
+            scrollLeft,
             tipsDirection,
             direction, cOffset,
             tipsWidth, tipsHeight,
@@ -1901,7 +1914,7 @@
 
         } else if( easy.type(opts.position) === 'function' ) {
 
-            opts.position.call( self, opts.tips, container );
+            opts.position.call( self, container, opts.tips );
 
             return;
         }
@@ -1909,7 +1922,8 @@
         x = tipsOffset.left;
         y = tipsOffset.top;
 
-        scrollTop = window.scrollTop;
+        scrollTop = easy.scrollTop();
+        scrollLeft = easy.scrollLeft();
 
         cOffset = easy.offset( container );
         tipsWidth = easy.outerWidth( opts.tips );
@@ -1922,13 +1936,11 @@
 
         easy.removeClass( eles.arrow, 't r b l');
 
-        console.log( tipsOffset.top - window.scrollY );
-
         while( tipsDirection ) {
 
             direction = tipsDirection.charAt(0);
 
-            if( direction === 't' && y > cHeight + opts.tipsSpace ) {
+            if( direction === 't' && y - scrollTop > cHeight + opts.tipsSpace ) {
                 //
                 easy.css( container, {
                     top: y - easy.height( container ) - opts.tipsSpace,
@@ -1957,7 +1969,7 @@
 
                 tipsDirection = null;
                 break;
-            } else if( direction === 'l' && x > cWidth + opts.tipsSpace ) {
+            } else if( direction === 'l' && x - scrollLeft > cWidth + opts.tipsSpace ) {
                 //
 
                 easy.css( container, {
@@ -1979,7 +1991,8 @@
             } );
         }
 
-        easy.addClass( eles.arrow, direction);
+        if( direction ) easy.addClass( eles.arrow, direction);
+
     }
 
     function setWindowOffset() {

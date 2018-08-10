@@ -22,7 +22,7 @@
 <body>
     <div class="o">123123123</div>
     <div class="o2">123123123</div>
-    <div class="tips">这是tipstipstipstips</div>
+    <div class="tips">这是tipsssssssss</div>
     <br><br><br><br><br>
     <div id="a">123123213</div>
     <a href="javascript:;" class="aa">打开</a>
@@ -132,10 +132,10 @@
         //         // console.log(3);
         //     }
 
-            // Overlay.tips({
-            //     content: '$.attr.data-info',
-            //     tips: '.tips-box'
-            // });
+            Overlay.tips({
+                content: '$.attr.data-info',
+                tips: '.tips-box'
+            });
 
             // var tips = Overlay.tips({
             //     content: '100000',
@@ -147,7 +147,8 @@
                 el: '.tips',
                 tips: '.tips-box1',
                 trigger: false,
-                position: 'b'
+                position: 'b',
+                anim: 'fadeSlideDown'
             });
 
             document.querySelector('.tips-box1').addEventListener('mouseenter', function() {
