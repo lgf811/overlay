@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Overlay</title>
     <link rel="stylesheet" href="reset.css">
-    <link rel="stylesheet" href="../src/theme/default/overlay.css">
+    <link rel="stylesheet" href="../lib/theme/default/overlay.css">
     <style>
         .tips-box {
             float: left;
@@ -17,7 +17,9 @@
             line-height: 1;
             vertical-align: top
         }
+
     </style>
+    <script src="../lib/overlay.js"></script>
 </head>
 <body>
     <div class="o">123123123</div>
@@ -28,7 +30,9 @@
     <a href="javascript:;" class="aa">打开</a>
 
     <hr />
-    <span class="tips-box" data-info="冒泡测试01">冒泡测试01</span>
+    <a href="javascript:;" class="test-trigger-btn" data-info="气泡内容" style="display: inline-block;">气泡触发按钮气泡触发按钮气泡触</a>
+    <hr />
+    <span class="tips-box" data-info="冒泡测试0111111">冒泡测试01</span>
     <span class="tips-box" data-info="冒泡测试02">冒泡测试02</span>
     <span class="tips-box" data-info="冒泡测试03">冒泡测试03</span>
     <span class="tips-box" data-info="冒泡测试04">冒泡测试04</span>
@@ -40,8 +44,12 @@
     <span class="tips-box" data-info="冒泡测试10">冒泡测试10</span>
     <hr>
     <span class="tips-box1" data-info="冒泡测试10">冒泡测试10<br >冒泡测试10<br >冒泡测试10<br >冒泡测试10<br >冒泡测试10<br >冒泡测试10<br ></span>
-    <script src="../src/overlay.js"></script>
+
+	<div class="test1">
+		这里是示例的文字
+	</div>
     <script>
+
         //(function() {
 
             // var win = new Overlay({
@@ -57,18 +65,25 @@
             //     }
             // });
 
+// 			Overlay.config.keyframes.aaa = {
+// 				enter: {
+// 					'0%': ''
+// 				}
+// 			}
+
             var win2 = new Overlay({
-                // el: '.o2',
-                content: './frame.htm',
+                el: '.o',
+                // content: './frame.htm',
                 title: '标题',
                 width: '300',
-                height: '260',
+                // height: '260',
                 // position: 'l-t',
+				// close: false,
                 position: 'c',
                 full: true,
                 // defFull: true,
                 mask: '0.1',
-                anim: 'fadeSlideDown',
+                anim: 'spring',
                 // offset: {
                 //     x: '20%',
                 //     y: '100'
@@ -78,27 +93,35 @@
                     'cancel.cancel': '取消'
                 }
             }).once(function( e ) {
-                alert(123);
-                //alert(123);
-                //return 123;
+
             }).cancel(function( e, obj ) {
-                // console.log(e.handlerName);
+				alert('cancel' );
+
             })
-            // .once(function( e, obj ) {
-                // return Overlay.alert();
-                // console.log(123123123);
-                //alert(123)
-                // console.log('once');
-            // })
             .closed(function( e, obj ) {
                 // console.log(e.handlerName);
-            }).enter(function() {
-                // console.log(1)
-            }).enter(function() {
-                // console.log(2)
+            }).enter(function( e, data ) {
 
-                //return {a: 123};
-            }).enter(enter1)
+                // return new Overlay({
+                //     name: 'test1',
+                //     title: '标题',
+                //     content: '测试内容',
+                //     buttons: {
+                //         'enter.enter-1': '我是确定'
+                //     }
+                // });
+
+                return Overlay.alert({
+                    content: '你好'
+                });
+
+            }).enter(function( e, data ) {
+
+                alert( this.options.content );
+
+            }).enter(function( e, data ) {
+                // console.log( data );
+            })
             // .beforeOpen(function() {
             //     // console.log('beforeOpen')
             // })
@@ -107,7 +130,7 @@
             // })
             .movestart(function() {
                 // console.log('start');
-                return 123
+                // return 123
             }).moveing(function() {
                 // console.log('ing');
             }).moveend(function() {
@@ -129,6 +152,16 @@
             });
         //})();
 
+            // win2.push({
+            //     key: 1,
+            //     key2: 2,
+            //     key3: 3
+            // })
+
+            // win2.push('key', 1);
+            // win2.push('key2', 2);
+            // win2.push('key3', 3);
+
             function enter1() {
                 // console.log(3);
             }
@@ -138,6 +171,15 @@
                 tips: '.tips-box'
             });
 
+
+
+            // 示例1
+            // 该参数在使用气泡时才可以使用
+            Overlay.tips({
+                content: '$.html',
+                tips: '.test-trigger-btn',
+				// width: 300
+            });
             // var tips = Overlay.tips({
             //     content: '100000',
             //     tips: '.tips-box1',
@@ -147,7 +189,6 @@
             var tips = Overlay.tips({
                 el: '.tips',
                 tips: '.tips-box1',
-                trigger: false,
                 position: 'b',
                 anim: 'fadeSlideDown'
             });
@@ -164,10 +205,12 @@
                 win2.open();
             });
 
+
             // t r b l
             // r b l t
             // b l t r
             // l t r b
+
     </script>
 </body>
 </html>
