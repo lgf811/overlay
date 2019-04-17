@@ -90,11 +90,11 @@
                 // },
                 buttons: {
                     'enter.enter.enter-1123123': '确定',
-                    'cancel.cancel': '取消'
+                    '$cancel.cancel': '取消'
                 }
             }).once(function( e ) {
 
-            }).cancel(function( e, obj ) {
+            }).$cancel(function( e, obj ) {
 				alert('cancel' );
 
             })
@@ -119,7 +119,13 @@
 
                 alert( this.options.content );
 
+                return Overlay.alert({
+                    content: '你好222'
+                });
+
             }).enter(function( e, data ) {
+
+                alert( this.options.content );
                 // console.log( data );
             })
             // .beforeOpen(function() {

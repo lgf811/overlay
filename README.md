@@ -3,8 +3,7 @@
 ## 简介
 Overlay 是一款通过 Promise 规范与 jQuery 存储数据的方式触发灵感而编写的一款弹出框插件，该插件使用链式函数监听事件，与调用内部方法，支持多点事件监听，事件解绑与绑定。
 
-该插件仅支持IE8以上的浏览器，IE9无法使用内部动画效果
-
+该插件仅支持IE9及以上的浏览器，IE9无法使用内部动画效果
 
 ------
 ## API与示例
@@ -84,7 +83,7 @@ css选择器或是DOM对象，通过该属性将对象元素装入定义好的DO
 下居中：bottom-center  |  bc  |  b-c  |  center-bottom  |  cb  |  c-b\
 左下：bottom-left  |  bl  |  b-l  |  left-bottom  |  lb  |  l-b\
 左居中：center-left  |  cl  |  c-l  |  left-center  |  lc  |  l-c\
-自定义：Function:function( container: DOM Obejct ) {}
+自定义：function( container: DOM Obejct ) {}
 
 
 #### 11.offset (Object)
@@ -240,12 +239,12 @@ new Overlay({
     title: '示例标题2',
     content: '示例文字2',
     buttons: {
-        'submit.submit-btn': '确定',
+        '$submit.submit-btn': '确定',
         'clear.clear-btn': '清除',
         'shut.shut-btn': '取消'
     },
     defOpen: true
-}).submit(function() {
+}).$submit(function() {
     console.log( '点击了确定按钮' );
 }).clear(function() {
     console.log( '点击了清除按钮2' );

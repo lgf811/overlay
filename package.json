@@ -1,0 +1,11 @@
+{
+  "name": "overlay",
+  "version": "1.1.0",
+  "description": "a popup plugin",
+  "main": "index.js",
+  "author": "lgf811",
+  "license": "MIT",
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {}
+}
