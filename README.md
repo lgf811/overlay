@@ -241,25 +241,20 @@ Overlay.tips({
 
 组件大小是否可调整，鼠标在组件右下角可以触发
 
-#### 24.resize (Boolean)
-> default: true
 
-组件大小是否可调整，鼠标在组件右下角可以触发
-
-
-#### 25.skin (String)
+#### 24.skin (String)
 > default: null
 
 组件皮肤，可根据自己的需要，自定义
 
 
-#### 26.outBound (Boolean)
+#### 25.outBound (Boolean)
 > default: false
 
 组件在可拖拽的情况下，是否可以拖到界外
 
 
-#### 27.buttons (Object)
+#### 26.buttons (Object)
 > default: null
 
 组件内存放按钮的参数
@@ -318,7 +313,7 @@ new Overlay({
 **`push`, `pull`**
 
 
-#### 28.closedDestroy (Boolean)
+#### 27.closedDestroy (Boolean)
 组件关闭后是否销毁
 > default: false
 
