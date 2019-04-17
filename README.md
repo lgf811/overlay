@@ -1,14 +1,29 @@
 # 欢迎使用 Overlay 弹出框插件
-------
+
 ## 简介
 Overlay 是一款通过 Promise 规范与 jQuery 存储数据的方式触发灵感而编写的一款弹出框插件，该插件使用链式函数监听事件，与调用内部方法，支持多点事件监听，事件解绑与绑定。
 
 该插件仅支持IE9及以上的浏览器，IE9无法使用内部动画效果
 
 ------
-## API与示例
+## 使用与API
 
-### 一、options
+### 一、使用说明
+#### 1. 安装
+使用 npm：
+```bash
+$ npm install lgf811/overlay
+// or
+$ cnpm install lgf811/overlay
+# 如果本地没安装 cnpm 需要配置另行配置
+```
+使用 cdn：
+```bash
+// 本地地址，或是在服务器上的地址
+<script src="./lib/overlay"></script>
+```
+
+### 二、options
 
 #### 1. title (Boolean:false  |  String) 
 > default: null
@@ -19,13 +34,13 @@ Overlay 是一款通过 Promise 规范与 jQuery 存储数据的方式触发灵�
 #### 2. width (Number  |  String:string(px  |  %  |  )  |  Function)
 > default: null
 
-宽度 可设置为数字，数字字符串（像素、百分比）、或是可返回数字类型的Function
+宽度 可设置为数字，数字字符串（像素、百分比）、或是可返回数字类型的可执行Function
 
 
 #### 3. height (Number  |  String:string(px  |  %  |  )  |  Function)
 > default: null
 
-高度 可设置为数字，数字字符串（像素、百分比）、或是可返回数字类型的Function
+高度 可设置为数字，数字字符串（像素、百分比）、或是可返回数字类型的可执行Function
 
 
 #### 4. minWidth (Number)
@@ -73,27 +88,58 @@ css选择器或是DOM对象，通过该属性将对象元素装入定义好的DO
 #### 10. position (String)
 > default: "center"
 
-组件打开的位置\
-其他值：\
-左上：top-left  |  tl  |  t-l  |  left-top  |  lt  |  l-t\
-上居中：top-center  |  tc  |  t-c  |  center-top  |  ct  |  c-t\
-右上：top-right  |  tr  |  t-r  |  right-top  |  rt  |  r-t\
-右居中：center-right  |  cr  |  c-r  |  right-center  |  rc  |  r-c\
-右下：bottom-right  |  br  |  b-r  |  right-bottom  |  rb  |  r-b\
-下居中：bottom-center  |  bc  |  b-c  |  center-bottom  |  cb  |  c-b\
-左下：bottom-left  |  bl  |  b-l  |  left-bottom  |  lb  |  l-b\
-左居中：center-left  |  cl  |  c-l  |  left-center  |  lc  |  l-c\
-自定义：function( container: DOM Obejct ) {}
+```bash
+组件打开的位置
+其他值：
+左上：top-left
+# 其他等意可用值同 tl, t-l, left-top, lt, l-t
 
+上居中：top-center
+# 其他等意可用值同 tc, t-c, center-top, ct, c-t
+
+右上：top-right
+# 其他等意可用值同 tr, t-r, right-top, rt, r-t
+
+右居中：center-right
+# 其他等意可用值同 cr, c-r, right-center, rc, r-c
+
+右下：bottom-right
+# 其他等意可用值同 br, b-r, right-bottom, rb, r-b 
+
+下居中：bottom-center
+# 其他等意可用值同 bc, b-c, center-bottom, cb, c-b
+
+左下：bottom-left
+# 其他等意可用值同 bl, b-l, left-bottom, lb, l-b
+
+左居中：center-left
+# 其他等意可用值同 cl, c-l, left-center, lc, l-c
+
+自定义：function( container: DOM Obejct ) {}
+```
+示例：
+```js
+// 接上自定义 function( container: DOM Obejct ) {}
+
+function( container ) {
+    // this 关键字指向实例自身
+    // container 为实例dom最外层包围
+
+    container.style.top = '10px';
+    container.style.left = '10px';
+}
+```
 
 #### 11.offset (Object)
 > default: null
 
-设置组件打开后的偏移位置\
-{ \
-&nbsp;&nbsp;&nbsp;&nbsp;x: Number  |  String:string(px  |  %  |  )  |  Function,\
-&nbsp;&nbsp;&nbsp;&nbsp;y: Number  |  String:string(px  |  %  |  )  |  Function\
+```js
+//设置组件打开后的偏移位置
+{
+    x: Number | String:string(px | % | ) | Function,
+    y: Number | String:string(px | % | ) | Function
 }
+```
 
 
 #### 12.drag (Boolean)
@@ -159,7 +205,7 @@ css选择器或是DOM对象，通过该属性将对象元素装入定义好的DO
 <!-- 示例1 -->
 <a href="javascript:;" class="test-trigger-btn" data-info="气泡内容">气泡触发按钮</a>
 ```
-```javascript
+```js
 // 示例1
 // 该参数在使用气泡时才可以使用
 // 在结合 tips 使用的情况下 content 属性可以获取触发器元素的[Attribute]，并将内容显示到气泡DOM中
@@ -174,7 +220,7 @@ Overlay.tips({
 <div class="test-tips">测试气泡文字</div>
 <a href="javascript:;" class="test-trigger-btn">气泡触发按钮</a>
 ```
-```javascript
+```js
 // 示例2
 // 该参数在使用气泡时才可以使用
 // 在结合 tips 使用的情况下 el 属性可以将对应的DOM放入到对应的气泡DOM中
@@ -218,7 +264,7 @@ Overlay.tips({
 
 组件内存放按钮的参数
 
-```javascript
+```js
 //示例1
 new Overlay({
     title: '示例标题',
@@ -252,14 +298,16 @@ new Overlay({
     console.log( '点击了取消按钮' );
 });
 ```
-上面示例1 buttons 中 enter 是接收回调函数的方法，.enter-btn 是对应按钮的样式，样式也可以写多个，类似 enter.enter-btn.submit-btn 而 enter 也不是指定好的一个接收回调函数的方法，只要在 buttons 里 key 的起始位置写一个单词或是驼峰式的词组，就可以在后面的链式调用中用到。\
-示例2中也印证了示例1中的说明，接收回调函数的方法也可以用链式调用，多次接收回调函数\
+上面示例1 buttons 中 enter 是接收回调函数的方法，.enter-btn 是对应按钮的样式，样式也可以写多个，类似 enter.enter-btn.submit-btn 而 enter 也不是指定好的一个接收回调函数的方法，只要在 buttons 里 key 的起始位置写一个单词或是驼峰式的词组，就可以在后面的链式调用中用到。
+示例2中也印证了示例1中的说明，接收回调函数的方法也可以用链式调用，多次接收回调函数
 
-下面是该组件已经占用的链式调用方法，所以在buttons里就不要再用了，否则会引起报错\
-**once、ready、beforeOpen、opened、closed、movestart、moveing、moveend、destroyed、fullBefore、fullAfter、cancelFullBefore、cancelFullAfter、resizeStart、resizing、resizeEnd、open、close、full、cancelFull、autoAdjust、restore、setSize、setOffset、setTop、setContent、off、push、pull、destroy**
+下面是该组件已经占用的链式调用方法，所以在buttons里就不要再用了，否则会引起报错，如果想用，可以在buttons内编写时首字母前增加 $或是其他合法符号 以示区别\
+**once, ready, beforeOpen, opened, closed, movestart, moveing, moveend, destroyed, fullBefore, fullAfter, cancelFullBefore, cancelFullAfter, resizeStart, resizing, resizeEnd, open, close, full, cancelFull, autoAdjust, restore, setSize, setOffset, setTop, setContent, off, push, pull, destroy**
 
 
 #### 28.closedDestroy (Boolean)
+组件关闭后是否销毁
 > default: false
 
-组件关闭后是否销毁
+closedDestroy 的默认值 只针对于 new Overlay()
+Overlay.alert与 Overlay.confirm 与之不同
