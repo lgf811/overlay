@@ -1,7 +1,7 @@
 # 欢迎使用 Overlay 弹出框插件
 
 ## 简介
-Overlay 是一款通过 Promise 规范与 jQuery 存储数据的方式触发灵感而编写的一款弹出框插件，该插件使用链式函数监听事件，与调用内部方法，支持多点事件监听，事件解绑与绑定。
+Overlay 是一款通过 Promise 规范与 jQuery 存储数据的方式触发灵感而编写的一款弹出框插件，该插件使用链式函数进行事件监听，与调用内部方法，支持多点事件监听，事件解绑与绑定。
 
 该插件仅支持IE9及以上的浏览器，IE9无法使用内部动画效果
 
@@ -298,11 +298,24 @@ new Overlay({
     console.log( '点击了取消按钮' );
 });
 ```
-上面示例1 buttons 中 enter 是接收回调函数的方法，.enter-btn 是对应按钮的样式，样式也可以写多个，类似 enter.enter-btn.submit-btn 而 enter 也不是指定好的一个接收回调函数的方法，只要在 buttons 里 key 的起始位置写一个单词或是驼峰式的词组，就可以在后面的链式调用中用到。
+上面示例1 `buttons` 中 `enter` 是接收回调函数的方法，`.enter-btn` 是对应按钮的样式，样式也可以写多个，类似 `enter.enter-btn.submit-btn` 而 enter 也不是指定好的一个接收回调函数的方法，只要在 buttons 里 key 的起始位置写一个单词或是驼峰式的词组，就可以在后面的链式调用中用到。
 示例2中也印证了示例1中的说明，接收回调函数的方法也可以用链式调用，多次接收回调函数
 
-下面是该组件已经占用的链式调用方法，所以在buttons里就不要再用了，否则会引起报错，如果想用，可以在buttons内编写时首字母前增加 $或是其他合法符号 以示区别\
-**once, ready, beforeOpen, opened, closed, movestart, moveing, moveend, destroyed, fullBefore, fullAfter, cancelFullBefore, cancelFullAfter, resizeStart, resizing, resizeEnd, open, close, full, cancelFull, autoAdjust, restore, setSize, setOffset, setTop, setContent, off, push, pull, destroy**
+下面是该组件已经占用的链式调用方法，所以在buttons里就不要再用了，否则会引起报错，如果想用，可以在buttons内编写时首字母前增加 $或是其他合法符号 以示区别
+
+**`once`, `ready`, `beforeOpen`, `opened`, `closed`**
+
+**`movestart`, `moveing`, `moveend`**
+
+**`destroy`, `destroyed`**
+
+**`fullBefore`, `fullAfter`, `cancelFullBefore`, `cancelFullAfter`, `resizeStart`, `resizing`, `resizeEnd`, `full`, `cancelFull`, `autoAdjust`, `restore`, `setSize`, `setOffset`, `setTop`**
+
+**`setContent`**
+
+**`off`**
+
+**`push`, `pull`**
 
 
 #### 28.closedDestroy (Boolean)
