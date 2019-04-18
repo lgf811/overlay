@@ -18,6 +18,31 @@
             vertical-align: top
         }
 
+        .test1-enter {
+            -webkit-animation-name: test1Enter;
+            animation-name: test1Enter;
+            -webkit-animation-duration: 300ms;
+            animation-duration: 300ms
+        }
+
+        .test1-leave {
+            -webkit-animation-name: test1Leave;
+            animation-name: test1Leave;
+            -webkit-animation-duration: 6000ms;
+            animation-duration: 6000ms
+        }
+
+        @keyframes test1Enter {
+            0% { transform: translateY(-30%); opacity: 0 }
+            100% { transform: translateY(0); opacity: 1 }
+        }
+
+        @keyframes test1Leave {
+            0% { transform: translateY(0) }
+            100% { transform: translateY(-30%) }
+        }
+
+
     </style>
     <script src="../lib/overlay.js"></script>
 </head>
@@ -83,7 +108,8 @@
                 full: true,
                 // defFull: true,
                 mask: '0.1',
-                anim: 'spring',
+                // anim: 'spring',
+                anim: 'test1',
                 // offset: {
                 //     x: '20%',
                 //     y: '100'
@@ -156,6 +182,30 @@
             }).resizeEnd(function() {
                 // console.log('调整结束');
             });
+
+
+            win2 = new Overlay({
+                el: '.o',
+                // content: './frame.htm',
+                title: '标题',
+                width: '300',
+                // height: '260',
+                // position: 'l-t',
+				// close: false,
+                position: 'c',
+                full: true,
+                // defFull: true,
+                mask: '0.1',
+                anim: 'spring',
+                // offset: {
+                //     x: '20%',
+                //     y: '100'
+                // },
+                buttons: {
+                    'enter.enter.enter-1123123': '确定',
+                    '$cancel.cancel': '取消'
+                }
+            })
         //})();
 
             // win2.push({

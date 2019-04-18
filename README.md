@@ -82,8 +82,26 @@ css选择器或是DOM对象，通过该属性将对象元素装入定义好的DO
 #### 9. anim (String)
 > default: "scale"
 
-打开动画的方式(fade  |  scale  |  spring  |  fadeSlideUp  |  fadeSlideDown) 动画方式可以通过 css 或是 Overlay.config 添加新的动画方式。css keyframes 打开的name 需要在后面加入-enter 关闭的name 需要加入 -leave，name 则要与 打开动画的name相同
+打开动画的方式(`fade`, `scale`, `spring`, `fadeSlideUp`, `fadeSlideDown`) 动画方式可以通过 css 或是 Overlay.config 添加新的动画样式。CSS keyframes 打开的 name 需要在后面加入 -enter 关闭的 name 需要加入 -leave，name 则要与 打开动画的 name 相同。
 
+例（ Overlay.config ）：
+```js
+Overlay.config.keyframes.test = {
+    enter: {
+        "0%": "opacity: 0; transform: scale(0.6)",
+        "100%": "opacity: 1; transform: scale(1)"
+    },
+    leave: {
+        "0%": "opacity: 1; transform: scale(1)",
+        "100%": "opacity: 0; transform: scale(0.6)"
+    }
+}
+```
+
+例（ CSS ）：
+```css
+
+```
 
 #### 10. position (String)
 > default: "center"
